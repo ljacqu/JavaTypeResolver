@@ -8,12 +8,52 @@
     <artifactId>typeresolver</artifactId>
     <version>0.1-SNAPSHOT</version>
 
+    <name>JavaTypeResolver</name>
+    <description>Utility for resolving generic types and general reflective operations on types</description>
+    <url>https://github.com/ljacqu/JavaTypeResolver</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/ljacqu/JavaTypeResolver.git</connection>
+        <developerConnection>scm:git:git@github.com:ljacqu/JavaTypeResolver.git</developerConnection>
+        <url>https://github.com/ljacqu/JavaTypeResolver</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/ljacqu/JavaTypeResolver/issues</url>
+    </issueManagement>
+
+    <properties>
+        <project.jdkVersion>1.8</project.jdkVersion>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${project.jdkVersion}</source>
+                    <target>${project.jdkVersion}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.5.1</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
     </dependencies>
 
