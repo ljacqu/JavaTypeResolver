@@ -26,31 +26,32 @@ class TypeInfoTest {
 
     @Test
     void shouldReturnClassFromParameterizedClass() {
-        assertEquals(new TypeInfo(getType("stringList")).toClass(), List.class);
-        assertEquals(new TypeInfo(getType("stringListSet")).toClass(), Set.class);
-        assertEquals(new TypeInfo(getType("questionMarkMap")).toClass(), Map.class);
+        assertEquals(getType("stringList").toClass(), List.class);
+        assertEquals(getType("stringListSet").toClass(), Set.class);
+        assertEquals(getType("questionMarkMap").toClass(), Map.class);
     }
 
     @Test
-    void shouldReturnNullIfClassCannotBeFound() {
+    void shouldReturnNullIfClassCannotBeDetermined() {
         assertNull(new TypeInfo(null).toClass());
-        Type quesionMarkType = new TypeInfo(getType("questionMarkMap")).getGenericTypeInfo(0).getType();
-        assertNull(new TypeInfo(quesionMarkType).toClass());
+        assertNull(getFirstGenericTypeFromField("questionMarkMap").toClass());
+        assertNull(getFirstGenericTypeFromField("superIntList").toClass());
+        assertNull(getFirstGenericTypeFromField("extComparableList").toClass());
     }
 
     @Test
     void shouldReturnGenericTypeInfo() {
-        assertEquals(new TypeInfo(getType("stringList")).getGenericTypeInfo(0),
+        assertEquals(getType("stringList").getGenericTypeInfo(0),
             new TypeInfo(String.class));
-        assertEquals(new TypeInfo(getType("numberIntegerMap")).getGenericTypeInfo(1),
+        assertEquals(getType("numberIntegerMap").getGenericTypeInfo(1),
             new TypeInfo(Integer.class));
-        assertEquals(new TypeInfo(getType("stringListSet")).getGenericTypeInfo(0),
-            new TypeInfo(getType("stringList")));
+        assertEquals(getType("stringListSet").getGenericTypeInfo(0),
+            getType("stringList"));
     }
 
     @Test
     void shouldReturnNullAsGenericTypeInfoIfNotApplicable() {
-        assertNull(new TypeInfo(getType("stringList")).getGenericTypeInfo(1));
+        assertNull(getType("stringList").getGenericTypeInfo(1));
         assertNull(new TypeInfo(String.class).getGenericTypeInfo(0));
         assertNull(new TypeInfo(null).getGenericTypeInfo(1));
         assertNull(new TypeInfo(int.class).getGenericTypeInfo(0));
@@ -58,29 +59,51 @@ class TypeInfoTest {
 
     @Test
     void shouldReturnGenericTypeAsClass() {
-        assertEquals(new TypeInfo(getType("stringList")).getGenericTypeAsClass(0), String.class);
-        assertEquals(new TypeInfo(getType("stringListSet")).getGenericTypeAsClass(0), List.class);
-        assertEquals(new TypeInfo(getType("numberIntegerMap")).getGenericTypeAsClass(1), Integer.class);
+        assertEquals(getType("stringList").getGenericTypeAsClass(0), String.class);
+        assertEquals(getType("stringListSet").getGenericTypeAsClass(0), List.class);
+        assertEquals(getType("numberIntegerMap").getGenericTypeAsClass(1), Integer.class);
     }
 
     @Test
     void shouldReturnNullIfGenericTypeClassIsNotApplicable() {
         assertNull(new TypeInfo(null).getGenericTypeAsClass(0));
-        assertNull(new TypeInfo(getType("questionMarkMap")).getGenericTypeAsClass(0));
+        assertNull(getType("questionMarkMap").getGenericTypeAsClass(0));
     }
 
-    private static Type getType(String fieldName) {
+    @Test
+    void shouldReturnSafeToReadClass() throws NoSuchMethodException {
+        assertEquals(getFirstGenericTypeFromField("numberIntegerMap").getSafeToReadClass(), Number.class);
+        assertEquals(getFirstGenericTypeFromField("questionMarkMap").getSafeToReadClass(), Object.class);
+        assertEquals(getFirstGenericTypeFromField("superIntList").getSafeToReadClass(), Object.class);
+        assertEquals(getFirstGenericTypeFromField("extComparableList").getSafeToReadClass(), Comparable.class);
+
+        Type boundTypeVariable = ParameterizedTypes.class.getDeclaredMethod("bExtSerializable").getGenericReturnType();
+        assertEquals(new TypeInfo(boundTypeVariable).getSafeToReadClass(), Number.class);
+    }
+
+    private static TypeInfo getType(String fieldName) {
         try {
-            return ParameterizedTypes.class.getDeclaredField(fieldName).getGenericType();
+            return new TypeInfo(ParameterizedTypes.class.getDeclaredField(fieldName).getGenericType());
         } catch (Exception e) {
             throw new IllegalStateException(fieldName, e);
         }
     }
 
-    private static final class ParameterizedTypes {
+    private static TypeInfo getFirstGenericTypeFromField(String fieldName) {
+        return getType(fieldName).getGenericTypeInfo(0);
+    }
+
+    private static final class ParameterizedTypes<V> {
         private List<String> stringList;
         private Map<?, ?> questionMarkMap;
         private Set<List<String>> stringListSet;
         private Map<Number, Integer> numberIntegerMap;
+        private Set<V> typeVariableSet;
+        private List<? super Integer> superIntList;
+        private List<? extends Comparable> extComparableList;
+
+        private <B extends Number> B bExtSerializable() {
+            return null;
+        }
     }
 }
