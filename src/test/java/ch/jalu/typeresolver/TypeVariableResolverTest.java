@@ -8,15 +8,18 @@ import ch.jalu.typeresolver.samples.typeinheritance.OneArgProcessor;
 import com.google.common.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -124,6 +127,54 @@ class TypeVariableResolverTest {
         assertEquals(resolvedOptionalType, expectedOptionalType);
         Type expectedComparableType = new TypeToken<Comparable<? super Integer>>() { }.getType();
         assertEquals(resolvedComparableType, expectedComparableType);
+    }
+
+    @Test
+    void shouldResolveQuestionMarkTypesRecursively() throws NoSuchFieldException {
+        // given
+        Type type = new TypeToken<AbstractTwoArgProcessor<? super Serializable, ? extends TimeUnit>>() { }.getType();
+        TypeVariableResolver resolver = new TypeVariableResolver(type);
+        Type tSuperComparable = AbstractTwoArgProcessor.class.getDeclaredField("tSuperComparable").getGenericType();
+        Type uExtOptional = AbstractTwoArgProcessor.class.getDeclaredField("uExtOptional").getGenericType();
+
+        // when
+        Type comparableResolved = resolver.resolve(tSuperComparable);
+        Type optionalResolved = resolver.resolve(uExtOptional);
+
+        // then
+        Type expectedComparable = new TypeToken<Comparable<? super Serializable>>() { }.getType();
+        assertEquals(comparableResolved, expectedComparable);
+        Type expectedOptional = new TypeToken<Optional<? extends TimeUnit>>() { }.getType();
+        assertEquals(optionalResolved, expectedOptional);
+    }
+
+    @Test
+    void shouldHandleCombinationOfSuperAndExtends() throws NoSuchFieldException {
+        Type type = new TypeToken<AbstractTwoArgProcessor<? extends Serializable, ? super TimeUnit>>() { }.getType();
+        TypeVariableResolver resolver = new TypeVariableResolver(type);
+        Type tSuperComparable = AbstractTwoArgProcessor.class.getDeclaredField("tSuperComparable").getGenericType();
+        Type uExtOptional = AbstractTwoArgProcessor.class.getDeclaredField("uExtOptional").getGenericType();
+
+        // when
+        TypeInfo comparableResolved = new TypeInfo(resolver.resolve(tSuperComparable));
+        TypeInfo optionalResolved = new TypeInfo(resolver.resolve(uExtOptional));
+
+        // then
+        // Comparable type is: Comparable<capture<? super capture<? extends Serializable>>>
+        assertEquals(comparableResolved.toClass(), Comparable.class);
+        Type comparableType = comparableResolved.getGenericTypeInfo(0).getType();
+        assertTrue(comparableType instanceof WildcardType);
+        assertArrayEquals(((WildcardType) comparableType).getUpperBounds(), new Type[]{ Object.class });
+        Type extendsSerializable = new TypeInfo(new TypeToken<List<? extends Serializable>>() {}.getType()).getGenericTypeInfo(0).getType();
+        assertArrayEquals(((WildcardType) comparableType).getLowerBounds(), new Type[]{ extendsSerializable });
+
+        // Optional type is: Optional<capture<? extends capture<? super TimeUnit>>>
+        assertEquals(optionalResolved.toClass(), Optional.class);
+        Type optionalType = optionalResolved.getGenericTypeInfo(0).getType();
+        assertTrue(optionalType instanceof WildcardType);
+        assertArrayEquals(((WildcardType) optionalType).getLowerBounds(), new Type[]{ });
+        Type superTimeUnit = new TypeInfo(new TypeToken<List<? super TimeUnit>>() {}.getType()).getGenericTypeInfo(0).getType();
+        assertArrayEquals(((WildcardType) optionalType).getUpperBounds(), new Type[]{ superTimeUnit });
     }
 
     private static TypeVariableResolver createChildResolver(TypeVariableResolver parentResolver,

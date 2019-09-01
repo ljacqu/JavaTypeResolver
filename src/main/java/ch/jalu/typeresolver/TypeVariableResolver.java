@@ -5,7 +5,6 @@ import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -27,8 +26,8 @@ public class TypeVariableResolver {
 
     private final Table<Class, String, Type> typeRules = HashBasedTable.create();
 
-    public TypeVariableResolver(Class<?> clazz) {
-        registerTypesFromParentAndInterfaces(clazz);
+    public TypeVariableResolver(Type type) {
+        registerTypes(type);
     }
 
     private TypeVariableResolver(TypeVariableResolver parentResolver) {
@@ -37,15 +36,7 @@ public class TypeVariableResolver {
 
     public TypeVariableResolver createChildResolver(Type type) {
         TypeVariableResolver childResolver = new TypeVariableResolver(this);
-        if (type instanceof Class<?>) {
-            childResolver.registerTypesFromParentAndInterfaces((Class) type);
-        } else {
-            if (type instanceof ParameterizedType) {
-                Class<?> rawType = (Class<?>) ((ParameterizedType) type).getRawType();
-                childResolver.registerTypesFromParentAndInterfaces(rawType);
-            }
-            childResolver.registerTypes(type);
-        }
+        childResolver.registerTypes(type);
         return childResolver;
     }
 
@@ -65,7 +56,7 @@ public class TypeVariableResolver {
             WildcardType wt = (WildcardType) type;
             Type[] upperBounds = resolve(wt.getUpperBounds());
             Type[] lowerBounds = resolve(wt.getLowerBounds());
-            return new WildcardTypeImpl(upperBounds, lowerBounds);
+            return createWildcardType(upperBounds, lowerBounds);
         }
         return type;
     }
@@ -76,6 +67,31 @@ public class TypeVariableResolver {
             resolvedTypes[i] = resolve(types[i]);
         }
         return resolvedTypes;
+    }
+
+    private WildcardType createWildcardType(Type[] upperBounds, Type[] lowerBounds) {
+        if (lowerBounds.length == 1) {
+            Type lowerBound = lowerBounds[0];
+            if (lowerBound instanceof WildcardType && ((WildcardType) lowerBound).getLowerBounds().length > 0) {
+                return (WildcardType) lowerBound;
+            }
+        } else if (upperBounds.length == 1) {
+            Type upperBound = upperBounds[0];
+            if (upperBound instanceof WildcardType && ((WildcardType) upperBound).getLowerBounds().length == 0) {
+                return (WildcardType) upperBound;
+            }
+        }
+        return new WildcardTypeImpl(upperBounds, lowerBounds);
+    }
+
+    private void registerTypes(Type type) {
+        if (type instanceof Class<?>) {
+            registerTypesFromParentAndInterfaces((Class) type);
+        } else if (type instanceof ParameterizedType) {
+            Class<?> rawType = (Class<?>) ((ParameterizedType) type).getRawType();
+            registerTypesFromParentAndInterfaces(rawType);
+            registerParameterizedTypes((ParameterizedType) type);
+        }
     }
 
     private void registerTypesFromParentAndInterfaces(Class<?> clazz) {
@@ -89,14 +105,11 @@ public class TypeVariableResolver {
         }
     }
 
-    private void registerTypes(@Nullable Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            Class<?> rawType = (Class<?>) pt.getRawType();
-            Type[] typeArguments = pt.getActualTypeArguments();
-            for (int i = 0; i < typeArguments.length; ++i) {
-                typeRules.put(rawType, rawType.getTypeParameters()[i].getName(), typeArguments[i]);
-            }
+    private void registerParameterizedTypes(ParameterizedType parameterizedType) {
+        Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+        Type[] typeArguments = parameterizedType.getActualTypeArguments();
+        for (int i = 0; i < typeArguments.length; ++i) {
+            typeRules.put(rawType, rawType.getTypeParameters()[i].getName(), typeArguments[i]);
         }
     }
 }
