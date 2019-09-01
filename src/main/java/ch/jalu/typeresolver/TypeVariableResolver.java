@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
@@ -37,6 +38,10 @@ public class TypeVariableResolver {
         if (type instanceof Class<?>) {
             childResolver.registerTypesFromParentAndInterfaces((Class) type);
         } else {
+            if (type instanceof ParameterizedType) {
+                Class<?> rawType = (Class<?>) ((ParameterizedType) type).getRawType();
+                childResolver.registerTypesFromParentAndInterfaces(rawType);
+            }
             childResolver.registerTypes(type);
         }
         return childResolver;
@@ -56,7 +61,7 @@ public class TypeVariableResolver {
             for (int i = 0; i < pt.getActualTypeArguments().length; ++i) {
                 resolvedTypes[i] = resolve(pt.getActualTypeArguments()[i]);
             }
-            return new ParameterizedTypeImpl(resolvedTypes, pt);
+            return new ParameterizedTypeImpl((Class<?>) pt.getRawType(), pt.getOwnerType(), resolvedTypes);
         }
         return type;
     }
@@ -80,39 +85,6 @@ public class TypeVariableResolver {
             for (int i = 0; i < typeArguments.length; ++i) {
                 typeRules.put(rawType, rawType.getTypeParameters()[i].getName(), typeArguments[i]);
             }
-        }
-    }
-
-    /**
-     * Parameterized type implementation which wraps another parameterized type but allows to
-     * set custom generic types. Used to resolve the parameterized type's type arguments, which
-     * may be type variables which could be resolved to concrete types.
-     */
-    private static class ParameterizedTypeImpl implements ParameterizedType {
-
-        private final Type[] actualTypeArguments;
-        private final Type rawType;
-        private final Type ownerType;
-
-        private ParameterizedTypeImpl(Type[] actualTypeArguments, ParameterizedType originalParameterizedType) {
-            this.actualTypeArguments = actualTypeArguments;
-            this.rawType = originalParameterizedType.getRawType();
-            this.ownerType = originalParameterizedType.getOwnerType();
-        }
-
-        @Override
-        public Type[] getActualTypeArguments() {
-            return actualTypeArguments;
-        }
-
-        @Override
-        public Type getRawType() {
-            return rawType;
-        }
-
-        @Override
-        public Type getOwnerType() {
-            return ownerType;
         }
     }
 }
