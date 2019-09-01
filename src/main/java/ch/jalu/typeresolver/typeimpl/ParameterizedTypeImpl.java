@@ -68,10 +68,10 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         if (actualTypeArguments.length > 0) {
             sb.append("<");
             for (int i = 0; i < actualTypeArguments.length; ++i) {
-                sb.append(actualTypeArguments[i].getTypeName());
-                if (i < actualTypeArguments.length - 1) {
+                if (i > 0) {
                     sb.append(", ");
                 }
+                sb.append(actualTypeArguments[i].getTypeName());
             }
             sb.append(">");
         }

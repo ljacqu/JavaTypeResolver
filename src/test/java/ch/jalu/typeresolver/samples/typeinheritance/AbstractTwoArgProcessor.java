@@ -10,5 +10,6 @@ public abstract class AbstractTwoArgProcessor<T, U> {
     private List<U> uList;
     private Map<T, U> tuMap;
     private Optional<? extends U> uExtOptional;
+    private Comparable<? super T> tSuperComparable;
 
 }

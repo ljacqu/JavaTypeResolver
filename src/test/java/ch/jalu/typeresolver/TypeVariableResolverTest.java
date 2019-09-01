@@ -108,6 +108,24 @@ class TypeVariableResolverTest {
         assertEquals(tuMapResolved2, expectedTuMapType.getType());
     }
 
+    @Test
+    void shouldResolveQuestionMarkTypes() throws Exception {
+        // given
+        TypeVariableResolver resolver = new TypeVariableResolver(IntegerDoubleArgProcessor.class);
+        Type optionalType = AbstractTwoArgProcessor.class.getDeclaredField("uExtOptional").getGenericType();
+        Type comparableType = AbstractTwoArgProcessor.class.getDeclaredField("tSuperComparable").getGenericType();
+
+        // when
+        Type resolvedOptionalType = resolver.resolve(optionalType);
+        Type resolvedComparableType = resolver.resolve(comparableType);
+
+        // then
+        Type expectedOptionalType = new TypeToken<Optional<? extends Double>>() { }.getType();
+        assertEquals(resolvedOptionalType, expectedOptionalType);
+        Type expectedComparableType = new TypeToken<Comparable<? super Integer>>() { }.getType();
+        assertEquals(resolvedComparableType, expectedComparableType);
+    }
+
     private static TypeVariableResolver createChildResolver(TypeVariableResolver parentResolver,
                                                             Class<?> clazz, String fieldName) {
         try {

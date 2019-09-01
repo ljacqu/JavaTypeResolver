@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
+import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
@@ -8,6 +9,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 
 /**
  * Allows to resolve type variables to actual classes from previous context (extension of a class with a type variable,
@@ -57,13 +59,23 @@ public class TypeVariableResolver {
             }
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) type;
-            Type[] resolvedTypes = new Type[pt.getActualTypeArguments().length];
-            for (int i = 0; i < pt.getActualTypeArguments().length; ++i) {
-                resolvedTypes[i] = resolve(pt.getActualTypeArguments()[i]);
-            }
+            Type[] resolvedTypes = resolve(pt.getActualTypeArguments());
             return new ParameterizedTypeImpl((Class<?>) pt.getRawType(), pt.getOwnerType(), resolvedTypes);
+        } else if (type instanceof WildcardType) {
+            WildcardType wt = (WildcardType) type;
+            Type[] upperBounds = resolve(wt.getUpperBounds());
+            Type[] lowerBounds = resolve(wt.getLowerBounds());
+            return new WildcardTypeImpl(upperBounds, lowerBounds);
         }
         return type;
+    }
+
+    private Type[] resolve(Type[] types) {
+        Type[] resolvedTypes = new Type[types.length];
+        for (int i = 0; i < types.length; ++i) {
+            resolvedTypes[i] = resolve(types[i]);
+        }
+        return resolvedTypes;
     }
 
     private void registerTypesFromParentAndInterfaces(Class<?> clazz) {
