@@ -5,6 +5,10 @@ import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerGenericArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.OneArgProcessor;
+import ch.jalu.typeresolver.samples.typevariables.ClassWithTypeVariables;
+import ch.jalu.typeresolver.samples.typevariables.ClassWithTypeVariablesExt;
+import ch.jalu.typeresolver.samples.typevariables.TypedContainer;
+import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import com.google.common.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
@@ -104,11 +108,8 @@ class TypeVariableResolverTest {
         assertIsParameterizedType(tuMapResolved, Map.class, Integer.class, Character.class);
         assertIsParameterizedType(processParamTypeResolved, List.class, Float.class);
 
-        TypeToken<Set<Map<Float, Set<Float>>>> expectedTSetType = new TypeToken<Set<Map<Float, Set<Float>>>>() {};
-        assertEquals(tSetResolved2, expectedTSetType.getType());
-
-        TypeToken<Map<Integer, Map<Float, Set<Float>>>> expectedTuMapType = new TypeToken<Map<Integer, Map<Float, Set<Float>>>>() {};
-        assertEquals(tuMapResolved2, expectedTuMapType.getType());
+        assertEquals(tSetResolved2, new TypeToken<Set<Map<Float, Set<Float>>>>() { }.getType());
+        assertEquals(tuMapResolved2, new TypeToken<Map<Integer, Map<Float, Set<Float>>>>() { }.getType());
     }
 
     @Test
@@ -142,39 +143,82 @@ class TypeVariableResolverTest {
         Type optionalResolved = resolver.resolve(uExtOptional);
 
         // then
-        Type expectedComparable = new TypeToken<Comparable<? super Serializable>>() { }.getType();
-        assertEquals(comparableResolved, expectedComparable);
-        Type expectedOptional = new TypeToken<Optional<? extends TimeUnit>>() { }.getType();
-        assertEquals(optionalResolved, expectedOptional);
+        assertEquals(comparableResolved, new TypeToken<Comparable<? super Serializable>>() { }.getType());
+        assertEquals(optionalResolved, new TypeToken<Optional<? extends TimeUnit>>() { }.getType());
     }
 
     @Test
     void shouldHandleCombinationOfSuperAndExtends() throws NoSuchFieldException {
+        // given
         Type type = new TypeToken<AbstractTwoArgProcessor<? extends Serializable, ? super TimeUnit>>() { }.getType();
         TypeVariableResolver resolver = new TypeVariableResolver(type);
         Type tSuperComparable = AbstractTwoArgProcessor.class.getDeclaredField("tSuperComparable").getGenericType();
         Type uExtOptional = AbstractTwoArgProcessor.class.getDeclaredField("uExtOptional").getGenericType();
 
         // when
-        TypeInfo comparableResolved = new TypeInfo(resolver.resolve(tSuperComparable));
-        TypeInfo optionalResolved = new TypeInfo(resolver.resolve(uExtOptional));
+        Type comparableResolved = resolver.resolve(tSuperComparable);
+        Type optionalResolved = resolver.resolve(uExtOptional);
 
         // then
         // Comparable type is: Comparable<capture<? super capture<? extends Serializable>>>
-        assertEquals(comparableResolved.toClass(), Comparable.class);
-        Type comparableType = comparableResolved.getGenericTypeInfo(0).getType();
-        assertTrue(comparableType instanceof WildcardType);
-        assertArrayEquals(((WildcardType) comparableType).getUpperBounds(), new Type[]{ Object.class });
-        Type extendsSerializable = new TypeInfo(new TypeToken<List<? extends Serializable>>() {}.getType()).getGenericTypeInfo(0).getType();
-        assertArrayEquals(((WildcardType) comparableType).getLowerBounds(), new Type[]{ extendsSerializable });
+        assertIsParameterizedType(comparableResolved, Comparable.class, newWildcardSuper(newWildcardExtends(Serializable.class)));
 
         // Optional type is: Optional<capture<? extends capture<? super TimeUnit>>>
-        assertEquals(optionalResolved.toClass(), Optional.class);
-        Type optionalType = optionalResolved.getGenericTypeInfo(0).getType();
-        assertTrue(optionalType instanceof WildcardType);
-        assertArrayEquals(((WildcardType) optionalType).getLowerBounds(), new Type[]{ });
-        Type superTimeUnit = new TypeInfo(new TypeToken<List<? super TimeUnit>>() {}.getType()).getGenericTypeInfo(0).getType();
-        assertArrayEquals(((WildcardType) optionalType).getUpperBounds(), new Type[]{ superTimeUnit });
+        assertIsParameterizedType(optionalResolved, Optional.class, newWildcardExtends(newWildcardSuper(TimeUnit.class)));
+    }
+
+    @Test
+    void shouldResolveComplexTypeVariables() throws NoSuchFieldException {
+        // given
+        Type type = new TypeToken<ClassWithTypeVariablesExt<Double, TimeUnit>>() {}.getType();
+        TypeVariableResolver resolver = new TypeVariableResolver(type);
+
+        Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
+        Type extendsListType = TypedContainer.class.getDeclaredField("extendsList").getGenericType();
+        Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
+
+        TypeVariableResolver comparableYResolver = resolver.createChildResolver(
+            ClassWithTypeVariables.class.getDeclaredField("comparableYContainer").getGenericType());
+        TypeVariableResolver xArrayContainer = resolver.createChildResolver(
+            ClassWithTypeVariables.class.getDeclaredField("xArrayContainer").getGenericType());
+        TypeVariableResolver extendsContainer = resolver.createChildResolver(
+            ClassWithTypeVariables.class.getDeclaredField("extendsContainer").getGenericType());
+
+        // when
+        Type comparableYList = comparableYResolver.resolve(listType);
+        Type comparableYExtendsList = comparableYResolver.resolve(extendsListType);
+        Type comparableYSuperList = comparableYResolver.resolve(superListType);
+
+        Type xArrayList = xArrayContainer.resolve(listType);
+        Type xArrayExtendsList = xArrayContainer.resolve(extendsListType);
+        Type xArraySuperList = xArrayContainer.resolve(superListType);
+
+        Type extendsList = extendsContainer.resolve(listType);
+        Type extendsExtendsList = extendsContainer.resolve(extendsListType);
+        Type extendsSuperList = extendsContainer.resolve(superListType);
+
+        // then
+        assertEquals(comparableYList,        new TypeToken<List<Comparable<Double>>>() { }.getType());
+        assertEquals(comparableYExtendsList, new TypeToken<List<? extends Comparable<Double>>>() { }.getType());
+        assertEquals(comparableYSuperList,   new TypeToken<List<? super Comparable<Double>>>() { }.getType());
+
+        assertEquals(xArrayList,        new TypeToken<List<Double[][]>>() { }.getType());
+        assertEquals(xArrayExtendsList, new TypeToken<List<? extends Double[][]>>() { }.getType());
+        assertEquals(xArraySuperList,   new TypeToken<List<? super Double[][]>>() { }.getType());
+
+        assertEquals(extendsList,        new TypeToken<List<? extends Double>>() { }.getType());
+        assertEquals(extendsExtendsList, new TypeToken<List<? extends Double>>() { }.getType());
+        assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(newWildcardExtends(Double.class)));
+    }
+
+    /** Creates a type "? extends T" where T is the given upperBound. */
+    private static WildcardType newWildcardExtends(Type upperBound) {
+        return new WildcardTypeImpl(new Type[]{ upperBound }, new Type[0]);
+    }
+
+    /** Creates a type "? super T" where T is the given lowerBound. */
+    private static WildcardType newWildcardSuper(Type lowerBound) {
+        return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ lowerBound });
     }
 
     private static TypeVariableResolver createChildResolver(TypeVariableResolver parentResolver,
@@ -186,21 +230,21 @@ class TypeVariableResolverTest {
         }
     }
 
-    private static void assertIsParameterizedType(Type actualType, Class<?> expectedRawType, Class<?>... expectedClasses) {
+    private static void assertIsParameterizedType(Type actualType, Class<?> expectedRawType, Type... expectedTypeArguments) {
         assertTrue(actualType instanceof ParameterizedType);
         ParameterizedType pt = (ParameterizedType) actualType;
         assertEquals(expectedRawType, pt.getRawType());
-        assertArrayEquals(expectedClasses, pt.getActualTypeArguments());
+        assertArrayEquals(expectedTypeArguments, pt.getActualTypeArguments());
     }
 
-    private class ClassWithTypes {
+    private static class ClassWithTypes {
 
         private IntegerGenericArgProcessor<Character> intCharProcessor;
         private ListProcessorContainer<Float> floatListProcessors;
 
     }
 
-    private class ListProcessorContainer<T> {
+    private static class ListProcessorContainer<T> {
 
         private OneArgProcessor<List<T>> oneArgProcessor;
         private IntegerGenericArgProcessor<Map<T, Set<T>>> twoArgProcessor;

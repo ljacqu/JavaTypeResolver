@@ -1,10 +1,13 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -57,6 +60,14 @@ public class TypeVariableResolver {
             Type[] upperBounds = resolve(wt.getUpperBounds());
             Type[] lowerBounds = resolve(wt.getLowerBounds());
             return createWildcardType(upperBounds, lowerBounds);
+        } else if (type instanceof GenericArrayType) {
+            GenericArrayType gat = (GenericArrayType) type;
+            Type resolvedComponentType = resolve(gat.getGenericComponentType());
+            if (resolvedComponentType instanceof Class<?> || resolvedComponentType instanceof ParameterizedType) {
+                Class<?> componentClass = new TypeInfo(resolvedComponentType).toClass();
+                return Array.newInstance(componentClass, 0).getClass();
+            }
+            return new GenericArrayTypeImpl(resolvedComponentType);
         }
         return type;
     }
