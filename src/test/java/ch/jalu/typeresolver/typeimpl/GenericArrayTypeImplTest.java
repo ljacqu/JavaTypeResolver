@@ -51,7 +51,5 @@ class GenericArrayTypeImplTest {
         private T[] tArray1d;
         private T[][][] tArray3d;
 
-
     }
-
 }

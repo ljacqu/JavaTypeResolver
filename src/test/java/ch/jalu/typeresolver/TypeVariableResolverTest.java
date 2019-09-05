@@ -261,6 +261,44 @@ class TypeVariableResolverTest {
         assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(wildcardExtendsArrayOfExtendsChronoField));
     }
 
+    @Test
+    void shouldResolveArrayTypesToTypeVariableArrayType() throws NoSuchFieldException {
+        // given
+        TypeVariableResolver resolver = new TypeVariableResolver(ClassWithTypeVariablesContainer.class)
+            .createChildResolver(ClassWithTypeVariablesContainer.class.getDeclaredField("foo").getGenericType());
+
+        Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
+        Type extendsListType = TypedContainer.class.getDeclaredField("extendsList").getGenericType();
+        Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
+
+        TypeVariableResolver xArrayContainerResolver = resolver.createChildResolver(
+            ClassWithTypeVariables.class.getDeclaredField("xArrayContainer").getGenericType());
+        TypeVariableResolver extendsZArrayResolver = resolver.createChildResolver(
+            ClassWithTypeVariables.class.getDeclaredField("listExtendsZArray").getGenericType());
+
+        // when
+        Type xArrayList = xArrayContainerResolver.resolve(listType);
+        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType);
+        Type xArraySuperList = xArrayContainerResolver.resolve(superListType);
+
+        Type extendsList = extendsZArrayResolver.resolve(listType);
+        Type extendsExtendsList = extendsZArrayResolver.resolve(extendsListType);
+        Type extendsSuperList = extendsZArrayResolver.resolve(superListType);
+
+        // then
+        Type xTypeVariable = ClassWithTypeVariablesContainer.class.getTypeParameters()[0];
+        Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(xTypeVariable));
+        assertIsParameterizedType(xArrayList, List.class, wildcardDoubleArray);
+        assertIsParameterizedType(xArrayExtendsList, List.class, newWildcardExtends(wildcardDoubleArray));
+        assertIsParameterizedType(xArraySuperList, List.class, newWildcardSuper(wildcardDoubleArray));
+
+        WildcardType wildcardExtendsGArrayType = newWildcardExtends(
+            new GenericArrayTypeImpl(ClassWithTypeVariablesContainer.class.getTypeParameters()[1]));
+        assertIsParameterizedType(extendsList, List.class, wildcardExtendsGArrayType);
+        assertIsParameterizedType(extendsExtendsList, List.class, wildcardExtendsGArrayType);
+        assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(wildcardExtendsGArrayType));
+    }
+
     /** Creates a type "? extends T" where T is the given upperBound. */
     private static WildcardType newWildcardExtends(Type upperBound) {
         return new WildcardTypeImpl(new Type[]{ upperBound }, new Type[0]);
@@ -298,6 +336,12 @@ class TypeVariableResolverTest {
 
         private OneArgProcessor<List<T>> oneArgProcessor;
         private IntegerGenericArgProcessor<Map<T, Set<T>>> twoArgProcessor;
+
+    }
+
+    private static class ClassWithTypeVariablesContainer<F, G extends Enum<?>> {
+
+        private ClassWithTypeVariables<F, F, G> foo;
 
     }
 }
