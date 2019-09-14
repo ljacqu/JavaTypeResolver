@@ -22,9 +22,9 @@ class WildcardTypeImplTest {
     void shouldReturnWildcardImplementationsInSyncWithJre() {
         // given
         Type type1 = new TypeToken<List<? extends Serializable>>() { }.getType();
-        WildcardType jreExtendsSerializable = (WildcardType) new TypeInfo(type1).getGenericTypeInfo(0).getType();
+        WildcardType jreExtendsSerializable = (WildcardType) new TypeInfo(type1).getTypeArgumentInfo(0).getType();
         Type type2 = new TypeToken<List<? super String>>() { }.getType();
-        WildcardType jreSuperString = (WildcardType) new TypeInfo(type2).getGenericTypeInfo(0).getType();
+        WildcardType jreSuperString = (WildcardType) new TypeInfo(type2).getTypeArgumentInfo(0).getType();
 
         // when
         WildcardType extendsSerializable = WildcardTypeImpl.newWildcardExtends(Serializable.class);
@@ -52,7 +52,7 @@ class WildcardTypeImplTest {
         Type givenType2 = new TypeToken<List<? extends Serializable>>() { }.getType();
         Type givenType3 = new TypeToken<List<? super String>>() { }.getType();
         Type[] jdkTypes = Stream.of(givenType1, givenType2, givenType3)
-            .map(type -> new TypeInfo(type).getGenericTypeInfo(0).getType())
+            .map(type -> new TypeInfo(type).getTypeArgumentInfo(0).getType())
             .toArray(Type[]::new);
 
         // when / then

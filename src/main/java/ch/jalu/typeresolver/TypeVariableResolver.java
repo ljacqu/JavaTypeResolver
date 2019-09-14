@@ -17,8 +17,8 @@ import java.util.Objects;
 import static ch.jalu.typeresolver.CommonTypeUtil.getRawType;
 
 /**
- * Allows to resolve type variables to actual classes from previous context (extension of a class with a type variable,
- * class containing a field with a type variable).
+ * Allows to resolve type variables to actual classes from previous context (extension of a class with a type parameter,
+ * class containing a field with a type argument).
  * <p>
  * For instance, if we want to visit all fields recursively and have a class such as:<pre>
  * class Foo {
@@ -27,6 +27,13 @@ import static ch.jalu.typeresolver.CommonTypeUtil.getRawType;
  * </pre>
  * When we visit the {@code Optional} class we may stumble upon a field defined as {@code T value}; from the previous
  * context we know that the {@code T} type variable can be translated to {@code String}.
+ * <p>
+ * Or, for example, we are processing a class which extends another class that has a type parameter:<pre>
+ * class Bar extends ArrayList&lt;Long&gt; {
+ * }
+ * </pre>
+ * With this context, if we process the {@link java.util.ArrayList#get(int)} method, we know that it will return a
+ * Long as the {@code E} type variable can be translated to a {@code Long}.
  */
 class TypeVariableResolver {
 
@@ -46,7 +53,7 @@ class TypeVariableResolver {
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) type;
             Type[] resolvedTypes = resolve(pt.getActualTypeArguments());
-            return new ParameterizedTypeImpl((Class<?>) pt.getRawType(), pt.getOwnerType(), resolvedTypes);
+            return new ParameterizedTypeImpl(getRawType(pt), pt.getOwnerType(), resolvedTypes);
         } else if (type instanceof WildcardType) {
             WildcardType wt = (WildcardType) type;
             Type[] upperBounds = resolve(wt.getUpperBounds());

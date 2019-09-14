@@ -43,20 +43,20 @@ class TypeVariableResolverTest {
     @Test
     void shouldResolveTypeVariables() throws NoSuchMethodException, NoSuchFieldException {
         // given
-        TypeVariableResolver resolver = new TypeVariableResolver(IntegerDoubleArgProcessorExtension.class);
+        TypeInfo typeInfo = new TypeInfo(IntegerDoubleArgProcessorExtension.class);
 
         Method processMethod = OneArgProcessor.class.getDeclaredMethod("process", Object.class);
         Field tuMap = AbstractTwoArgProcessor.class.getDeclaredField("tuMap");
 
         // when
-        Type processArgMethodType = resolver.resolve(processMethod.getGenericParameterTypes()[0]);
-        TypeInfo resolvedTuMapTypeInfo = new TypeInfo(resolver.resolve(tuMap.getGenericType()));
+        TypeInfo processArgMethodType = typeInfo.resolve(processMethod.getGenericParameterTypes()[0]);
+        TypeInfo resolvedTuMapTypeInfo = typeInfo.resolve(tuMap.getGenericType());
 
         // then
-        assertEquals(processArgMethodType, BigDecimal.class);
+        assertType(processArgMethodType, BigDecimal.class);
         assertEquals(resolvedTuMapTypeInfo.toClass(), Map.class);
-        assertEquals(resolvedTuMapTypeInfo.getGenericTypeAsClass(0), Integer.class);
-        assertEquals(resolvedTuMapTypeInfo.getGenericTypeAsClass(1), Double.class);
+        assertEquals(resolvedTuMapTypeInfo.getTypeArgumentAsClass(0), Integer.class);
+        assertEquals(resolvedTuMapTypeInfo.getTypeArgumentAsClass(1), Double.class);
     }
 
     @Test

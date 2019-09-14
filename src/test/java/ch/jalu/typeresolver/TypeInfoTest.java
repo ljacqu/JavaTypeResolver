@@ -15,34 +15,34 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class TypeInfoTest {
 
     @Test
-    void shouldReturnGenericTypeInfo() {
-        assertEquals(getType("stringList").getGenericTypeInfo(0),
+    void shouldReturnTypeArgumentInfo() {
+        assertEquals(getType("stringList").getTypeArgumentInfo(0),
             new TypeInfo(String.class));
-        assertEquals(getType("numberIntegerMap").getGenericTypeInfo(1),
+        assertEquals(getType("numberIntegerMap").getTypeArgumentInfo(1),
             new TypeInfo(Integer.class));
-        assertEquals(getType("stringListSet").getGenericTypeInfo(0),
+        assertEquals(getType("stringListSet").getTypeArgumentInfo(0),
             getType("stringList"));
     }
 
     @Test
-    void shouldReturnNullAsGenericTypeInfoIfNotApplicable() {
-        assertNull(getType("stringList").getGenericTypeInfo(1));
-        assertNull(new TypeInfo(String.class).getGenericTypeInfo(0));
-        assertNull(new TypeInfo(null).getGenericTypeInfo(1));
-        assertNull(new TypeInfo(int.class).getGenericTypeInfo(0));
+    void shouldReturnNullAsTypeArgumentIfNotApplicable() {
+        assertNull(getType("stringList").getTypeArgumentInfo(1));
+        assertNull(new TypeInfo(String.class).getTypeArgumentInfo(0));
+        assertNull(new TypeInfo(null).getTypeArgumentInfo(1));
+        assertNull(new TypeInfo(int.class).getTypeArgumentInfo(0));
     }
 
     @Test
-    void shouldReturnGenericTypeAsClass() {
-        assertEquals(getType("stringList").getGenericTypeAsClass(0), String.class);
-        assertEquals(getType("stringListSet").getGenericTypeAsClass(0), List.class);
-        assertEquals(getType("numberIntegerMap").getGenericTypeAsClass(1), Integer.class);
+    void shouldReturnTypeArgumentAsClass() {
+        assertEquals(getType("stringList").getTypeArgumentAsClass(0), String.class);
+        assertEquals(getType("stringListSet").getTypeArgumentAsClass(0), List.class);
+        assertEquals(getType("numberIntegerMap").getTypeArgumentAsClass(1), Integer.class);
     }
 
     @Test
-    void shouldReturnNullIfGenericTypeClassIsNotApplicable() {
-        assertNull(new TypeInfo(null).getGenericTypeAsClass(0));
-        assertNull(getType("questionMarkMap").getGenericTypeAsClass(0));
+    void shouldReturnNullIfTypeArgumentAsClassIsNotApplicable() {
+        assertNull(new TypeInfo(null).getTypeArgumentAsClass(0));
+        assertNull(getType("questionMarkMap").getTypeArgumentAsClass(0));
     }
 
     private static TypeInfo getType(String fieldName) {

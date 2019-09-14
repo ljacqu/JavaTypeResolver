@@ -11,7 +11,6 @@ import java.util.Objects;
  */
 public class TypeInfo {
 
-    @Nullable
     private final Type type;
 
     private TypeVariableResolver resolver;
@@ -21,21 +20,20 @@ public class TypeInfo {
      *
      * @param type the type to wrap (e.g. coming from {@link Field#getGenericType()})
      */
-    public TypeInfo(@Nullable Type type) {
+    public TypeInfo(Type type) {
         this.type = type;
     }
 
     /**
      * @return the type wrapped by this instance
      */
-    @Nullable
     public Type getType() {
         return type;
     }
 
     /**
-     * "Unwraps" the type and returns the generic type information for the given index, provided the wrapped type
-     * contains generic information. Returns null if not applicable.
+     * Returns the type argument at the given index for the wrapped type, provided that the type is a parameterized type
+     * and that the index is valid. Returns null if not applicable.
      * <p>
      * Examples for index = 0:<ul>
      * <li>{@code type = String -> result = null}</li>
@@ -44,23 +42,23 @@ public class TypeInfo {
      * <li>{@code type = List -> result = null}</li>
      * </ul>
      *
-     * @param index the index of the generic type to get (0-based)
-     * @return type information representing the generic type info for the given index, null if not applicable
+     * @param index the index of the type parameter to get (0-based)
+     * @return the type argument for the given index, null if not applicable
      */
     @Nullable
-    public TypeInfo getGenericTypeInfo(int index) {
+    public TypeInfo getTypeArgumentInfo(int index) {
         if (type instanceof ParameterizedType) {
-            Type[] genericTypes = ((ParameterizedType) type).getActualTypeArguments();
-            if (index < genericTypes.length) {
-                return new TypeInfo(genericTypes[index]);
+            Type[] typeArguments = ((ParameterizedType) type).getActualTypeArguments();
+            if (index < typeArguments.length) {
+                return new TypeInfo(typeArguments[index]);
             }
         }
         return null;
     }
 
     /**
-     * "Unwraps" the type and returns the generic type information for the given index as Class object,
-     * provided the wrapped type contains generic information. Returns null if not applicable, or if the generic
+     * Returns the type argument for the given index as Class object, provided that the type is a parameterized type
+     * and that the index is valid. Returns null if not applicable, or if the generic
      * type info cannot be converted to a {@link #toClass() safe-to-write} Class.
      * <p>
      * Examples for index = 0:<ul>
@@ -71,12 +69,12 @@ public class TypeInfo {
      * <li>{@code type = List -> result = null}</li>
      * </ul>
      *
-     * @param index the index of the generic type to get (0-based)
-     * @return type information representing the generic type info for the given index, null if not applicable
+     * @param index the index of the type parameter to get (0-based)
+     * @return the type argument as safe-to-write class, null if not applicable
      */
     @Nullable
-    public Class<?> getGenericTypeAsClass(int index) {
-        TypeInfo genericTypeInfo = getGenericTypeInfo(index);
+    public Class<?> getTypeArgumentAsClass(int index) {
+        TypeInfo genericTypeInfo = getTypeArgumentInfo(index);
         return genericTypeInfo == null ? null : genericTypeInfo.toClass();
     }
 
@@ -119,8 +117,24 @@ public class TypeInfo {
         return TypeToClassUtil.getSafeToReadClass(type);
     }
 
+    /**
+     * Resolves the given type if possible, based on information from the wrapped Type of this instance. For example,
+     * if this type info's type is {@code Optional<String>} and the input type is the Optional's {@code T} type,
+     * {@code String} will be returned.
+     * <p>
+     * Supported actions:<ul>
+     *  <li>Resolution of type variables, e.g. {@code T} to {@code String}</li>
+     *  <li>Resolution of type arguments, e.g. {@code Map<K, V>} to {@code Map<String, Long>}.</li>
+     *  <li>Resolution of generic array type, e.g. {@code T[]} to {@code List<String>[]}</li>
+     *  <li>Resolution within wildcard bounds, e.g. {@code ? super T} to {@code ? super Serializable}
+     * </ul>
+     *
+     * @param type the type to resolve
+     * @return the resolved type, or the original type if no resolution was possible, never null
+     */
     public TypeInfo resolve(Type type) {
-        Type resolvedType = getOrInitResolver().resolve(type);
+        // Avoid creating/calling resolver if type is a class -> nothing to resolve
+        Type resolvedType = (type instanceof Class<?>) ? type : getOrInitResolver().resolve(type);
         return new TypeInfo(resolvedType);
     }
 

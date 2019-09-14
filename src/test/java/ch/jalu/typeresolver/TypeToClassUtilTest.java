@@ -107,12 +107,14 @@ class TypeToClassUtilTest {
         Type cExtArrayList = getClass().getDeclaredMethod("cExtArrayList").getGenericReturnType();
         Type fExtComparableArray = getClass().getDeclaredMethod("fExtComparable").getGenericReturnType();
         Type oUnbound = getClass().getDeclaredMethod("oUnbound").getGenericReturnType();
+        Type qArrFieldType = getClass().getDeclaredMethod("qArrUnbound").getGenericReturnType();
 
         // when / then
         checkHasReadAndWriteClass(bExtNumber, Number.class, null);
         checkHasReadAndWriteClass(cExtArrayList, ArrayList.class, null);
         checkHasReadAndWriteClass(fExtComparableArray, Comparable[].class, null);
         checkHasReadAndWriteClass(oUnbound, Object.class, null);
+        checkHasReadAndWriteClass(qArrFieldType, Object[].class, null);
     }
 
     private static void checkHasReadAndWriteClass(Type givenType, Class<?> expectedSafeToRead, Class<?> expectedSafeToWrite) {
@@ -122,7 +124,7 @@ class TypeToClassUtilTest {
 
     private static Type getFirstGenericType(TypeToken<?> typeToken) {
         return new TypeInfo(typeToken.getType())
-            .getGenericTypeInfo(0)
+            .getTypeArgumentInfo(0)
             .getType();
     }
 
@@ -140,6 +142,9 @@ class TypeToClassUtilTest {
         return null;
     }
     private <O> O oUnbound() {
+        return null;
+    }
+    private <Q> Q[] qArrUnbound() {
         return null;
     }
 }
