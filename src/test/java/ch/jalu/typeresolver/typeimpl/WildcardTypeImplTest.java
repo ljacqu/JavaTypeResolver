@@ -6,15 +6,39 @@ import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test for {@link WildcardTypeImpl}.
  */
 class WildcardTypeImplTest {
+
+    @Test
+    void shouldReturnWildcardImplementationsInSyncWithJre() {
+        // given
+        Type type1 = new TypeToken<List<? extends Serializable>>() { }.getType();
+        WildcardType jreExtendsSerializable = (WildcardType) new TypeInfo(type1).getGenericTypeInfo(0).getType();
+        Type type2 = new TypeToken<List<? super String>>() { }.getType();
+        WildcardType jreSuperString = (WildcardType) new TypeInfo(type2).getGenericTypeInfo(0).getType();
+
+        // when
+        WildcardType extendsSerializable = WildcardTypeImpl.newWildcardExtends(Serializable.class);
+        WildcardType superString = WildcardTypeImpl.newWildcardSuper(String.class);
+
+        // then
+        assertEquals(extendsSerializable, jreExtendsSerializable);
+        assertArrayEquals(extendsSerializable.getUpperBounds(), jreExtendsSerializable.getUpperBounds());
+        assertArrayEquals(extendsSerializable.getLowerBounds(), jreExtendsSerializable.getLowerBounds());
+
+        assertEquals(superString, jreSuperString);
+        assertArrayEquals(superString.getUpperBounds(), jreSuperString.getUpperBounds());
+        assertArrayEquals(superString.getLowerBounds(), jreSuperString.getLowerBounds());
+    }
 
     @Test
     void shouldDefineEqualsLikeOtherImplementations() {
