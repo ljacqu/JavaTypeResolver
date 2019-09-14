@@ -86,24 +86,24 @@ class TypeVariableResolverTest {
     @Test
     void shouldResolveTypesWithChildResolvers() throws Exception {
         // given
-        TypeVariableResolver resolver = new TypeVariableResolver(ClassWithTypes.class);
-        TypeVariableResolver intCharProcessorResolver = createChildResolver(resolver, ClassWithTypes.class, "intCharProcessor");
+        TypeInfo typeInfo = new TypeInfo(ClassWithTypes.class);
+        TypeInfo intCharProcessorResolver = createChildTypeInfo(typeInfo, ClassWithTypes.class, "intCharProcessor");
         Type tSetType = IntegerGenericArgProcessor.class.getDeclaredField("tSet").getGenericType();
         Type uListType = AbstractTwoArgProcessor.class.getDeclaredField("uList").getGenericType();
         Type tuMapType = AbstractTwoArgProcessor.class.getDeclaredField("tuMap").getGenericType();
 
-        TypeVariableResolver floatListProcessorsResolver = createChildResolver(resolver, ClassWithTypes.class, "floatListProcessors");
-        TypeVariableResolver oneArgProcessorResolver = createChildResolver(floatListProcessorsResolver, ListProcessorContainer.class, "oneArgProcessor");
+        TypeInfo floatListProcessorsResolver = createChildTypeInfo(typeInfo, ClassWithTypes.class, "floatListProcessors");
+        TypeInfo oneArgProcessorResolver = createChildTypeInfo(floatListProcessorsResolver, ListProcessorContainer.class, "oneArgProcessor");
         Type processParamType = OneArgProcessor.class.getDeclaredMethod("process", Object.class).getGenericParameterTypes()[0];
-        TypeVariableResolver twoArgProcessorResolver = createChildResolver(floatListProcessorsResolver, ListProcessorContainer.class, "twoArgProcessor");
+        TypeInfo twoArgProcessorResolver = createChildTypeInfo(floatListProcessorsResolver, ListProcessorContainer.class, "twoArgProcessor");
 
         // when
-        Type tSetResolved = intCharProcessorResolver.resolve(tSetType);
-        Type uListResolved = intCharProcessorResolver.resolve(uListType);
-        Type tuMapResolved = intCharProcessorResolver.resolve(tuMapType);
-        Type processParamTypeResolved = oneArgProcessorResolver.resolve(processParamType);
-        Type tSetResolved2 = twoArgProcessorResolver.resolve(tSetType);
-        Type tuMapResolved2 = twoArgProcessorResolver.resolve(tuMapType);
+        TypeInfo tSetResolved = intCharProcessorResolver.resolve(tSetType);
+        TypeInfo uListResolved = intCharProcessorResolver.resolve(uListType);
+        TypeInfo tuMapResolved = intCharProcessorResolver.resolve(tuMapType);
+        TypeInfo processParamTypeResolved = oneArgProcessorResolver.resolve(processParamType);
+        TypeInfo tSetResolved2 = twoArgProcessorResolver.resolve(tSetType);
+        TypeInfo tuMapResolved2 = twoArgProcessorResolver.resolve(tuMapType);
 
         // then
         assertIsParameterizedType(tSetResolved, Set.class, Character.class);
@@ -111,8 +111,8 @@ class TypeVariableResolverTest {
         assertIsParameterizedType(tuMapResolved, Map.class, Integer.class, Character.class);
         assertIsParameterizedType(processParamTypeResolved, List.class, Float.class);
 
-        assertEquals(tSetResolved2, new TypeToken<Set<Map<Float, Set<Float>>>>() { }.getType());
-        assertEquals(tuMapResolved2, new TypeToken<Map<Integer, Map<Float, Set<Float>>>>() { }.getType());
+        assertEquals(tSetResolved2.getType(), new TypeToken<Set<Map<Float, Set<Float>>>>() { }.getType());
+        assertEquals(tuMapResolved2.getType(), new TypeToken<Map<Integer, Map<Float, Set<Float>>>>() { }.getType());
     }
 
     @Test
@@ -174,43 +174,43 @@ class TypeVariableResolverTest {
     void shouldResolveComplexTypeVariables() throws NoSuchFieldException {
         // given
         Type type = new TypeToken<ClassWithTypeVariablesExt<Double, TimeUnit>>() {}.getType();
-        TypeVariableResolver resolver = new TypeVariableResolver(type);
+        TypeInfo typeInfo = new TypeInfo(type);
 
         Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
         Type extendsListType = TypedContainer.class.getDeclaredField("extendsList").getGenericType();
         Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
 
-        TypeVariableResolver comparableYResolver = resolver.createChildResolver(
+        TypeInfo comparableYResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("comparableYContainer").getGenericType());
-        TypeVariableResolver xArrayContainerResolver = resolver.createChildResolver(
+        TypeInfo xArrayContainerResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("xArrayContainer").getGenericType());
-        TypeVariableResolver extendsZArrayContainerResolver = resolver.createChildResolver(
+        TypeInfo extendsZArrayContainerResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("listExtendsZArray").getGenericType());
 
         // when
-        Type comparableYList = comparableYResolver.resolve(listType);
-        Type comparableYExtendsList = comparableYResolver.resolve(extendsListType);
-        Type comparableYSuperList = comparableYResolver.resolve(superListType);
+        TypeInfo comparableYList = comparableYResolver.resolve(listType);
+        TypeInfo comparableYExtendsList = comparableYResolver.resolve(extendsListType);
+        TypeInfo comparableYSuperList = comparableYResolver.resolve(superListType);
 
-        Type xArrayList = xArrayContainerResolver.resolve(listType);
-        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType);
-        Type xArraySuperList = xArrayContainerResolver.resolve(superListType);
+        TypeInfo xArrayList = xArrayContainerResolver.resolve(listType);
+        TypeInfo xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType);
+        TypeInfo xArraySuperList = xArrayContainerResolver.resolve(superListType);
 
-        Type extendsList = extendsZArrayContainerResolver.resolve(listType);
-        Type extendsExtendsList = extendsZArrayContainerResolver.resolve(extendsListType);
-        Type extendsSuperList = extendsZArrayContainerResolver.resolve(superListType);
+        TypeInfo extendsList = extendsZArrayContainerResolver.resolve(listType);
+        TypeInfo extendsExtendsList = extendsZArrayContainerResolver.resolve(extendsListType);
+        TypeInfo extendsSuperList = extendsZArrayContainerResolver.resolve(superListType);
 
         // then
-        assertEquals(comparableYList,        new TypeToken<List<Comparable<Double>>>() { }.getType());
-        assertEquals(comparableYExtendsList, new TypeToken<List<? extends Comparable<Double>>>() { }.getType());
-        assertEquals(comparableYSuperList,   new TypeToken<List<? super Comparable<Double>>>() { }.getType());
+        assertType(comparableYList,        new TypeToken<List<Comparable<Double>>>() { }.getType());
+        assertType(comparableYExtendsList, new TypeToken<List<? extends Comparable<Double>>>() { }.getType());
+        assertType(comparableYSuperList,   new TypeToken<List<? super Comparable<Double>>>() { }.getType());
 
-        assertEquals(xArrayList,        new TypeToken<List<Double[][]>>() { }.getType());
-        assertEquals(xArrayExtendsList, new TypeToken<List<? extends Double[][]>>() { }.getType());
-        assertEquals(xArraySuperList,   new TypeToken<List<? super Double[][]>>() { }.getType());
+        assertType(xArrayList,        new TypeToken<List<Double[][]>>() { }.getType());
+        assertType(xArrayExtendsList, new TypeToken<List<? extends Double[][]>>() { }.getType());
+        assertType(xArraySuperList,   new TypeToken<List<? super Double[][]>>() { }.getType());
 
-        assertEquals(extendsList,        new TypeToken<List<? extends TimeUnit[]>>() { }.getType());
-        assertEquals(extendsExtendsList, new TypeToken<List<? extends TimeUnit[]>>() { }.getType());
+        assertType(extendsList,        new TypeToken<List<? extends TimeUnit[]>>() { }.getType());
+        assertType(extendsExtendsList, new TypeToken<List<? extends TimeUnit[]>>() { }.getType());
         assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(newWildcardExtends(TimeUnit[].class)));
     }
 
@@ -218,31 +218,31 @@ class TypeVariableResolverTest {
     void shouldHandleQuestionMarkTypeVariable() throws NoSuchFieldException {
         // given
         Type type = new TypeToken<ClassWithTypeVariablesExt<?, ? extends ChronoField>>() {}.getType();
-        TypeVariableResolver resolver = new TypeVariableResolver(type);
+        TypeInfo typeInfo = new TypeInfo(type);
 
         Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
         Type extendsListType = TypedContainer.class.getDeclaredField("extendsList").getGenericType();
         Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
 
-        TypeVariableResolver comparableYResolver = resolver.createChildResolver(
+        TypeInfo comparableYResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("comparableYContainer").getGenericType());
-        TypeVariableResolver xArrayContainerResolver = resolver.createChildResolver(
+        TypeInfo xArrayContainerResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("xArrayContainer").getGenericType());
-        TypeVariableResolver extendsZArrayResolver = resolver.createChildResolver(
+        TypeInfo extendsZArrayResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("listExtendsZArray").getGenericType());
 
         // when
-        Type comparableYList = comparableYResolver.resolve(listType);
-        Type comparableYExtendsList = comparableYResolver.resolve(extendsListType);
-        Type comparableYSuperList = comparableYResolver.resolve(superListType);
+        Type comparableYList = comparableYResolver.resolve(listType).getType();
+        Type comparableYExtendsList = comparableYResolver.resolve(extendsListType).getType();
+        Type comparableYSuperList = comparableYResolver.resolve(superListType).getType();
 
-        Type xArrayList = xArrayContainerResolver.resolve(listType);
-        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType);
-        Type xArraySuperList = xArrayContainerResolver.resolve(superListType);
+        Type xArrayList = xArrayContainerResolver.resolve(listType).getType();
+        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType).getType();
+        Type xArraySuperList = xArrayContainerResolver.resolve(superListType).getType();
 
-        Type extendsList = extendsZArrayResolver.resolve(listType);
-        Type extendsExtendsList = extendsZArrayResolver.resolve(extendsListType);
-        Type extendsSuperList = extendsZArrayResolver.resolve(superListType);
+        Type extendsList = extendsZArrayResolver.resolve(listType).getType();
+        Type extendsExtendsList = extendsZArrayResolver.resolve(extendsListType).getType();
+        Type extendsSuperList = extendsZArrayResolver.resolve(superListType).getType();
 
         // then
         assertEquals(comparableYList,        new TypeToken<List<Comparable<?>>>(){ }.getType());
@@ -265,26 +265,26 @@ class TypeVariableResolverTest {
     @Test
     void shouldResolveArrayTypesToTypeVariableArrayType() throws NoSuchFieldException {
         // given
-        TypeVariableResolver resolver = new TypeVariableResolver(ClassWithTypeVariablesContainer.class)
-            .createChildResolver(ClassWithTypeVariablesContainer.class.getDeclaredField("foo").getGenericType());
+        TypeInfo typeInfo = new TypeInfo(ClassWithTypeVariablesContainer.class)
+            .resolve(ClassWithTypeVariablesContainer.class.getDeclaredField("foo").getGenericType());
 
         Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
         Type extendsListType = TypedContainer.class.getDeclaredField("extendsList").getGenericType();
         Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
 
-        TypeVariableResolver xArrayContainerResolver = resolver.createChildResolver(
+        TypeInfo xArrayContainerResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("xArrayContainer").getGenericType());
-        TypeVariableResolver extendsZArrayResolver = resolver.createChildResolver(
+        TypeInfo extendsZArrayResolver = typeInfo.resolve(
             ClassWithTypeVariables.class.getDeclaredField("listExtendsZArray").getGenericType());
 
         // when
-        Type xArrayList = xArrayContainerResolver.resolve(listType);
-        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType);
-        Type xArraySuperList = xArrayContainerResolver.resolve(superListType);
+        Type xArrayList = xArrayContainerResolver.resolve(listType).getType();
+        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType).getType();
+        Type xArraySuperList = xArrayContainerResolver.resolve(superListType).getType();
 
-        Type extendsList = extendsZArrayResolver.resolve(listType);
-        Type extendsExtendsList = extendsZArrayResolver.resolve(extendsListType);
-        Type extendsSuperList = extendsZArrayResolver.resolve(superListType);
+        Type extendsList = extendsZArrayResolver.resolve(listType).getType();
+        Type extendsExtendsList = extendsZArrayResolver.resolve(extendsListType).getType();
+        Type extendsSuperList = extendsZArrayResolver.resolve(superListType).getType();
 
         // then
         Type xTypeVariable = ClassWithTypeVariablesContainer.class.getTypeParameters()[0];
@@ -304,7 +304,7 @@ class TypeVariableResolverTest {
     void shouldResolveTypesFromNestedTypes() throws NoSuchFieldException {
         // given
         Type type = new TypeToken<ClassWithTypeVariablesExt<Integer, AccessMode>>() {}.getType();
-        TypeVariableResolver resolver = new TypeVariableResolver(type);
+        TypeInfo typeInfo = new TypeInfo(type);
 
         Type nestedContainerType = ClassWithTypeVariables.class.getDeclaredField("nestedContainer").getGenericType();
         Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
@@ -312,18 +312,17 @@ class TypeVariableResolverTest {
         Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
 
         // when
-        Type nestedContainerResolved = resolver.resolve(nestedContainerType);
-        TypeVariableResolver complexResolver = resolver.createChildResolver(nestedContainerResolved);
+        TypeInfo nestedContainerInfo = typeInfo.resolve(nestedContainerType);
 
-        Type listResolved = complexResolver.resolve(listType);
-        Type extendsListResolved = complexResolver.resolve(extendsListType);
-        Type superListResolved = complexResolver.resolve(superListType);
+        TypeInfo listResolved = nestedContainerInfo.resolve(listType);
+        TypeInfo extendsListResolved = nestedContainerInfo.resolve(extendsListType);
+        TypeInfo superListResolved = nestedContainerInfo.resolve(superListType);
 
         // then
-        assertEquals(nestedContainerResolved, new TypeToken<TypedContainer<TypedContainer<? extends AccessMode>>>(){ }.getType());
-        assertEquals(listResolved,        new TypeToken<List<TypedContainer<? extends AccessMode>>>(){ }.getType());
-        assertEquals(extendsListResolved, new TypeToken<List<? extends TypedContainer<? extends AccessMode>>>(){ }.getType());
-        assertEquals(superListResolved,   new TypeToken<List<? super   TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertType(nestedContainerInfo, new TypeToken<TypedContainer<TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertType(listResolved,        new TypeToken<List<TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertType(extendsListResolved, new TypeToken<List<? extends TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertType(superListResolved,   new TypeToken<List<? super   TypedContainer<? extends AccessMode>>>(){ }.getType());
     }
 
     /** Creates a type "? extends T" where T is the given upperBound. */
@@ -336,13 +335,21 @@ class TypeVariableResolverTest {
         return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ lowerBound });
     }
 
-    private static TypeVariableResolver createChildResolver(TypeVariableResolver parentResolver,
-                                                            Class<?> clazz, String fieldName) {
+    private static TypeInfo createChildTypeInfo(TypeInfo parentTypeInfo,
+                                                Class<?> clazz, String fieldName) {
         try {
-            return parentResolver.createChildResolver(clazz.getDeclaredField(fieldName).getGenericType());
+            return parentTypeInfo.resolve(clazz.getDeclaredField(fieldName).getGenericType());
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException(clazz + " - " + fieldName, e);
         }
+    }
+
+    private static void assertIsParameterizedType(TypeInfo actualType, Class<?> expectedRawType, Type... expectedTypeArguments) {
+        assertIsParameterizedType(actualType.getType(), expectedRawType, expectedTypeArguments);
+    }
+
+    private static void assertType(TypeInfo actualTypeInfo, Type expectedType) {
+        assertEquals(actualTypeInfo.getType(), expectedType);
     }
 
     private static void assertIsParameterizedType(Type actualType, Class<?> expectedRawType, Type... expectedTypeArguments) {

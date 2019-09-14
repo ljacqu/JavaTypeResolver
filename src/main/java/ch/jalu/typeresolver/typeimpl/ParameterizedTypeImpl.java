@@ -48,7 +48,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         return false;
     }
 
-    @Override // taken from sun.reflect
+    @Override // Same behavior as implementation in sun.reflect
     public int hashCode() {
         return Arrays.hashCode(this.actualTypeArguments)
             ^ Objects.hashCode(this.ownerType)

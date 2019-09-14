@@ -17,6 +17,8 @@ public class TypeInfo {
     @Nullable
     private final Type type;
 
+    private TypeVariableResolver resolver;
+
     /**
      * Constructor.
      *
@@ -121,6 +123,11 @@ public class TypeInfo {
         return safeToReadClass == null ? Object.class : safeToReadClass;
     }
 
+    public TypeInfo resolve(Type type) {
+        Type resolvedType = getOrInitResolver().resolve(type);
+        return new TypeInfo(resolvedType);
+    }
+
     @Nullable
     private Class<?> getSafeToWriteClassInternal(Type type) {
         if (type instanceof Class<?>) {
@@ -175,5 +182,12 @@ public class TypeInfo {
     @Override
     public String toString() {
         return "TypeInfo[type=" + type + "]";
+    }
+
+    private TypeVariableResolver getOrInitResolver() {
+        if (resolver == null) {
+            resolver = new TypeVariableResolver(type);
+        }
+        return resolver;
     }
 }

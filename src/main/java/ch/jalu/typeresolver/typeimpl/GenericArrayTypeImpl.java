@@ -30,7 +30,7 @@ public class GenericArrayTypeImpl implements GenericArrayType {
         return false;
     }
 
-    @Override
+    @Override // Same behavior as implementation in sun.reflect
     public int hashCode() {
         return Objects.hashCode(genericComponentType);
     }

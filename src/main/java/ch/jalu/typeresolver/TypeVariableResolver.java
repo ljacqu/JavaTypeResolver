@@ -3,15 +3,17 @@ package ch.jalu.typeresolver;
 import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Allows to resolve type variables to actual classes from previous context (extension of a class with a type variable,
@@ -25,29 +27,18 @@ import java.lang.reflect.WildcardType;
  * When we visit the {@code Optional} class we may stumble upon a field defined as {@code T value}; from the previous
  * context we know that the {@code T} type variable can be translated to {@code String}.
  */
-public class TypeVariableResolver {
+class TypeVariableResolver {
 
-    private final Table<Class, String, Type> typeRules = HashBasedTable.create();
+    private final Map<TypeVariableData, Type> typeRules = new HashMap<>();
 
-    public TypeVariableResolver(Type type) {
+    TypeVariableResolver(Type type) {
         registerTypes(type);
     }
 
-    private TypeVariableResolver(TypeVariableResolver parentResolver) {
-        typeRules.putAll(parentResolver.typeRules);
-    }
-
-    public TypeVariableResolver createChildResolver(Type type) {
-        TypeVariableResolver childResolver = new TypeVariableResolver(this);
-        childResolver.registerTypes(type);
-        return childResolver;
-    }
-
-    public Type resolve(Type type) {
+    Type resolve(Type type) {
         if (type instanceof TypeVariable<?>) {
             TypeVariable<?> tv = (TypeVariable<?>) type;
-            Object declaringMember = tv.getGenericDeclaration();
-            Type lookedUpType = typeRules.get(declaringMember, tv.getName());
+            Type lookedUpType = typeRules.get(new TypeVariableData(tv));
             if (lookedUpType != null) {
                 return resolve(lookedUpType);
             }
@@ -120,7 +111,38 @@ public class TypeVariableResolver {
         Class<?> rawType = (Class<?>) parameterizedType.getRawType();
         Type[] typeArguments = parameterizedType.getActualTypeArguments();
         for (int i = 0; i < typeArguments.length; ++i) {
-            typeRules.put(rawType, rawType.getTypeParameters()[i].getName(), typeArguments[i]);
+            typeRules.put(new TypeVariableData(rawType.getTypeParameters()[i]), typeArguments[i]);
+        }
+    }
+
+    /**
+     * Contains the identifying properties of a {@link TypeVariable}. This class wraps them, as the implementation class
+     * of {@link TypeVariable} has a strict equals method that only matches objects of its own class.
+     */
+    private static final class TypeVariableData {
+        private final GenericDeclaration declarer;
+        private final String name;
+
+        TypeVariableData(TypeVariable<?> tv) {
+            this.declarer = tv.getGenericDeclaration();
+            this.name = tv.getName();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof TypeVariableData) {
+                TypeVariableData that = (TypeVariableData) obj;
+                return Objects.equals(this.declarer, that.declarer) && Objects.equals(this.name, that.name);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            // same behavior as TypeVariableImpl sun.reflect
+            return declarer.hashCode() ^ name.hashCode();
         }
     }
 }
