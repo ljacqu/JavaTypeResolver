@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver.typeimpl;
 
+import ch.jalu.typeresolver.CommonTypeUtil;
+
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
@@ -15,6 +17,27 @@ public class WildcardTypeImpl implements WildcardType {
     public WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
         this.upperBounds = upperBounds;
         this.lowerBounds = lowerBounds;
+    }
+
+    /**
+     * Creates a new wildcard type "? extends T", where T is the given upperBound.
+     *
+     * @param upperBound the upper bound
+     * @return new wildcard type whose upper bound is the given type
+     */
+    public static WildcardType newWildcardExtends(Type upperBound) {
+        return new WildcardTypeImpl(new Type[]{ upperBound }, new Type[0]);
+    }
+
+    /**
+     * Creates a new wildcard type "? super T", where T is the given lowerBound.
+     *
+     * @param lowerBound the lower bound
+     * @return new wildcard type whose lower bound is the given type
+     */
+    public static WildcardType newWildcardSuper(Type lowerBound) {
+        // Set Object.class as upper bound to be in line with the JDK behavior
+        return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ lowerBound });
     }
 
     @Override
@@ -50,7 +73,7 @@ public class WildcardTypeImpl implements WildcardType {
         if (lowerBounds.length > 0) {
             bounds = lowerBounds;
             sb.append("? super ");
-        } else if (upperBounds.length == 0 || upperBounds[0].equals(Object.class)) {
+        } else if (!CommonTypeUtil.hasExplicitUpperBound(this)) {
             return "?";
         } else { // upperBounds.length > 0
             bounds = upperBounds;

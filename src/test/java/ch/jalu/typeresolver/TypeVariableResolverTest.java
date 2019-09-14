@@ -28,6 +28,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardExtends;
+import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardSuper;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -232,22 +234,22 @@ class TypeVariableResolverTest {
             ClassWithTypeVariables.class.getDeclaredField("listExtendsZArray").getGenericType());
 
         // when
-        Type comparableYList = comparableYResolver.resolve(listType).getType();
-        Type comparableYExtendsList = comparableYResolver.resolve(extendsListType).getType();
-        Type comparableYSuperList = comparableYResolver.resolve(superListType).getType();
+        TypeInfo comparableYList = comparableYResolver.resolve(listType);
+        TypeInfo comparableYExtendsList = comparableYResolver.resolve(extendsListType);
+        TypeInfo comparableYSuperList = comparableYResolver.resolve(superListType);
 
-        Type xArrayList = xArrayContainerResolver.resolve(listType).getType();
-        Type xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType).getType();
-        Type xArraySuperList = xArrayContainerResolver.resolve(superListType).getType();
+        TypeInfo xArrayList = xArrayContainerResolver.resolve(listType);
+        TypeInfo xArrayExtendsList = xArrayContainerResolver.resolve(extendsListType);
+        TypeInfo xArraySuperList = xArrayContainerResolver.resolve(superListType);
 
-        Type extendsList = extendsZArrayResolver.resolve(listType).getType();
-        Type extendsExtendsList = extendsZArrayResolver.resolve(extendsListType).getType();
-        Type extendsSuperList = extendsZArrayResolver.resolve(superListType).getType();
+        TypeInfo extendsList = extendsZArrayResolver.resolve(listType);
+        TypeInfo extendsExtendsList = extendsZArrayResolver.resolve(extendsListType);
+        TypeInfo extendsSuperList = extendsZArrayResolver.resolve(superListType);
 
         // then
-        assertEquals(comparableYList,        new TypeToken<List<Comparable<?>>>(){ }.getType());
-        assertEquals(comparableYExtendsList, new TypeToken<List<? extends Comparable<?>>>(){ }.getType());
-        assertEquals(comparableYSuperList,   new TypeToken<List<? super Comparable<?>>>(){ }.getType());
+        assertType(comparableYList,        new TypeToken<List<Comparable<?>>>(){ }.getType());
+        assertType(comparableYExtendsList, new TypeToken<List<? extends Comparable<?>>>(){ }.getType());
+        assertType(comparableYSuperList,   new TypeToken<List<? super Comparable<?>>>(){ }.getType());
 
         Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(
             new WildcardTypeImpl(new Type[]{ Object.class }, new Type[0])));
@@ -325,16 +327,6 @@ class TypeVariableResolverTest {
         assertType(superListResolved,   new TypeToken<List<? super   TypedContainer<? extends AccessMode>>>(){ }.getType());
     }
 
-    /** Creates a type "? extends T" where T is the given upperBound. */
-    private static WildcardType newWildcardExtends(Type upperBound) {
-        return new WildcardTypeImpl(new Type[]{ upperBound }, new Type[0]);
-    }
-
-    /** Creates a type "? super T" where T is the given lowerBound. */
-    private static WildcardType newWildcardSuper(Type lowerBound) {
-        return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ lowerBound });
-    }
-
     private static TypeInfo createChildTypeInfo(TypeInfo parentTypeInfo,
                                                 Class<?> clazz, String fieldName) {
         try {
@@ -344,12 +336,12 @@ class TypeVariableResolverTest {
         }
     }
 
-    private static void assertIsParameterizedType(TypeInfo actualType, Class<?> expectedRawType, Type... expectedTypeArguments) {
-        assertIsParameterizedType(actualType.getType(), expectedRawType, expectedTypeArguments);
-    }
-
     private static void assertType(TypeInfo actualTypeInfo, Type expectedType) {
         assertEquals(actualTypeInfo.getType(), expectedType);
+    }
+
+    private static void assertIsParameterizedType(TypeInfo actualType, Class<?> expectedRawType, Type... expectedTypeArguments) {
+        assertIsParameterizedType(actualType.getType(), expectedRawType, expectedTypeArguments);
     }
 
     private static void assertIsParameterizedType(Type actualType, Class<?> expectedRawType, Type... expectedTypeArguments) {

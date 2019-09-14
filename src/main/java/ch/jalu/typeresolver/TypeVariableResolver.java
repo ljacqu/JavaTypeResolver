@@ -4,7 +4,6 @@ import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.ParameterizedType;
@@ -14,6 +13,8 @@ import java.lang.reflect.WildcardType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static ch.jalu.typeresolver.CommonTypeUtil.getRawType;
 
 /**
  * Allows to resolve type variables to actual classes from previous context (extension of a class with a type variable,
@@ -55,8 +56,8 @@ class TypeVariableResolver {
             GenericArrayType gat = (GenericArrayType) type;
             Type resolvedComponentType = resolve(gat.getGenericComponentType());
             if (resolvedComponentType instanceof Class<?> || resolvedComponentType instanceof ParameterizedType) {
-                Class<?> componentClass = new TypeInfo(resolvedComponentType).toClass();
-                return Array.newInstance(componentClass, 0).getClass();
+                Class<?> componentClass = TypeToClassUtil.getSafeToWriteClass(resolvedComponentType);
+                return CommonTypeUtil.createArrayClass(componentClass);
             }
             return new GenericArrayTypeImpl(resolvedComponentType);
         }
@@ -90,7 +91,7 @@ class TypeVariableResolver {
         if (type instanceof Class<?>) {
             registerTypesFromParentAndInterfaces((Class) type);
         } else if (type instanceof ParameterizedType) {
-            Class<?> rawType = (Class<?>) ((ParameterizedType) type).getRawType();
+            Class<?> rawType = getRawType((ParameterizedType) type);
             registerTypesFromParentAndInterfaces(rawType);
             registerParameterizedTypes((ParameterizedType) type);
         }
@@ -108,7 +109,7 @@ class TypeVariableResolver {
     }
 
     private void registerParameterizedTypes(ParameterizedType parameterizedType) {
-        Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+        Class<?> rawType = getRawType(parameterizedType);
         Type[] typeArguments = parameterizedType.getActualTypeArguments();
         for (int i = 0; i < typeArguments.length; ++i) {
             typeRules.put(new TypeVariableData(rawType.getTypeParameters()[i]), typeArguments[i]);
