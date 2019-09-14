@@ -4,9 +4,6 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -101,7 +98,7 @@ public class TypeInfo {
      */
     @Nullable
     public Class<?> toClass() {
-        return getSafeToWriteClassInternal(type);
+        return TypeToClassUtil.getSafeToWriteClass(type);
     }
 
     /**
@@ -119,49 +116,12 @@ public class TypeInfo {
      * @return the type as Class which is safe for reading (e.g. getting field value or reading from a collection)
      */
     public Class<?> getSafeToReadClass() {
-        Class<?> safeToReadClass = getSafeToReadClassInternal(type);
-        return safeToReadClass == null ? Object.class : safeToReadClass;
+        return TypeToClassUtil.getSafeToReadClass(type);
     }
 
     public TypeInfo resolve(Type type) {
         Type resolvedType = getOrInitResolver().resolve(type);
         return new TypeInfo(resolvedType);
-    }
-
-    @Nullable
-    private Class<?> getSafeToWriteClassInternal(Type type) {
-        if (type instanceof Class<?>) {
-            return (Class<?>) type;
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            // Current implementations can only have Class<?> as raw type, so cast without checking
-            return (Class<?>) pt.getRawType();
-        }
-        return null;
-    }
-
-    @Nullable
-    private Class<?> getSafeToReadClassInternal(Type type) {
-        Class<?> safeToWriteClass = getSafeToWriteClassInternal(type);
-        if (safeToWriteClass != null) {
-            return safeToWriteClass;
-        }
-
-        if (type instanceof WildcardType) {
-            return getFirstResolvableSafeToReadClass(((WildcardType) type).getUpperBounds());
-        } else if (type instanceof TypeVariable<?>) {
-            return getFirstResolvableSafeToReadClass(((TypeVariable<?>) type).getBounds());
-        }
-        return null;
-    }
-
-    @Nullable
-    private Class<?> getFirstResolvableSafeToReadClass(Type[] types) {
-        return Arrays.stream(types)
-            .map(this::getSafeToReadClassInternal)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
     }
 
     @Override
