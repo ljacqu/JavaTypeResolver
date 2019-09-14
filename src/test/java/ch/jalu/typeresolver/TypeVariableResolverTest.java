@@ -20,6 +20,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
+import java.nio.file.AccessMode;
 import java.time.temporal.ChronoField;
 import java.util.List;
 import java.util.Map;
@@ -297,6 +298,32 @@ class TypeVariableResolverTest {
         assertIsParameterizedType(extendsList, List.class, wildcardExtendsGArrayType);
         assertIsParameterizedType(extendsExtendsList, List.class, wildcardExtendsGArrayType);
         assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(wildcardExtendsGArrayType));
+    }
+
+    @Test
+    void shouldResolveTypesFromNestedTypes() throws NoSuchFieldException {
+        // given
+        Type type = new TypeToken<ClassWithTypeVariablesExt<Integer, AccessMode>>() {}.getType();
+        TypeVariableResolver resolver = new TypeVariableResolver(type);
+
+        Type nestedContainerType = ClassWithTypeVariables.class.getDeclaredField("nestedContainer").getGenericType();
+        Type listType = TypedContainer.class.getDeclaredField("list").getGenericType();
+        Type extendsListType = TypedContainer.class.getDeclaredField("extendsList").getGenericType();
+        Type superListType = TypedContainer.class.getDeclaredField("superList").getGenericType();
+
+        // when
+        Type nestedContainerResolved = resolver.resolve(nestedContainerType);
+        TypeVariableResolver complexResolver = resolver.createChildResolver(nestedContainerResolved);
+
+        Type listResolved = complexResolver.resolve(listType);
+        Type extendsListResolved = complexResolver.resolve(extendsListType);
+        Type superListResolved = complexResolver.resolve(superListType);
+
+        // then
+        assertEquals(nestedContainerResolved, new TypeToken<TypedContainer<TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertEquals(listResolved,        new TypeToken<List<TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertEquals(extendsListResolved, new TypeToken<List<? extends TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertEquals(superListResolved,   new TypeToken<List<? super   TypedContainer<? extends AccessMode>>>(){ }.getType());
     }
 
     /** Creates a type "? extends T" where T is the given upperBound. */
