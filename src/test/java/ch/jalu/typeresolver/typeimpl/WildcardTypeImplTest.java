@@ -25,10 +25,13 @@ class WildcardTypeImplTest {
         WildcardType jreExtendsSerializable = (WildcardType) new TypeInfo(type1).getTypeArgumentInfo(0).getType();
         Type type2 = new TypeToken<List<? super String>>() { }.getType();
         WildcardType jreSuperString = (WildcardType) new TypeInfo(type2).getTypeArgumentInfo(0).getType();
+        Type type3 = new TypeToken<List<?>>() { }.getType();
+        WildcardType jreEmptyWildcard = (WildcardType) new TypeInfo(type3).getTypeArgumentInfo(0).getType();
 
         // when
         WildcardType extendsSerializable = WildcardTypeImpl.newWildcardExtends(Serializable.class);
         WildcardType superString = WildcardTypeImpl.newWildcardSuper(String.class);
+        WildcardType emptyWildcard = WildcardTypeImpl.newUnboundedWildcard();
 
         // then
         assertEquals(extendsSerializable, jreExtendsSerializable);
@@ -38,6 +41,10 @@ class WildcardTypeImplTest {
         assertEquals(superString, jreSuperString);
         assertArrayEquals(superString.getUpperBounds(), jreSuperString.getUpperBounds());
         assertArrayEquals(superString.getLowerBounds(), jreSuperString.getLowerBounds());
+
+        assertEquals(emptyWildcard, jreEmptyWildcard);
+        assertArrayEquals(emptyWildcard.getUpperBounds(), jreEmptyWildcard.getUpperBounds());
+        assertArrayEquals(emptyWildcard.getLowerBounds(), jreEmptyWildcard.getLowerBounds());
     }
 
     @Test

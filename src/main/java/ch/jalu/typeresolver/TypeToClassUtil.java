@@ -72,11 +72,13 @@ public final class TypeToClassUtil {
         } else if (type instanceof GenericArrayType) {
             GenericArrayType gat = (GenericArrayType) type;
             Class<?> componentAsClass = getSafeToReadClassOrNull(gat.getGenericComponentType());
+            // componentAsClass usually isn't null because the component type of GenericArrayType is normally either a
+            // ParameterizedType or a TypeVariable. If a type variable is unbounded, the JRE sets Object as the bound.
+            // However, if the type was somehow resolved we might have an array of wildcard, for example.
             if (componentAsClass != null) {
                 return CommonTypeUtil.createArrayClass(componentAsClass);
             }
-            // TODO: Could we return Object[].class here to be a little more specific,
-            // or is it possible to encounter a primitive array type as value?
+            return Object[].class;
         }
         return null;
     }

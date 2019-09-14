@@ -14,6 +14,12 @@ public class WildcardTypeImpl implements WildcardType {
     private final Type[] upperBounds;
     private final Type[] lowerBounds;
 
+    /**
+     * Constructor. Prefer the more specific static creator methods when possible.
+     *
+     * @param upperBounds the upper bounds
+     * @param lowerBounds the lower bounds
+     */
     public WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
         this.upperBounds = upperBounds;
         this.lowerBounds = lowerBounds;
@@ -36,8 +42,17 @@ public class WildcardTypeImpl implements WildcardType {
      * @return new wildcard type whose lower bound is the given type
      */
     public static WildcardType newWildcardSuper(Type lowerBound) {
-        // Set Object.class as upper bound to be in line with the JDK behavior
+        // Set Object.class as upper bound to be in line with the JRE behavior
         return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ lowerBound });
+    }
+
+    /**
+     * Creates a new unbounded wildcard "?", as returned by the JRE (upper bound is set to Object.class).
+     *
+     * @return new wildcard with no bounds
+     */
+    public static WildcardType newUnboundedWildcard() {
+        return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[0]);
     }
 
     @Override

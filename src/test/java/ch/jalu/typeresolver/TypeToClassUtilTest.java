@@ -1,8 +1,11 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
+import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import com.google.common.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,6 +118,15 @@ class TypeToClassUtilTest {
         checkHasReadAndWriteClass(fExtComparableArray, Comparable[].class, null);
         checkHasReadAndWriteClass(oUnbound, Object.class, null);
         checkHasReadAndWriteClass(qArrFieldType, Object[].class, null);
+    }
+
+    @Test
+    void shouldReturnObjectArrayForGenericTypeArrayWithNoSpecificInfo() {
+        // given
+        GenericArrayType arrayType = new GenericArrayTypeImpl(WildcardTypeImpl.newUnboundedWildcard());
+
+        // when / then
+        checkHasReadAndWriteClass(arrayType, Object[].class, null);
     }
 
     private static void checkHasReadAndWriteClass(Type givenType, Class<?> expectedSafeToRead, Class<?> expectedSafeToWrite) {
