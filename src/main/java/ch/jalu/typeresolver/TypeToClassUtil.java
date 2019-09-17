@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
+
 import javax.annotation.Nullable;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -52,6 +54,22 @@ public final class TypeToClassUtil {
     public static Class<?> getSafeToReadClass(@Nullable Type type) {
         Class<?> clazz = getSafeToReadClassOrNull(type);
         return clazz == null ? Object.class : clazz;
+    }
+
+    // TODO: More generic name & signature, etc.
+    public WildcardType simplifyWildcard(Type[] upperBounds, Type[] lowerBounds) {
+        if (lowerBounds.length == 1) {
+            Type lowerBound = lowerBounds[0];
+            if (lowerBound instanceof WildcardType && ((WildcardType) lowerBound).getLowerBounds().length > 0) {
+                return (WildcardType) lowerBound;
+            }
+        } else if (upperBounds.length == 1) {
+            Type upperBound = upperBounds[0];
+            if (upperBound instanceof WildcardType && ((WildcardType) upperBound).getLowerBounds().length == 0) {
+                return (WildcardType) upperBound;
+            }
+        }
+        return new WildcardTypeImpl(upperBounds, lowerBounds);
     }
 
     @Nullable

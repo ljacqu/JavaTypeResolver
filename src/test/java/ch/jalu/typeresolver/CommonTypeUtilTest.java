@@ -1,7 +1,6 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
-import com.google.common.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.ParameterizedType;
@@ -21,8 +20,8 @@ class CommonTypeUtilTest {
     @Test
     void shouldReturnRawTypeAsClass() {
         // given
-        ParameterizedType list = (ParameterizedType) new TypeToken<List<String>>() { }.getType();
-        ParameterizedType map = (ParameterizedType) new TypeToken<Map<Integer, ?>>() { }.getType();
+        ParameterizedType list = (ParameterizedType) new TypeReference<List<String>>() { }.getType();
+        ParameterizedType map = (ParameterizedType) new TypeReference<Map<Integer, ?>>() { }.getType();
 
         // when / then
         assertEquals(CommonTypeUtil.getRawType(list), List.class);

@@ -58,7 +58,7 @@ class TypeVariableResolver {
             WildcardType wt = (WildcardType) type;
             Type[] upperBounds = resolve(wt.getUpperBounds());
             Type[] lowerBounds = resolve(wt.getLowerBounds());
-            return createWildcardType(upperBounds, lowerBounds);
+            return new WildcardTypeImpl(upperBounds, lowerBounds);
         } else if (type instanceof GenericArrayType) {
             GenericArrayType gat = (GenericArrayType) type;
             Type resolvedComponentType = resolve(gat.getGenericComponentType());
@@ -77,21 +77,6 @@ class TypeVariableResolver {
             resolvedTypes[i] = resolve(types[i]);
         }
         return resolvedTypes;
-    }
-
-    private WildcardType createWildcardType(Type[] upperBounds, Type[] lowerBounds) {
-        if (lowerBounds.length == 1) {
-            Type lowerBound = lowerBounds[0];
-            if (lowerBound instanceof WildcardType && ((WildcardType) lowerBound).getLowerBounds().length > 0) {
-                return (WildcardType) lowerBound;
-            }
-        } else if (upperBounds.length == 1) {
-            Type upperBound = upperBounds[0];
-            if (upperBound instanceof WildcardType && ((WildcardType) upperBound).getLowerBounds().length == 0) {
-                return (WildcardType) upperBound;
-            }
-        }
-        return new WildcardTypeImpl(upperBounds, lowerBounds);
     }
 
     private void registerTypes(Type type) {

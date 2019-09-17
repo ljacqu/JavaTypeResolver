@@ -2,7 +2,6 @@ package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
-import com.google.common.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.GenericArrayType;
@@ -35,9 +34,9 @@ class TypeToClassUtilTest {
     @Test
     void shouldReturnClassFromParameterizedClass() {
         // given
-        Type stringList = new TypeToken<List<String>>(){ }.getType();
-        Type questionMarkMap = new TypeToken<Map<?, ?>>(){ }.getType();
-        Type stringListArrSet = new TypeToken<Set<List<String>[]>>(){ }.getType();
+        Type stringList = new TypeReference<List<String>>(){ }.getType();
+        Type questionMarkMap = new TypeReference<Map<?, ?>>(){ }.getType();
+        Type stringListArrSet = new TypeReference<Set<List<String>[]>>(){ }.getType();
 
         // when / then
         checkHasReadAndWriteClass(stringList, List.class, List.class);
@@ -48,9 +47,9 @@ class TypeToClassUtilTest {
     @Test
     void shouldReturnClassFromGenericArrayTypes() {
         // given
-        Type setArray = new TypeToken<Set<List<String>>[]>(){ }.getType();
-        Type list3dArray = new TypeToken<List<String>[][][]>(){ }.getType();
-        Type optional2dArray = new TypeToken<Optional<? extends Number>[][]>(){ }.getType();
+        Type setArray = new TypeReference<Set<List<String>>[]>(){ }.getType();
+        Type list3dArray = new TypeReference<List<String>[][][]>(){ }.getType();
+        Type optional2dArray = new TypeReference<Optional<? extends Number>[][]>(){ }.getType();
 
         // when / then
         checkHasReadAndWriteClass(setArray, Set[].class, Set[].class);
@@ -61,21 +60,21 @@ class TypeToClassUtilTest {
     @Test
     void shouldReturnClassFromWildcards() {
         // given
-        Type empty = getFirstGenericType(new TypeToken<List<?>>() { });
+        Type empty = new NestedTypeReference<List<?>>() { }.getType();
 
-        Type superInt = getFirstGenericType(new TypeToken<List<? super Integer>>(){ });
-        Type superComparable = getFirstGenericType(new TypeToken<List<? super Comparable<String>>>(){ });
-        Type superByteArray = getFirstGenericType(new TypeToken<List<? super byte[]>>(){ });
+        Type superInt = new NestedTypeReference<List<? super Integer>>(){ }.getType();
+        Type superComparable = new NestedTypeReference<List<? super Comparable<String>>>(){ }.getType();
+        Type superByteArray = new NestedTypeReference<List<? super byte[]>>(){ }.getType();
         Type nestedSuperString = newWildcardSuper(newWildcardSuper(String.class)); // ? super<? super String>
         Type nestedSuperListArr = newWildcardSuper(newWildcardSuper(newWildcardSuper(
-            new TypeToken<List<Integer>[]>() { }.getType()))); // ? super<? super<? super List...[]>>
+            new TypeReference<List<Integer>[]>() { }.getType()))); // ? super<? super<? super List...[]>>
 
-        Type extInt = getFirstGenericType(new TypeToken<List<? extends Integer>>(){ });
-        Type extComparable = getFirstGenericType(new TypeToken<List<? extends Comparable<String>>>(){ });
-        Type extByteArray = getFirstGenericType(new TypeToken<List<? extends byte[]>>(){ });
+        Type extInt = new NestedTypeReference<List<? extends Integer>>(){ }.getType();
+        Type extComparable = new NestedTypeReference<List<? extends Comparable<String>>>(){ }.getType();
+        Type extByteArray = new NestedTypeReference<List<? extends byte[]>>(){ }.getType();
         Type nestedExtString = newWildcardExtends(newWildcardExtends(String.class)); // ? extends<? extends String>
         Type nestedExtListArr = newWildcardExtends(newWildcardExtends(newWildcardExtends(
-            new TypeToken<List<Integer>[]>() { }.getType()))); // ? extends<? extends<? extends List...[]>>
+            new TypeReference<List<Integer>[]>() { }.getType()))); // ? extends<? extends<? extends List...[]>>
 
         // when / then
         checkHasReadAndWriteClass(empty, Object.class, null);
@@ -132,12 +131,6 @@ class TypeToClassUtilTest {
     private static void checkHasReadAndWriteClass(Type givenType, Class<?> expectedSafeToRead, Class<?> expectedSafeToWrite) {
         assertEquals(TypeToClassUtil.getSafeToReadClass(givenType), expectedSafeToRead);
         assertEquals(TypeToClassUtil.getSafeToWriteClass(givenType), expectedSafeToWrite);
-    }
-
-    private static Type getFirstGenericType(TypeToken<?> typeToken) {
-        return new TypeInfo(typeToken.getType())
-            .getTypeArgumentInfo(0)
-            .getType();
     }
 
     // -----------

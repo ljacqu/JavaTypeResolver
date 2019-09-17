@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import com.google.common.reflect.TypeToken;
+import ch.jalu.typeresolver.TypeReference;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
@@ -19,8 +19,8 @@ class ParameterizedTypeImplTest {
     @Test
     public void shouldBeEqualToOtherImplementations() {
         // given
-        Type doubleListType = new TypeToken<List<Double>>() { }.getType();
-        Type mapType = new TypeToken<Map<String, Set<Short[]>>>() { }.getType();
+        Type doubleListType = new TypeReference<List<Double>>() { }.getType();
+        Type mapType = new TypeReference<Map<String, Set<Short[]>>>() { }.getType();
 
         ParameterizedTypeImpl listPt = new ParameterizedTypeImpl(List.class, null, new Type[]{ Double.class });
         ParameterizedTypeImpl setPt = new ParameterizedTypeImpl(Set.class, null, new Type[]{ Short[].class });
@@ -47,8 +47,8 @@ class ParameterizedTypeImplTest {
     @Test
     void shouldDefineUsableToString() {
         // given
-        Type doubleListType = new TypeToken<List<Double>>() { }.getType();
-        Type mapType = new TypeToken<Map<String, Set<Short[]>>>() { }.getType();
+        Type doubleListType = new TypeReference<List<Double>>() { }.getType();
+        Type mapType = new TypeReference<Map<String, Set<Short[]>>>() { }.getType();
 
         ParameterizedTypeImpl listPt = new ParameterizedTypeImpl(List.class, null, new Type[]{ Double.class });
         ParameterizedTypeImpl setPt = new ParameterizedTypeImpl(Set.class, null, new Type[]{ Short[].class });

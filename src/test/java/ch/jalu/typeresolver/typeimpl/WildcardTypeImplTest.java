@@ -1,14 +1,12 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.TypeInfo;
-import com.google.common.reflect.TypeToken;
+import ch.jalu.typeresolver.NestedTypeReference;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,12 +19,9 @@ class WildcardTypeImplTest {
     @Test
     void shouldReturnWildcardImplementationsInSyncWithJre() {
         // given
-        Type type1 = new TypeToken<List<? extends Serializable>>() { }.getType();
-        WildcardType jreExtendsSerializable = (WildcardType) new TypeInfo(type1).getTypeArgumentInfo(0).getType();
-        Type type2 = new TypeToken<List<? super String>>() { }.getType();
-        WildcardType jreSuperString = (WildcardType) new TypeInfo(type2).getTypeArgumentInfo(0).getType();
-        Type type3 = new TypeToken<List<?>>() { }.getType();
-        WildcardType jreEmptyWildcard = (WildcardType) new TypeInfo(type3).getTypeArgumentInfo(0).getType();
+        WildcardType jreExtendsSerializable = new NestedTypeReference<List<? extends Serializable>>() { }.type();
+        WildcardType jreSuperString = new NestedTypeReference<List<? super String>>() { }.type();
+        WildcardType jreEmptyWildcard = new NestedTypeReference<List<?>>() { }.type();
 
         // when
         WildcardType extendsSerializable = WildcardTypeImpl.newWildcardExtends(Serializable.class);
@@ -55,18 +50,16 @@ class WildcardTypeImplTest {
         WildcardTypeImpl type3 = new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ String.class });
         Type[] givenTypes = {type1, type2, type3};
 
-        Type givenType1 = new TypeToken<List<?>>() { }.getType();
-        Type givenType2 = new TypeToken<List<? extends Serializable>>() { }.getType();
-        Type givenType3 = new TypeToken<List<? super String>>() { }.getType();
-        Type[] jdkTypes = Stream.of(givenType1, givenType2, givenType3)
-            .map(type -> new TypeInfo(type).getTypeArgumentInfo(0).getType())
-            .toArray(Type[]::new);
+        Type givenType1 = new NestedTypeReference<List<?>>() { }.type();
+        Type givenType2 = new NestedTypeReference<List<? extends Serializable>>() { }.type();
+        Type givenType3 = new NestedTypeReference<List<? super String>>() { }.type();
+        Type[] jreTypes = {givenType1, givenType2, givenType3};
 
         // when / then
         for (int i = 0; i < givenTypes.length; ++i) {
-            for (int j = 0; j < jdkTypes.length; ++j) {
+            for (int j = 0; j < jreTypes.length; ++j) {
                 Type givenType = givenTypes[i];
-                Type jdkType = jdkTypes[j];
+                Type jdkType = jreTypes[j];
 
                 boolean shouldMatch = (i == j);
                 assertEquals(givenType.equals(jdkType), shouldMatch, i + "," + j);
