@@ -1,4 +1,6 @@
-package ch.jalu.typeresolver;
+package ch.jalu.typeresolver.reference;
+
+import ch.jalu.typeresolver.TypeInfo;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

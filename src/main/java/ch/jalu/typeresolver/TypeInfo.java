@@ -1,7 +1,5 @@
 package ch.jalu.typeresolver;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -171,10 +169,12 @@ public class TypeInfo {
         return resolver;
     }
 
-    /*
+    /**
      * Called in the no-args constructor, allowing to infer the type through some other way.
+     *
+     * @return the type this instance will wrap
      */
     protected Type inferTypeForNoArgsConstructor() {
-        throw new NotImplementedException(); // meant to be overridden
+        throw new UnsupportedOperationException(); // meant to be overridden
     }
 }

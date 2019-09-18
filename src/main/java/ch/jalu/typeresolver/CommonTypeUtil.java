@@ -6,7 +6,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 
 /**
- * Contains utility methods for Type objects.
+ * Contains simple utility methods for Type objects.
  */
 public final class CommonTypeUtil {
 

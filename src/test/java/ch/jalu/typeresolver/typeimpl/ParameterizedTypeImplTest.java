@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.TypeReference;
+import ch.jalu.typeresolver.reference.TypeReference;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;

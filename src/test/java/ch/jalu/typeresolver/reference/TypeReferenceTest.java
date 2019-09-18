@@ -1,5 +1,6 @@
-package ch.jalu.typeresolver;
+package ch.jalu.typeresolver.reference;
 
+import ch.jalu.typeresolver.TypeInfo;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

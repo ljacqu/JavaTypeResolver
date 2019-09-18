@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.reference.NestedTypeReference;
+import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import org.junit.jupiter.api.Test;

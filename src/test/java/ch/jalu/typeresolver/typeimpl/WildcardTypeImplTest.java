@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.NestedTypeReference;
+import ch.jalu.typeresolver.reference.NestedTypeReference;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
@@ -19,9 +19,9 @@ class WildcardTypeImplTest {
     @Test
     void shouldReturnWildcardImplementationsInSyncWithJre() {
         // given
-        WildcardType jreExtendsSerializable = new NestedTypeReference<List<? extends Serializable>>() { }.type();
-        WildcardType jreSuperString = new NestedTypeReference<List<? super String>>() { }.type();
-        WildcardType jreEmptyWildcard = new NestedTypeReference<List<?>>() { }.type();
+        WildcardType jreExtendsSerializable = new NestedTypeReference<List<? extends Serializable>>() { }.wildcardType();
+        WildcardType jreSuperString = new NestedTypeReference<List<? super String>>() { }.wildcardType();
+        WildcardType jreEmptyWildcard = new NestedTypeReference<List<?>>() { }.wildcardType();
 
         // when
         WildcardType extendsSerializable = WildcardTypeImpl.newWildcardExtends(Serializable.class);
@@ -50,9 +50,9 @@ class WildcardTypeImplTest {
         WildcardTypeImpl type3 = new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ String.class });
         Type[] givenTypes = {type1, type2, type3};
 
-        Type givenType1 = new NestedTypeReference<List<?>>() { }.type();
-        Type givenType2 = new NestedTypeReference<List<? extends Serializable>>() { }.type();
-        Type givenType3 = new NestedTypeReference<List<? super String>>() { }.type();
+        Type givenType1 = new NestedTypeReference<List<?>>() { }.getType();
+        Type givenType2 = new NestedTypeReference<List<? extends Serializable>>() { }.getType();
+        Type givenType3 = new NestedTypeReference<List<? super String>>() { }.getType();
         Type[] jreTypes = {givenType1, givenType2, givenType3};
 
         // when / then
