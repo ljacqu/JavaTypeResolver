@@ -60,10 +60,11 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         StringBuilder sb = new StringBuilder();
         if (ownerType != null) {
             sb.append(ownerType.getTypeName())
-                .append("$");
+                .append("$")
+                .append(rawType.getSimpleName());
+        } else {
+            sb.append(rawType.getName());
         }
-
-        sb.append(rawType.getName());
 
         if (actualTypeArguments.length > 0) {
             sb.append("<");

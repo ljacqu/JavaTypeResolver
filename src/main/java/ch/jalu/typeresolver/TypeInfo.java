@@ -1,9 +1,13 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
+
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -121,6 +125,16 @@ public class TypeInfo {
         return TypeToClassUtil.getSafeToReadClass(type);
     }
 
+    public TypeInfo getEnclosingType() {
+        Type enclosingType = null;
+        if (type instanceof Class<?>) {
+            enclosingType = ((Class<?>) type).getEnclosingClass();
+        } else if (type instanceof ParameterizedType) {
+            enclosingType = ((ParameterizedType) type).getOwnerType();
+        }
+        return enclosingType == null ? null : new TypeInfo(enclosingType);
+    }
+
     /**
      * Resolves the given type if possible, based on information from the wrapped Type of this instance. For example,
      * if this type info's type is {@code Optional<String>} and the input type is the Optional's {@code T} type,
@@ -140,6 +154,39 @@ public class TypeInfo {
         // Avoid creating/calling resolver if type is a class -> nothing to resolve
         Type resolvedType = (type instanceof Class<?>) ? type : getOrInitResolver().resolve(type);
         return new TypeInfo(resolvedType);
+    }
+
+    @Nullable
+    public TypeInfo resolveSuperclass(Class<?> clazz) {
+        final Class<?> thisClass = toClass();
+        if (thisClass == null || !clazz.isAssignableFrom(thisClass)) {
+            return null;
+        }
+
+        if (clazz.getTypeParameters().length > 0) {
+            TypeVariableResolver resolver = getOrInitResolver();
+            Type[] resolvedTypeArguments = Arrays.stream(clazz.getTypeParameters())
+                .map(resolver::resolve)
+                .toArray(Type[]::new);
+            return new TypeInfo(new ParameterizedTypeImpl(clazz,
+                getOwnerTypeForResolvedParameterizedType(clazz, type), resolvedTypeArguments));
+        }
+        return new TypeInfo(clazz);
+    }
+
+    @Nullable
+    private Type getOwnerTypeForResolvedParameterizedType(Class<?> requestedSuperclass, Type type) {
+        Class<?> enclosingClass = requestedSuperclass.getEnclosingClass();
+        // Return enclosing class without type arguments if the nested class is static (in line with Java behavior)
+        if (enclosingClass == null || Modifier.isStatic(requestedSuperclass.getModifiers())) {
+            return enclosingClass;
+        }
+
+        TypeInfo resolvedEnclosingClass = new TypeInfo(type).getEnclosingType()
+            .resolveSuperclass(enclosingClass);
+        return resolvedEnclosingClass == null
+            ? enclosingClass
+            : resolvedEnclosingClass.getType();
     }
 
     @Override
