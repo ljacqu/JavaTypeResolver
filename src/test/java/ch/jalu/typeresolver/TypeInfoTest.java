@@ -3,6 +3,8 @@ package ch.jalu.typeresolver;
 import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainerExt;
+import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
+import ch.jalu.typeresolver.samples.nestedclasses.TypeNestedClassExtStandalone;
 import ch.jalu.typeresolver.samples.typeinheritance.AbstractTwoArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
 import ch.jalu.typeresolver.samples.typeinheritance.OneArgProcessor;
@@ -17,6 +19,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
@@ -150,6 +153,48 @@ class TypeInfoTest {
     }
 
     @Test
+    void shouldResolveSuperclassOfParameterizedTypeOfExtensionInSeparateTopLevelClass() {
+        // given
+        TypeInfo typeInfo = new TypeInfo(TypeNestedClassExtStandalone.class);
+
+        // when
+        TypeInfo nestedClassInfo = typeInfo.resolveSuperclass(InnerParameterizedClassesContainer.TypedNestedClass.class);
+
+        // then
+        // check both ways to be explicit but to also guarantee our expectation is the right thing
+        assertEquals(nestedClassInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<Float>>() { });
+        assertEquals(nestedClassInfo, of(TypeNestedClassExtStandalone.class.getGenericSuperclass()));
+    }
+
+    @Test
+    void shouldNotReturnEnclosingClassAsParameterizedTypeOwnerIfNotRelevant() {
+        // given
+        TypeInfo typeInfo = new TypeInfo(TypeNestedClassExtStandalone.NestedTypeNestedClassExtStandalone.class);
+
+        // when
+        TypeInfo nestedClassInfo = typeInfo.resolveSuperclass(InnerParameterizedClassesContainer.TypedNestedClass.class);
+
+        // then
+        // check both ways to be explicit but to also guarantee our expectation is the right thing
+        assertEquals(nestedClassInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<String>>() { });
+        assertEquals(nestedClassInfo, of(TypeNestedClassExtStandalone.NestedTypeNestedClassExtStandalone.class.getGenericSuperclass()));
+    }
+
+    @Test
+    void shouldResolveSuperclassIncludingOwnerInMultipleNestedClass() {
+        // given
+        TypeInfo typeInfo = new TypeInfo(AdditionalNestedClassExt.Intermediate.TypedInnerClassExt.class);
+
+        // when
+        TypeInfo innerClassInfo = typeInfo.resolveSuperclass(InnerParameterizedClassesContainer.TypedInnerClass.class);
+
+        // then
+        // check both ways to be explicit but to also guarantee our expectation is the right thing
+        assertEquals(innerClassInfo, new TypeReference<InnerParameterizedClassesContainer<Double>.TypedInnerClass<String>>() { });
+        assertEquals(innerClassInfo, of(AdditionalNestedClassExt.Intermediate.TypedInnerClassExt.class.getGenericSuperclass()));
+    }
+
+    @Test
     void shouldResolveSimpleSuperclasses() {
         // given
         TypeInfo string = new TypeInfo(String.class);
@@ -183,6 +228,15 @@ class TypeInfoTest {
         assertEquals(list2dArray.resolveSuperclass(AbstractList[][].class), new TypeReference<AbstractList<Short>[][]>(){ });
         assertEquals(list2dArray.resolveSuperclass(RandomAccess[][].class), of(RandomAccess[][].class));
         assertEquals(list2dArray.resolveSuperclass(Object[].class), of(Object[].class));
+    }
+
+    @Test
+    void shouldReturnNullForNotApplicableSuperclass() {
+        // given
+        assertNull(of(String.class).resolveSuperclass(Collection.class));
+        assertNull(of(double[].class).resolveSuperclass(Object[].class));
+        assertNull(of(ArrayList.class).resolveSuperclass(Iterator.class));
+        assertNull(of(List.class).resolveSuperclass(ArrayList.class));
     }
 
     private static TypeInfo getType(String fieldName) {

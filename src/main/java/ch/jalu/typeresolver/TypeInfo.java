@@ -40,6 +40,11 @@ public class TypeInfo {
         return new TypeInfo(field.getGenericType());
     }
 
+    @Nullable
+    protected static TypeInfo ofNullable(@Nullable Type type) {
+        return type == null ? null : of(type);
+    }
+
     /**
      * @return the type wrapped by this instance
      */
@@ -141,7 +146,7 @@ public class TypeInfo {
         } else if (type instanceof ParameterizedType) {
             enclosingType = ((ParameterizedType) type).getOwnerType();
         }
-        return enclosingType == null ? null : new TypeInfo(enclosingType);
+        return ofNullable(enclosingType);
     }
 
     @Nullable
@@ -152,7 +157,7 @@ public class TypeInfo {
         } else if (type instanceof GenericArrayType) {
             componentType = ((GenericArrayType) type).getGenericComponentType();
         }
-        return componentType == null ? null : new TypeInfo(componentType);
+        return ofNullable(componentType);
     }
 
     /**
@@ -190,25 +195,29 @@ public class TypeInfo {
         } else if (clazz.getTypeParameters().length > 0) {
             TypeVariableResolver resolver = getOrInitResolver();
             return new TypeInfo(new ParameterizedTypeImpl(clazz,
-                getOwnerTypeForResolvedParameterizedType(clazz, type),
+                getOwnerTypeForResolvedParameterizedType(clazz),
                 resolver.resolveTypes(clazz.getTypeParameters())));
         }
         return new TypeInfo(clazz);
     }
 
     @Nullable
-    private Type getOwnerTypeForResolvedParameterizedType(Class<?> requestedSuperclass, Type type) {
-        Class<?> enclosingClass = requestedSuperclass.getEnclosingClass();
+    private Type getOwnerTypeForResolvedParameterizedType(Class<?> superclass) {
+        Class<?> enclosingClass = superclass.getEnclosingClass();
         // Return enclosing class without type arguments if the nested class is static (in line with Java behavior)
-        if (enclosingClass == null || Modifier.isStatic(requestedSuperclass.getModifiers())) {
+        if (enclosingClass == null || Modifier.isStatic(superclass.getModifiers())) {
             return enclosingClass;
         }
 
-        TypeInfo resolvedEnclosingClass = new TypeInfo(type).getEnclosingType()
-            .resolveSuperclass(enclosingClass);
-        return resolvedEnclosingClass == null
-            ? enclosingClass
-            : resolvedEnclosingClass.getType();
+        TypeInfo enclosingInfo = getEnclosingType();
+        while (enclosingInfo != null) {
+            TypeInfo resolvedEnclosingType = enclosingInfo.resolveSuperclass(enclosingClass);
+            if (resolvedEnclosingType != null) {
+                return resolvedEnclosingType.getType();
+            }
+            enclosingInfo = enclosingInfo.getEnclosingType();
+        }
+        throw new IllegalStateException("Could not resolve enclosing class '" + enclosingClass + "' from " + type);
     }
 
     @Override
