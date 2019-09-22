@@ -16,11 +16,10 @@ import java.util.Objects;
 public class TypeInfo {
 
     private final Type type;
-
     private TypeVariableResolver resolver;
 
     /**
-     * Constructor.
+     * Constructor. Alternatively, use {@link #of(Type)} or {@link #of(Field)}.
      *
      * @param type the type to wrap (e.g. coming from {@link Field#getGenericType()})
      */
@@ -28,21 +27,34 @@ public class TypeInfo {
         this.type = type;
     }
 
+    /**
+     * No-args constructor for overriding classes which define the type to wrap by overriding
+     * {@link #inferTypeForNoArgsConstructor()}.
+     *
+     * @see ch.jalu.typeresolver.reference.TypeReference
+     */
     protected TypeInfo() {
         this.type = inferTypeForNoArgsConstructor();
     }
 
+    /**
+     * Creates a new instance wrapping the given type.
+     *
+     * @param type the type to wrap
+     * @return type info for the given type
+     */
     public static TypeInfo of(Type type) {
         return new TypeInfo(type);
     }
 
+    /**
+     * Creates a new instance wrapping the generic type of the given field.
+     *
+     * @param field the field whose generic type should be used
+     * @return type info for the field's type
+     */
     public static TypeInfo of(Field field) {
         return new TypeInfo(field.getGenericType());
-    }
-
-    @Nullable
-    protected static TypeInfo ofNullable(@Nullable Type type) {
-        return type == null ? null : of(type);
     }
 
     /**
@@ -138,6 +150,12 @@ public class TypeInfo {
         return TypeToClassUtil.getSafeToReadClass(type);
     }
 
+    /**
+     * Returns a type info of the enclosing type (i.e. the outer class if this type is an nested class).
+     * Returns null if not applicable.
+     *
+     * @return the enclosing type, or null if this type is not a nested type
+     */
     @Nullable
     public TypeInfo getEnclosingType() {
         Type enclosingType = null;
@@ -146,9 +164,15 @@ public class TypeInfo {
         } else if (type instanceof ParameterizedType) {
             enclosingType = ((ParameterizedType) type).getOwnerType();
         }
-        return ofNullable(enclosingType);
+        return enclosingType == null ? null : of(enclosingType);
     }
 
+    /**
+     * Returns the array component type of this type, if applicable. Returns null otherwise (if the type doesn't
+     * represent an array).
+     *
+     * @return the component type of this array type, or null if this type is not an array
+     */
     @Nullable
     public TypeInfo getComponentType() {
         Type componentType = null;
@@ -157,7 +181,7 @@ public class TypeInfo {
         } else if (type instanceof GenericArrayType) {
             componentType = ((GenericArrayType) type).getGenericComponentType();
         }
-        return ofNullable(componentType);
+        return componentType == null ? null : of(componentType);
     }
 
     /**
@@ -181,6 +205,13 @@ public class TypeInfo {
         return new TypeInfo(resolvedType);
     }
 
+    /**
+     * Returns the given class' including its type arguments if it is a superclass of this wrapped type.
+     * Returns null if the given class is not a superclass of this wrapped type.
+     *
+     * @param clazz the desired superclass to get the info for
+     * @return the type info of the superclass of the given class, or null if this wrapped type is not a supertype
+     */
     @Nullable
     public TypeInfo resolveSuperclass(Class<?> clazz) {
         final Class<?> thisClass = toClass();
@@ -188,10 +219,9 @@ public class TypeInfo {
             return null;
         }
 
-        TypeInfo componentType = getComponentType();
-        if (componentType != null && clazz.isArray()) {
-            TypeInfo resolvedComponent = componentType.resolveSuperclass(clazz.getComponentType());
-            return new TypeInfo(CommonTypeUtil.createArrayType(resolvedComponent.getType()));
+        if (clazz.isArray()) {
+            TypeInfo resolvedComponent = getComponentType().resolveSuperclass(clazz.getComponentType());
+            return of(CommonTypeUtil.createArrayType(resolvedComponent.getType()));
         } else if (clazz.getTypeParameters().length > 0) {
             TypeVariableResolver resolver = getOrInitResolver();
             return new TypeInfo(new ParameterizedTypeImpl(clazz,
@@ -240,13 +270,6 @@ public class TypeInfo {
         return "TypeInfo[type=" + type + "]";
     }
 
-    private TypeVariableResolver getOrInitResolver() {
-        if (resolver == null) {
-            resolver = new TypeVariableResolver(type);
-        }
-        return resolver;
-    }
-
     /**
      * Called in the no-args constructor, allowing to infer the type through some other way.
      *
@@ -254,5 +277,12 @@ public class TypeInfo {
      */
     protected Type inferTypeForNoArgsConstructor() {
         throw new UnsupportedOperationException(); // meant to be overridden
+    }
+
+    private TypeVariableResolver getOrInitResolver() {
+        if (resolver == null) {
+            resolver = new TypeVariableResolver(type);
+        }
+        return resolver;
     }
 }

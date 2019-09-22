@@ -5,15 +5,17 @@ import ch.jalu.typeresolver.TypeInfo;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.util.List;
 
 /**
  * Type reference class which returns the first type argument of the inner type argument. This is used
  * to create wildcard types, which cannot be created directly:
  * <br>{@code TypeInfo typeInfo = new NestedTypeReference<List<?>>() { }; // TypeInfo of '?' wildcard}
  *
- * @param <O> the "outer" type whose first type argument will be used
+ * @param <L> the list type whose type argument will be used. Bounded to List as reminder that the actual type
+ *            argument of the List is considered, and not the List itself
  */
-public abstract class NestedTypeReference<O> extends TypeInfo {
+public abstract class NestedTypeReference<L extends List> extends TypeInfo {
 
     /**
      * Constructor. See javadoc on class for proper usage.
@@ -22,7 +24,7 @@ public abstract class NestedTypeReference<O> extends TypeInfo {
     }
 
     /**
-     * Convenience method to retrieve the inner class casted to a Wildcard.
+     * Convenience method to retrieve the inner class cast to a Wildcard.
      * An exception is thrown if the type is not a wildcard.
      *
      * @return the wrapped type casted as wildcard

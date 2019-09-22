@@ -28,7 +28,7 @@ class NestedTypeReferenceTest {
     void shouldThrowForMissingInnerType() {
         // given / when / then
         assertThrows(IllegalStateException.class, () -> new NestedTypeReference() { });
-        assertThrows(IllegalStateException.class, () -> new NestedTypeReference<String>() { });
+        assertThrows(IllegalStateException.class, () -> new NestedTypeReference<List>() { });
     }
 
     @Test
