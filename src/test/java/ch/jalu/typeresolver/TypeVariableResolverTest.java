@@ -51,7 +51,7 @@ class TypeVariableResolverTest {
         TypeInfo resolvedTuMapTypeInfo = typeInfo.resolve(tuMap.getGenericType());
 
         // then
-        assertType(processArgMethodType, BigDecimal.class);
+        assertEquals(processArgMethodType.getType(), BigDecimal.class);
         assertEquals(resolvedTuMapTypeInfo.toClass(), Map.class);
         assertEquals(resolvedTuMapTypeInfo.getTypeArgumentAsClass(0), Integer.class);
         assertEquals(resolvedTuMapTypeInfo.getTypeArgumentAsClass(1), Double.class);
@@ -201,15 +201,15 @@ class TypeVariableResolverTest {
         TypeInfo extendsSuperList = extendsZArrayContainerResolver.resolve(superListType);
 
         // then
-        assertType(comparableYList,        new TypeReference<List<Comparable<Double>>>() { }.getType());
-        assertType(comparableYExtendsList, new TypeReference<List<? extends Comparable<Double>>>() { }.getType());
-        assertType(comparableYSuperList,   new TypeReference<List<? super Comparable<Double>>>() { }.getType());
+        assertEquals(comparableYList,        new TypeReference<List<Comparable<Double>>>() { });
+        assertEquals(comparableYExtendsList, new TypeReference<List<? extends Comparable<Double>>>() { });
+        assertEquals(comparableYSuperList,   new TypeReference<List<? super Comparable<Double>>>() { });
 
-        assertType(xArrayList,        new TypeReference<List<Double[][]>>() { }.getType());
-        assertType(xArrayExtendsList, new TypeReference<List<? extends Double[][]>>() { }.getType());
-        assertType(xArraySuperList,   new TypeReference<List<? super Double[][]>>() { }.getType());
+        assertEquals(xArrayList,        new TypeReference<List<Double[][]>>() { });
+        assertEquals(xArrayExtendsList, new TypeReference<List<? extends Double[][]>>() { });
+        assertEquals(xArraySuperList,   new TypeReference<List<? super Double[][]>>() { });
 
-        assertType(extendsList,        new TypeReference<List<? extends TimeUnit[]>>() { }.getType());
+        assertEquals(extendsList,        new TypeReference<List<? extends TimeUnit[]>>() { });
         assertIsParameterizedType(extendsExtendsList, List.class, newWildcardExtends(newWildcardExtends(TimeUnit[].class)));
         assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(newWildcardExtends(TimeUnit[].class)));
     }
@@ -245,9 +245,9 @@ class TypeVariableResolverTest {
         TypeInfo extendsSuperList = extendsZArrayResolver.resolve(superListType);
 
         // then
-        assertType(comparableYList,        new TypeReference<List<Comparable<?>>>(){ }.getType());
-        assertType(comparableYExtendsList, new TypeReference<List<? extends Comparable<?>>>(){ }.getType());
-        assertType(comparableYSuperList,   new TypeReference<List<? super Comparable<?>>>(){ }.getType());
+        assertEquals(comparableYList,        new TypeReference<List<Comparable<?>>>(){ });
+        assertEquals(comparableYExtendsList, new TypeReference<List<? extends Comparable<?>>>(){ });
+        assertEquals(comparableYSuperList,   new TypeReference<List<? super Comparable<?>>>(){ });
 
         Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(
             new WildcardTypeImpl(new Type[]{ Object.class }, new Type[0])));
@@ -319,10 +319,10 @@ class TypeVariableResolverTest {
         TypeInfo superListResolved = nestedContainerInfo.resolve(superListType);
 
         // then
-        assertType(nestedContainerInfo, new TypeReference<TypedContainer<TypedContainer<? extends AccessMode>>>(){ }.getType());
-        assertType(listResolved,        new TypeReference<List<TypedContainer<? extends AccessMode>>>(){ }.getType());
-        assertType(extendsListResolved, new TypeReference<List<? extends TypedContainer<? extends AccessMode>>>(){ }.getType());
-        assertType(superListResolved,   new TypeReference<List<? super   TypedContainer<? extends AccessMode>>>(){ }.getType());
+        assertEquals(nestedContainerInfo, new TypeReference<TypedContainer<TypedContainer<? extends AccessMode>>>(){ });
+        assertEquals(listResolved,        new TypeReference<List<TypedContainer<? extends AccessMode>>>(){ });
+        assertEquals(extendsListResolved, new TypeReference<List<? extends TypedContainer<? extends AccessMode>>>(){ });
+        assertEquals(superListResolved,   new TypeReference<List<? super   TypedContainer<? extends AccessMode>>>(){ });
     }
 
     private static TypeInfo createChildTypeInfo(TypeInfo parentTypeInfo,
@@ -332,10 +332,6 @@ class TypeVariableResolverTest {
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException(clazz + " - " + fieldName, e);
         }
-    }
-
-    private static void assertType(TypeInfo actualTypeInfo, Type expectedType) {
-        assertEquals(actualTypeInfo.getType(), expectedType);
     }
 
     private static class ClassWithTypes {

@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -35,6 +37,20 @@ public final class CommonTypeUtil {
      */
     public static Class<?> createArrayClass(Class<?> componentType) {
         return Array.newInstance(componentType, 0).getClass();
+    }
+
+    /**
+     * Returns an array class or a {@link java.lang.reflect.GenericArrayType} instance whose component type is
+     * the {@code componentType} argument.
+     *
+     * @param componentType the component type to create an array type for
+     * @return the appropriate array type
+     */
+    public static Type createArrayType(Type componentType) {
+        if (componentType instanceof Class<?>) {
+            return createArrayClass((Class<?>) componentType);
+        }
+        return new GenericArrayTypeImpl(componentType);
     }
 
     /**

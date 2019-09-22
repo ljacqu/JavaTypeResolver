@@ -1,6 +1,5 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 
@@ -52,26 +51,22 @@ class TypeVariableResolver {
             }
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) type;
-            Type[] resolvedTypes = resolve(pt.getActualTypeArguments());
+            Type[] resolvedTypes = resolveTypes(pt.getActualTypeArguments());
             return new ParameterizedTypeImpl(getRawType(pt), pt.getOwnerType(), resolvedTypes);
         } else if (type instanceof WildcardType) {
             WildcardType wt = (WildcardType) type;
-            Type[] upperBounds = resolve(wt.getUpperBounds());
-            Type[] lowerBounds = resolve(wt.getLowerBounds());
+            Type[] upperBounds = resolveTypes(wt.getUpperBounds());
+            Type[] lowerBounds = resolveTypes(wt.getLowerBounds());
             return new WildcardTypeImpl(upperBounds, lowerBounds);
         } else if (type instanceof GenericArrayType) {
             GenericArrayType gat = (GenericArrayType) type;
             Type resolvedComponentType = resolve(gat.getGenericComponentType());
-            if (resolvedComponentType instanceof Class<?> || resolvedComponentType instanceof ParameterizedType) {
-                Class<?> componentClass = TypeToClassUtil.getSafeToWriteClass(resolvedComponentType);
-                return CommonTypeUtil.createArrayClass(componentClass);
-            }
-            return new GenericArrayTypeImpl(resolvedComponentType);
+            return CommonTypeUtil.createArrayType(resolvedComponentType);
         }
         return type;
     }
 
-    private Type[] resolve(Type[] types) {
+    Type[] resolveTypes(Type[] types) {
         Type[] resolvedTypes = new Type[types.length];
         for (int i = 0; i < types.length; ++i) {
             resolvedTypes[i] = resolve(types[i]);

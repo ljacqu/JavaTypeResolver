@@ -4,10 +4,10 @@ import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -30,6 +30,14 @@ public class TypeInfo {
 
     protected TypeInfo() {
         this.type = inferTypeForNoArgsConstructor();
+    }
+
+    public static TypeInfo of(Type type) {
+        return new TypeInfo(type);
+    }
+
+    public static TypeInfo of(Field field) {
+        return new TypeInfo(field.getGenericType());
     }
 
     /**
@@ -125,6 +133,7 @@ public class TypeInfo {
         return TypeToClassUtil.getSafeToReadClass(type);
     }
 
+    @Nullable
     public TypeInfo getEnclosingType() {
         Type enclosingType = null;
         if (type instanceof Class<?>) {
@@ -133,6 +142,17 @@ public class TypeInfo {
             enclosingType = ((ParameterizedType) type).getOwnerType();
         }
         return enclosingType == null ? null : new TypeInfo(enclosingType);
+    }
+
+    @Nullable
+    public TypeInfo getComponentType() {
+        Type componentType = null;
+        if (type instanceof Class<?>) {
+            componentType = ((Class<?>) type).getComponentType();
+        } else if (type instanceof GenericArrayType) {
+            componentType = ((GenericArrayType) type).getGenericComponentType();
+        }
+        return componentType == null ? null : new TypeInfo(componentType);
     }
 
     /**
@@ -163,13 +183,15 @@ public class TypeInfo {
             return null;
         }
 
-        if (clazz.getTypeParameters().length > 0) {
+        TypeInfo componentType = getComponentType();
+        if (componentType != null && clazz.isArray()) {
+            TypeInfo resolvedComponent = componentType.resolveSuperclass(clazz.getComponentType());
+            return new TypeInfo(CommonTypeUtil.createArrayType(resolvedComponent.getType()));
+        } else if (clazz.getTypeParameters().length > 0) {
             TypeVariableResolver resolver = getOrInitResolver();
-            Type[] resolvedTypeArguments = Arrays.stream(clazz.getTypeParameters())
-                .map(resolver::resolve)
-                .toArray(Type[]::new);
             return new TypeInfo(new ParameterizedTypeImpl(clazz,
-                getOwnerTypeForResolvedParameterizedType(clazz, type), resolvedTypeArguments));
+                getOwnerTypeForResolvedParameterizedType(clazz, type),
+                resolver.resolveTypes(clazz.getTypeParameters())));
         }
         return new TypeInfo(clazz);
     }

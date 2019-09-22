@@ -9,16 +9,21 @@ import ch.jalu.typeresolver.samples.typeinheritance.OneArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.StringArgProcessorExtension;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.AbstractCollection;
+import java.util.AbstractList;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.RandomAccess;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static ch.jalu.typeresolver.TypeInfo.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -142,6 +147,42 @@ class TypeInfoTest {
 
         // then
         assertEquals(typeNestedInnerInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<Float>.TypedNestedInnerClass<Double>>() { });
+    }
+
+    @Test
+    void shouldResolveSimpleSuperclasses() {
+        // given
+        TypeInfo string = new TypeInfo(String.class);
+        TypeInfo enumType = new TypeInfo(TimeUnit.class);
+        TypeInfo doubleArray = new TypeInfo(double[].class);
+
+        // when / then
+        assertEquals(string.resolveSuperclass(String.class), of(String.class));
+        assertEquals(string.resolveSuperclass(Object.class), of(Object.class));
+        assertEquals(enumType.resolveSuperclass(Serializable.class), of(Serializable.class));
+        assertEquals(doubleArray.resolveSuperclass(double[].class), of(double[].class));
+        assertEquals(doubleArray.resolveSuperclass(Object.class), of(Object.class));
+    }
+
+    @Test
+    void shouldResolveArraySuperclasses() {
+        // given
+        TypeInfo double3dArray = new TypeInfo(double[][][].class);
+        TypeInfo stringArr = new TypeInfo(String[].class);
+        TypeInfo list2dArray = new TypeReference<ArrayList<Short>[][]>() { };
+
+        // when / then
+        assertEquals(double3dArray.resolveSuperclass(Object[][].class), of(Object[][].class));
+        assertEquals(double3dArray.resolveSuperclass(Object[].class), of(Object[].class));
+        assertEquals(double3dArray.resolveSuperclass(Object.class), of(Object.class));
+
+        assertEquals(stringArr.resolveSuperclass(Object[].class), of(Object[].class));
+        assertEquals(stringArr.resolveSuperclass(Serializable[].class), of(Serializable[].class));
+
+        assertEquals(list2dArray.resolveSuperclass(List[][].class), new TypeReference<List<Short>[][]>(){ });
+        assertEquals(list2dArray.resolveSuperclass(AbstractList[][].class), new TypeReference<AbstractList<Short>[][]>(){ });
+        assertEquals(list2dArray.resolveSuperclass(RandomAccess[][].class), of(RandomAccess[][].class));
+        assertEquals(list2dArray.resolveSuperclass(Object[].class), of(Object[].class));
     }
 
     private static TypeInfo getType(String fieldName) {
