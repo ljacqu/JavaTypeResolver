@@ -166,6 +166,11 @@ class TypeInfoTest {
         assertEquals(nestedClassInfo, of(TypeNestedClassExtStandalone.class.getGenericSuperclass()));
     }
 
+    /**
+     * TypedNestedClass' type arguments could be inferred from the generic superclass or from the enclosing class.
+     * In the case that both are present, the superclass wins, as demonstrated in
+     * {@link TypeNestedClassExtStandalone.NestedTypeNestedClassExtStandalone#proofOfInferredTypeN()}.
+     */
     @Test
     void shouldNotReturnEnclosingClassAsParameterizedTypeOwnerIfNotRelevant() {
         // given
@@ -178,6 +183,26 @@ class TypeInfoTest {
         // check both ways to be explicit but to also guarantee our expectation is the right thing
         assertEquals(nestedClassInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<String>>() { });
         assertEquals(nestedClassInfo, of(TypeNestedClassExtStandalone.NestedTypeNestedClassExtStandalone.class.getGenericSuperclass()));
+    }
+
+    /**
+     * TypeNestedClass, in contrast to {@link #shouldNotReturnEnclosingClassAsParameterizedTypeOwnerIfNotRelevant()}, is
+     * inferred from the enclosing class, as demonstrated in {@link TypeNestedClassExtStandalone.NestedTypeNestedClassNoParent#proofOfInferredTypeN()}.
+     */
+    @Test
+    void shouldResolveTypeArgumentFromEnclosingClassSupertype() {
+        // given
+        TypeInfo typeInfo = new TypeInfo(TypeNestedClassExtStandalone.NestedTypeNestedClassNoParent.class);
+
+        // when
+        TypeInfo nestedClassInfo = typeInfo.resolve(InnerParameterizedClassesContainer.TypedNestedClass.class.getTypeParameters()[0]);
+
+        // then
+        assertEquals(nestedClassInfo, of(Float.class));
+
+        // Check that our expectation also reflects reality
+        TypeInfo typeNestedClassInfo = of(TypeNestedClassExtStandalone.NestedTypeNestedClassNoParent.class.getEnclosingClass().getGenericSuperclass());
+        assertEquals(Float.class, typeNestedClassInfo.getTypeArgumentAsClass(0));
     }
 
     @Test
@@ -232,7 +257,7 @@ class TypeInfoTest {
 
     @Test
     void shouldReturnNullForNotApplicableSuperclass() {
-        // given
+        // given / when / then
         assertNull(of(String.class).resolveSuperclass(Collection.class));
         assertNull(of(double[].class).resolveSuperclass(Object[].class));
         assertNull(of(ArrayList.class).resolveSuperclass(Iterator.class));

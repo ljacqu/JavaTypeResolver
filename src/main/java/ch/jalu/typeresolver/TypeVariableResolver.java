@@ -10,8 +10,10 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static ch.jalu.typeresolver.CommonTypeUtil.getRawType;
 
@@ -39,7 +41,7 @@ class TypeVariableResolver {
     private final Map<TypeVariableData, Type> typeRules = new HashMap<>();
 
     TypeVariableResolver(Type type) {
-        registerTypes(type);
+        registerTypes(type, new HashSet<>());
     }
 
     Type resolve(Type type) {
@@ -74,33 +76,41 @@ class TypeVariableResolver {
         return resolvedTypes;
     }
 
-    private void registerTypes(Type type) {
+    private void registerTypes(Type type, Set<Class<?>> processedClasses) {
         if (type instanceof Class<?>) {
-            registerTypesFromParentAndInterfaces((Class) type);
+            Class<?> clazz = (Class<?>) type;
+            registerTypesFromParentAndInterfaces(clazz, processedClasses);
+            registerTypes(clazz.getEnclosingClass(), processedClasses);
         } else if (type instanceof ParameterizedType) {
-            Class<?> rawType = getRawType((ParameterizedType) type);
-            registerTypesFromParentAndInterfaces(rawType);
-            registerParameterizedTypes((ParameterizedType) type);
+            ParameterizedType pt = (ParameterizedType) type;
+            registerParameterizedTypes(pt, processedClasses);
+            registerTypesFromParentAndInterfaces(getRawType(pt), processedClasses);
+            registerTypes(pt.getOwnerType(), processedClasses);
         }
     }
 
-    private void registerTypesFromParentAndInterfaces(Class<?> clazz) {
+    private void registerTypesFromParentAndInterfaces(Class<?> clazz, Set<Class<?>> processedClasses) {
         Class<?> currentClass = clazz;
         while (!Object.class.equals(currentClass) && currentClass != null) {
-            registerTypes(currentClass.getGenericSuperclass());
+            registerTypes(currentClass.getGenericSuperclass(), processedClasses);
             for (Type genericInterfaceType : currentClass.getGenericInterfaces()) {
-                registerTypes(genericInterfaceType);
+                registerTypes(genericInterfaceType, processedClasses);
             }
             currentClass = currentClass.getSuperclass();
         }
     }
 
-    private void registerParameterizedTypes(ParameterizedType parameterizedType) {
+    private void registerParameterizedTypes(ParameterizedType parameterizedType, Set<Class<?>> processedClasses) {
         Class<?> rawType = getRawType(parameterizedType);
+        if (processedClasses.contains(rawType)) {
+            return;
+        }
+
         Type[] typeArguments = parameterizedType.getActualTypeArguments();
         for (int i = 0; i < typeArguments.length; ++i) {
             typeRules.put(new TypeVariableData(rawType.getTypeParameters()[i]), typeArguments[i]);
         }
+        processedClasses.add(rawType);
     }
 
     /**

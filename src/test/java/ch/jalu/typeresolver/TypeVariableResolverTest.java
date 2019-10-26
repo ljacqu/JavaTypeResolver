@@ -1,6 +1,8 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.reference.TypeReference;
+import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
+import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainerExt;
 import ch.jalu.typeresolver.samples.typeinheritance.AbstractTwoArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
@@ -323,6 +325,22 @@ class TypeVariableResolverTest {
         assertEquals(listResolved,        new TypeReference<List<TypedContainer<? extends AccessMode>>>(){ });
         assertEquals(extendsListResolved, new TypeReference<List<? extends TypedContainer<? extends AccessMode>>>(){ });
         assertEquals(superListResolved,   new TypeReference<List<? super   TypedContainer<? extends AccessMode>>>(){ });
+    }
+
+    @Test
+    void shouldResolveTypeFromEnclosingClass() throws NoSuchFieldException {
+        // given
+        TypeInfo typeInfo = new TypeReference<InnerParameterizedClassesContainerExt.TypedInnerClassExt.InnerInnerClassExt<Cloneable>>() { };
+        Type tField = InnerParameterizedClassesContainer.TypedInnerClass.InnerInnerClass.class.getDeclaredField("tField").getGenericType();
+        Type pField = InnerParameterizedClassesContainer.TypedInnerClass.InnerInnerClass.class.getDeclaredField("pField").getGenericType();
+
+        // when
+        TypeInfo tFieldRes = typeInfo.resolve(tField);
+        TypeInfo pFieldRes = typeInfo.resolve(pField);
+
+        // then
+        assertEquals(tFieldRes, TypeInfo.of(String.class));
+        assertEquals(pFieldRes, TypeInfo.of(Integer.class));
     }
 
     private static TypeInfo createChildTypeInfo(TypeInfo parentTypeInfo,
