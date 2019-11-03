@@ -1,0 +1,6 @@
+sudo: false
+dist: trusty
+language: java
+jdk: oraclejdk8
+
+script: mvn clean package jacoco:report coveralls:report -B
