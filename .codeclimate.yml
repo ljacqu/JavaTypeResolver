@@ -7,6 +7,8 @@ plugins:
       file: '.checkstyle.xml'
   sonar-java:
     enabled: true
+    config:
+      sonar.java.source: "8"
 
 # Disable all the following CodeClimate checks: Checkstyle already checks for these things and has the advantage
 # that the Checkstyle config can also be used in one's IDE.

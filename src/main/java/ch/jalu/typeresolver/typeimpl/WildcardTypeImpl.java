@@ -82,6 +82,7 @@ public class WildcardTypeImpl implements WildcardType {
         return Arrays.hashCode(lowerBounds) ^ Arrays.hashCode(upperBounds);
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         Type[] bounds;
