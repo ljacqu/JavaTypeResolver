@@ -1,0 +1,36 @@
+version: '2' # required to adjust maintainability checks
+
+plugins:
+  checkstyle:
+    enabled: true
+    config:
+      file: '.checkstyle.xml'
+
+# Disable all the following CodeClimate checks: Checkstyle already checks for these things and has the advantage
+# that the Checkstyle config can also be used in one's IDE.
+checks:
+  argument-count:
+    enabled: false
+  complex-logic:
+    enabled: false
+  file-lines:
+    enabled: false
+  method-complexity:
+    enabled: false
+  method-count:
+    enabled: false
+  method-lines:
+    enabled: false
+  nested-control-flow:
+    enabled: false
+  return-statements:
+    enabled: false
+  # Enable these as there's no Checkstyle equivalent
+  similar-code:
+    enabled: false
+  identical-code:
+    enabled: true
+
+exclude_patterns:
+  # Don't check test scope
+  - 'src/test/java/**'
