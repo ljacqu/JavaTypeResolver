@@ -1,9 +1,9 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.reference.TypeReference;
+import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainerExt;
-import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
 import ch.jalu.typeresolver.samples.nestedclasses.TypeNestedClassExtStandalone;
 import ch.jalu.typeresolver.samples.typeinheritance.AbstractTwoArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
@@ -12,6 +12,7 @@ import ch.jalu.typeresolver.samples.typeinheritance.StringArgProcessorExtension;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.AbstractCollection;
 import java.util.AbstractList;
@@ -28,7 +29,9 @@ import java.util.concurrent.TimeUnit;
 
 import static ch.jalu.typeresolver.TypeInfo.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test for {@link TypeInfo}.
@@ -262,6 +265,42 @@ class TypeInfoTest {
         assertNull(of(double[].class).resolveSuperclass(Object[].class));
         assertNull(of(ArrayList.class).resolveSuperclass(Iterator.class));
         assertNull(of(List.class).resolveSuperclass(ArrayList.class));
+    }
+
+    @Test
+    void shouldReturnIfIsAssignableToClass() {
+        // given
+        TypeInfo list = of(List.class);
+        TypeInfo collection = of(Collection.class);
+        Type genericList = new TypeReference<List<String>>() { }.getType();
+        Type genericCollection = new TypeReference<Collection<String>>() { }.getType();
+
+        // when / then
+        assertTrue(list.isAssignableTo(Collection.class));
+        assertTrue(list.isAssignableTo(genericCollection));
+        assertTrue(list.isAssignableTo(List.class));
+        assertTrue(list.isAssignableTo(genericList));
+
+        assertFalse(collection.isAssignableTo(List.class));
+        assertFalse(list.isAssignableTo(Set.class));
+        assertFalse(list.isAssignableTo(ArrayList.class));
+    }
+
+    @Test
+    void shouldReturnIfIsAssignableToParameterizedType() {
+        // given
+        TypeInfo genericList = new TypeReference<List<String>>() { };
+        TypeInfo genericCollection = new TypeReference<Collection<String>>() { };
+
+        // when / then
+        assertTrue(genericList.isAssignableTo(List.class));
+        assertTrue(genericList.isAssignableTo(Collection.class));
+        assertTrue(genericList.isAssignableTo(genericList));
+        assertTrue(genericList.isAssignableTo(genericCollection));
+
+        assertFalse(genericList.isAssignableTo(Set.class));
+        assertFalse(genericList.isAssignableTo(new TypeReference<List<Double>>() { }));
+        assertFalse(genericList.isAssignableTo(new TypeReference<Collection<Float>>() { }));
     }
 
     private static TypeInfo getType(String fieldName) {

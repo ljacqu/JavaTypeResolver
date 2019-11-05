@@ -1,7 +1,9 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
+import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -68,5 +70,13 @@ public final class CommonTypeUtil {
             return false;
         }
         return !Object.class.equals(upperBounds[0]) || upperBounds.length > 1;
+    }
+
+    @Nullable
+    public static ParameterizedType createParameterizedType(Class<?> rawType) {
+        if (rawType.getTypeParameters().length > 0) {
+            return new ParameterizedTypeImpl(rawType, rawType.getEnclosingClass(), rawType.getTypeParameters());
+        }
+        return null;
     }
 }

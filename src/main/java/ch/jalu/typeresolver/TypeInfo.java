@@ -231,6 +231,71 @@ public class TypeInfo {
         return new TypeInfo(clazz);
     }
 
+    public boolean isAssignableTo(TypeInfo typeInfo) {
+        return isAssignableTo(typeInfo.getType());
+    }
+
+    public boolean isAssignableTo(Type superType) {
+        return isAssignable(superType, type, true);
+    }
+
+    private boolean isAssignableToClass(Class<?> superType, Type childType, boolean considerChildren) {
+        if (childType instanceof Class<?> || childType instanceof ParameterizedType) {
+            Class<?> childClass = TypeToClassUtil.getSafeToWriteClass(childType);
+            if (considerChildren) {
+                return childClass != null && superType.isAssignableFrom(childClass);
+            }
+            return superType.equals(childClass);
+        }
+        return false; // todo wt, gat, tv
+    }
+
+    private boolean isAssignable(Class<?> given, Class<?> actual, boolean considerChildren) {
+        if (considerChildren) {
+            return given.isAssignableFrom(actual);
+        }
+        return given.equals(actual);
+    }
+
+    private boolean isSubclassOfParameterizedType(ParameterizedType superType, Type childType,
+                                                  boolean considerChildren) {
+        if (childType instanceof Class<?>) {
+            Class<?> rawSuperType = CommonTypeUtil.getRawType(superType);
+            return isAssignable(rawSuperType, (Class<?>) childType, considerChildren);
+        } else if (childType instanceof ParameterizedType) {
+            // List<String> is a Collection<String>, but List<Comparable> or Collection<Comparable> is not!
+            Class<?> rawSuperType = CommonTypeUtil.getRawType(superType);
+            Class<?> rawChildType = CommonTypeUtil.getRawType((ParameterizedType) childType);
+            if (isAssignable(rawSuperType, rawChildType, considerChildren)) {
+                ParameterizedType resolvedSupertype =
+                    (ParameterizedType) new TypeInfo(childType).resolveSuperclass(rawSuperType).getType();
+                for (int i = 0; i < resolvedSupertype.getActualTypeArguments().length; ++i) {
+                    Type actualSuperArg = resolvedSupertype.getActualTypeArguments()[i];
+                    Type expectedSuperArg = superType.getActualTypeArguments()[i];
+                    if (!isAssignable(expectedSuperArg, actualSuperArg, false)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    private boolean isAssignable(Type givenType, Type actualType, boolean considerChildren) {
+        if (givenType.equals(actualType)) {
+            return true;
+        }
+
+        if (givenType instanceof Class<?>) {
+            return isAssignableToClass((Class<?>) givenType, actualType, considerChildren);
+        } else if (givenType instanceof ParameterizedType) {
+            return isSubclassOfParameterizedType((ParameterizedType) givenType, actualType, considerChildren);
+        }
+        return false; // todo wt, gat, tv
+    }
+
     @Nullable
     private Type getOwnerTypeForResolvedParameterizedType(Class<?> superclass) {
         Class<?> enclosingClass = superclass.getEnclosingClass();
