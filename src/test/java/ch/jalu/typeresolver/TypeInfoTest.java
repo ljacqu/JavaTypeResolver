@@ -7,6 +7,7 @@ import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesConta
 import ch.jalu.typeresolver.samples.nestedclasses.TypeNestedClassExtStandalone;
 import ch.jalu.typeresolver.samples.typeinheritance.AbstractTwoArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
+import ch.jalu.typeresolver.samples.typeinheritance.IntegerGenericArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.OneArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.StringArgProcessorExtension;
 import org.junit.jupiter.api.Test;
@@ -277,9 +278,9 @@ class TypeInfoTest {
 
         // when / then
         assertTrue(list.isAssignableTo(Collection.class));
-        assertTrue(list.isAssignableTo(genericCollection));
+        assertFalse(list.isAssignableTo(genericCollection));
         assertTrue(list.isAssignableTo(List.class));
-        assertTrue(list.isAssignableTo(genericList));
+        assertFalse(list.isAssignableTo(genericList));
 
         assertFalse(collection.isAssignableTo(List.class));
         assertFalse(list.isAssignableTo(Set.class));
@@ -301,6 +302,30 @@ class TypeInfoTest {
         assertFalse(genericList.isAssignableTo(Set.class));
         assertFalse(genericList.isAssignableTo(new TypeReference<List<Double>>() { }));
         assertFalse(genericList.isAssignableTo(new TypeReference<Collection<Float>>() { }));
+    }
+
+    @Test
+    void shouldReturnIfIsAssignableWithDifferentParameterizedTypeParents() {
+        // given
+        TypeInfo intDblArgProcessor = of(IntegerDoubleArgProcessorExtension.class);
+        TypeInfo bigDecimalOneArgProcessor = new TypeReference<OneArgProcessor<BigDecimal>>() {};
+        TypeInfo stringOneArgProcessor = new TypeReference<OneArgProcessor<String>>() {};
+        TypeInfo twoArgProcessor1 = new TypeReference<AbstractTwoArgProcessor<Integer, Double>>() {};
+        TypeInfo twoArgProcessor2 = new TypeReference<AbstractTwoArgProcessor<Integer, String>>() {};
+        TypeInfo twoArgProcessor3 = new TypeReference<AbstractTwoArgProcessor<String, Double>>() {};
+
+        // when / then
+        assertTrue(intDblArgProcessor.isAssignableTo(bigDecimalOneArgProcessor));
+        assertFalse(intDblArgProcessor.isAssignableTo(stringOneArgProcessor));
+        assertTrue(intDblArgProcessor.isAssignableTo(OneArgProcessor.class));
+
+        assertTrue(intDblArgProcessor.isAssignableTo(twoArgProcessor1));
+        assertTrue(intDblArgProcessor.isAssignableTo(AbstractTwoArgProcessor.class));
+        assertFalse(intDblArgProcessor.isAssignableTo(twoArgProcessor2));
+        assertFalse(intDblArgProcessor.isAssignableTo(twoArgProcessor3));
+        assertTrue(intDblArgProcessor.isAssignableTo(IntegerGenericArgProcessor.class));
+        assertTrue(intDblArgProcessor.isAssignableTo(new TypeReference<IntegerGenericArgProcessor<Double>>() { }));
+        assertFalse(intDblArgProcessor.isAssignableTo(new TypeReference<IntegerGenericArgProcessor<BigDecimal>>() { }));
     }
 
     private static TypeInfo getType(String fieldName) {

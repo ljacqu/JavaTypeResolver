@@ -57,6 +57,11 @@ public class TypeInfo {
         return new TypeInfo(field.getGenericType());
     }
 
+    @Nullable
+    public static Type getType(@Nullable TypeInfo typeInfo) {
+        return typeInfo == null ? null : typeInfo.getType();
+    }
+
     /**
      * @return the type wrapped by this instance
      */
@@ -239,13 +244,10 @@ public class TypeInfo {
         return isAssignable(superType, type, true);
     }
 
-    private boolean isAssignableToClass(Class<?> superType, Type childType, boolean considerChildren) {
+    private boolean isAssignableToClass(Class<?> givenClass, Type childType, boolean considerChildren) {
         if (childType instanceof Class<?> || childType instanceof ParameterizedType) {
-            Class<?> childClass = TypeToClassUtil.getSafeToWriteClass(childType);
-            if (considerChildren) {
-                return childClass != null && superType.isAssignableFrom(childClass);
-            }
-            return superType.equals(childClass);
+            Class<?> actualType = TypeToClassUtil.getSafeToWriteClass(childType);
+            return isAssignable(givenClass, actualType, considerChildren);
         }
         return false; // todo wt, gat, tv
     }
@@ -257,28 +259,30 @@ public class TypeInfo {
         return given.equals(actual);
     }
 
-    private boolean isSubclassOfParameterizedType(ParameterizedType superType, Type childType,
+    private boolean isSubclassOfParameterizedType(ParameterizedType given, Type actual,
                                                   boolean considerChildren) {
-        if (childType instanceof Class<?>) {
-            Class<?> rawSuperType = CommonTypeUtil.getRawType(superType);
-            return isAssignable(rawSuperType, (Class<?>) childType, considerChildren);
-        } else if (childType instanceof ParameterizedType) {
-            // List<String> is a Collection<String>, but List<Comparable> or Collection<Comparable> is not!
-            Class<?> rawSuperType = CommonTypeUtil.getRawType(superType);
-            Class<?> rawChildType = CommonTypeUtil.getRawType((ParameterizedType) childType);
-            if (isAssignable(rawSuperType, rawChildType, considerChildren)) {
-                ParameterizedType resolvedSupertype =
-                    (ParameterizedType) new TypeInfo(childType).resolveSuperclass(rawSuperType).getType();
-                for (int i = 0; i < resolvedSupertype.getActualTypeArguments().length; ++i) {
-                    Type actualSuperArg = resolvedSupertype.getActualTypeArguments()[i];
-                    Type expectedSuperArg = superType.getActualTypeArguments()[i];
-                    if (!isAssignable(expectedSuperArg, actualSuperArg, false)) {
-                        return false;
-                    }
-                }
-                return true;
+        Class<?> givenRaw = CommonTypeUtil.getRawType(given);
+        Type actualAsGivenType = getType(new TypeInfo(actual).resolveSuperclass(givenRaw));
+
+        if (actualAsGivenType instanceof ParameterizedType) {
+            ParameterizedType actualAsRequiredType = (ParameterizedType) actualAsGivenType;
+            if (!considerChildren && !givenRaw.equals(CommonTypeUtil.getRawType(actualAsRequiredType))) {
+                return false;
             }
-            return false;
+
+            for (int i = 0; i < given.getActualTypeArguments().length; ++i) {
+                Type givenArg = given.getActualTypeArguments()[i];
+                Type actualArg = actualAsRequiredType.getActualTypeArguments()[i];
+                if (!isAssignable(givenArg, actualArg, false)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (actualAsGivenType != null) {
+            throw new IllegalStateException("Expected parameterized type as inferred type for '" + givenRaw
+                    + "' but got " + actualAsGivenType + " of type " + actualAsGivenType.getClass().getSimpleName());
         }
         return false;
     }
