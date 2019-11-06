@@ -1,22 +1,17 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.array.AbstractArrayProperties;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 
 import javax.annotation.Nullable;
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -240,70 +235,33 @@ public class TypeInfo {
         return new TypeInfo(clazz);
     }
 
+    /**
+     * Returns all types that this wrapped type is an instance of, i.e. returns all superclasses and interfaces
+     * that the class can be assigned to.
+     *
+     * @return all types that this wrapped type can be assigned to
+     */
     public Set<Type> getAllTypes() {
-        return getAllTypesInternal(new HashSet<>(), Function.identity());
+        return TypeVisitor.gatherAllTypes(type, getOrInitResolver(), new HashSet<>(), Function.identity());
     }
 
+    /**
+     * Returns all types that this wrapped type is an instance of, as TypeInfo instances.
+     *
+     * @return all types this wrapped type can be assigned to
+     */
     public Set<TypeInfo> getAllTypeInfos() {
-        return getAllTypesInternal(new HashSet<>(), TypeInfo::new);
+        return TypeVisitor.gatherAllTypes(type, getOrInitResolver(), new HashSet<>(), TypeInfo::new);
     }
 
-    public <E> void gatherAllTypes(Collection<? super E> container, Function<Type, E> typeToElementFn) {
-        getAllTypesInternal(container, typeToElementFn);
-    }
-
-    private <E, C extends Collection<? super E>> C getAllTypesInternal(C container, Function<Type, E> typeToElementFn) {
-        if (CommonTypeUtil.getDefinitiveClass(type) != null) {
-            addClassesRecursively(type, getOrInitResolver(), container, typeToElementFn);
-        }
-        return container;
-    }
-
-    private <E> void addClassesRecursively(@Nullable Type type, TypeVariableResolver resolver,
-                                           Collection<? super E> container, Function<Type, E> typeToElementFn) {
-        if (type == null) {
-            return;
-        }
-
-        Class<?> typeAsClass = CommonTypeUtil.getDefinitiveClass(type);
-        if (!typeAsClass.isArray()) {
-            container.add(typeToElementFn.apply(resolver.resolve(type)));
-            addClassesRecursively(typeAsClass.getGenericSuperclass(), resolver, container, typeToElementFn);
-            for (Type genericInterface : typeAsClass.getGenericInterfaces()) {
-                addClassesRecursively(genericInterface, resolver, container, typeToElementFn);
-            }
-        } else {
-            AbstractArrayProperties arrayProperties = CommonTypeUtil.getArrayProperty(type);
-            List<Type> typesOfComponent = gatherAllTypesOfComponent(arrayProperties);
-
-            // An array like Double[][] is also a Number[][] or an Object[][], but only for the same dimension
-            for (Type comp : typesOfComponent) {
-                Type arrayType = CommonTypeUtil.createArrayType(comp, arrayProperties.getDimension());
-                container.add(typeToElementFn.apply(arrayType));
-            }
-
-            // Arrays implement Serializable & Cloneable, so a Double[][] is also a Serializable[] and a Serializable...
-            List<Type> typesOfArrayClass = Arrays.asList(Serializable.class, Cloneable.class, Object.class);
-            for (int i = arrayProperties.getDimension() - 1; i >= 0; --i) {
-                for (Type typeFromArr : typesOfArrayClass) {
-                    Type arrayType = CommonTypeUtil.createArrayType(typeFromArr, i);
-                    container.add(typeToElementFn.apply(arrayType));
-                }
-            }
-        }
-    }
-
-    private List<Type> gatherAllTypesOfComponent(AbstractArrayProperties arrayProperties) {
-        TypeVariableResolver componentResolver = new TypeVariableResolver(arrayProperties.getComponentType());
-        List<Type> typesOfComponent = new ArrayList<>();
-        addClassesRecursively(arrayProperties.getComponentType(), componentResolver,
-            typesOfComponent, Function.identity());
-
-        if (!CommonTypeUtil.getDefinitiveClass(arrayProperties.getComponentType()).isPrimitive()
-                && !typesOfComponent.contains(Object.class)) {
-            typesOfComponent.add(Object.class);
-        }
-        return typesOfComponent;
+    /**
+     * Invokes the given consumer for each type that this wrapped type can be assigned to (i.e. all parents
+     * and interfaces).
+     *
+     * @param typeVisitor callback run for each type that this wrapped type can be assigned to
+     */
+    public void visitAllTypes(Consumer<Type> typeVisitor) {
+        TypeVisitor.visitAllTypes(type, getOrInitResolver(), typeVisitor);
     }
 
     @Nullable
