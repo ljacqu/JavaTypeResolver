@@ -6,12 +6,16 @@ import org.junit.jupiter.api.Test;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Watchable;
 import java.util.AbstractCollection;
 import java.util.AbstractList;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +28,7 @@ import static ch.jalu.typeresolver.TypeInfo.of;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItems;
 
 /**
  * Test for {@link TypeVisitor}.
@@ -125,6 +130,22 @@ class TypeVisitorTest {
             new TypeReference<AbstractMap<String, ? extends Integer>>() { },
             new TypeReference<Map<String, ? extends Integer>>() { },
             of(Cloneable.class), of(Serializable.class), of(Object.class)));
+    }
+
+    @Test
+    void shouldConsiderInterfaceOfInterfaces() {
+        // given
+        Class<?> pathClass = Paths.get("").getClass();
+
+        // when
+        Set<TypeInfo> pathsAll = TypeVisitor.gatherAllTypes(
+            pathClass, new TypeVariableResolver(pathClass), new HashSet<>(), TypeInfo::new);
+
+        // then
+        assertThat(pathsAll, hasItems(of(Path.class),
+            new TypeReference<Comparable<Path>>() { },
+            new TypeReference<Iterable<Path>>() { },
+            of(Watchable.class), of(Object.class)));
     }
 
     @Test

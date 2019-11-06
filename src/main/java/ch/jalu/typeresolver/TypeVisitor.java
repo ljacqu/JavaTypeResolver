@@ -23,7 +23,10 @@ final class TypeVisitor {
     }
 
     static Set<Type> gatherAllTypes(Type type) {
-        TypeVariableResolver resolver = new TypeVariableResolver(type);
+        return gatherAllTypes(type, new TypeVariableResolver(type));
+    }
+
+    static Set<Type> gatherAllTypes(Type type, TypeVariableResolver resolver) {
         return gatherAllTypes(type, resolver, new HashSet<>(), Function.identity());
     }
 

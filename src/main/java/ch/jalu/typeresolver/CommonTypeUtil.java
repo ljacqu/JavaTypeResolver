@@ -44,6 +44,14 @@ public final class CommonTypeUtil {
         return Array.newInstance(componentType, 0).getClass();
     }
 
+    /**
+     * Returns an array class of the given component type and with the given dimensions, e.g. if the componentType is
+     * {@code double.class} and the dimension is 3, then {@code double[][][].class} is returned.
+     *
+     * @param componentType the component type of the array
+     * @param dimension the dimension of the class
+     * @return array class of the provided dimension with the given component
+     */
     public static Class<?> createArrayClass(Class<?> componentType, int dimension) {
         Class<?> clazz = componentType;
         for (int i = 0; i < dimension; ++i) {
@@ -63,6 +71,14 @@ public final class CommonTypeUtil {
         return createArrayType(componentType, 1);
     }
 
+    /**
+     * Returns an array class or a generic array type whose component is the provided component type and
+     * with the given dimension.
+     *
+     * @param componentType the component type
+     * @param dimension the dimension of the array
+     * @return the appropriate array type of the given dimension
+     */
     public static Type createArrayType(Type componentType, int dimension) {
         if (componentType instanceof Class<?>) {
             return createArrayClass((Class<?>) componentType, dimension);
@@ -70,6 +86,13 @@ public final class CommonTypeUtil {
         return GenericArrayTypeImpl.create(componentType, dimension);
     }
 
+    /**
+     * Returns a description of the given array type, or an array property with dimension 0
+     * if it is not an array. Never returns null.
+     *
+     * @param type the type to inspect
+     * @return array description of the given type
+     */
     public static AbstractArrayProperties getArrayProperty(Type type) {
         if (type instanceof Class<?>) {
             return ArrayClassProperties.getArrayPropertiesOfClass((Class<?>) type);

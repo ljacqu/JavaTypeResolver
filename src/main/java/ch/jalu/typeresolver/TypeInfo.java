@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Wraps a {@link Type} to offer easy retrieval of generic type information.
@@ -242,7 +241,7 @@ public class TypeInfo {
      * @return all types that this wrapped type can be assigned to
      */
     public Set<Type> getAllTypes() {
-        return TypeVisitor.gatherAllTypes(type, getOrInitResolver(), new HashSet<>(), Function.identity());
+        return TypeVisitor.gatherAllTypes(type, getOrInitResolver());
     }
 
     /**

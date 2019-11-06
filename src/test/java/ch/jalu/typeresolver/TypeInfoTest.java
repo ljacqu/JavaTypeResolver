@@ -12,11 +12,9 @@ import ch.jalu.typeresolver.samples.typeinheritance.StringArgProcessorExtension;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Watchable;
 import java.util.AbstractCollection;
 import java.util.AbstractList;
 import java.util.AbstractMap;
@@ -34,7 +32,6 @@ import static ch.jalu.typeresolver.TypeInfo.of;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -51,6 +48,18 @@ class TypeInfoTest {
             equalTo(of(Integer.class)));
         assertThat(getType("stringListSet").getTypeArgumentInfo(0),
             equalTo(new TypeReference<List<String>>() { }));
+    }
+
+    @Test
+    void shouldCreateTypeInfoFromGenericFieldType() throws NoSuchFieldException {
+        // given
+        Field field = ParameterizedTypes.class.getDeclaredField("stringList");
+
+        // when
+        TypeInfo fieldTypeInfo = TypeInfo.of(field);
+
+        // then
+        assertThat(fieldTypeInfo, equalTo(new TypeReference<List<String>>() { }));
     }
 
     @Test
@@ -282,7 +291,7 @@ class TypeInfoTest {
         // when
         Set<Type> stringAll = string.getAllTypes();
         Set<Type> stringArrayAll = stringArray.getAllTypes();
-        Set<Type> primitiveIntArrAll = primitiveIntArr.getAllTypes();
+        Set<TypeInfo> primitiveIntArrAll = primitiveIntArr.getAllTypeInfos();
 
         // then
         TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
@@ -290,23 +299,7 @@ class TypeInfoTest {
         assertThat(stringArrayAll, containsInAnyOrder(
             String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
             Object.class, Cloneable.class, Serializable.class));
-        assertThat(primitiveIntArrAll, containsInAnyOrder(int[].class, Object.class, Cloneable.class, Serializable.class));
-    }
-
-    @Test
-    void shouldConsiderInterfaceOfInterfaces() {
-        // given
-        Path emptyPath = Paths.get("");
-        TypeInfo pathTypeInfo = of(emptyPath.getClass());
-
-        // when
-        Set<TypeInfo> pathsAll = pathTypeInfo.getAllTypeInfos();
-
-        // then
-        assertThat(pathsAll, hasItems(of(Path.class),
-            new TypeReference<Comparable<Path>>() { },
-            new TypeReference<Iterable<Path>>() { },
-            of(Watchable.class), of(Object.class)));
+        assertThat(primitiveIntArrAll, containsInAnyOrder(of(int[].class), of(Object.class), of(Cloneable.class), of(Serializable.class)));
     }
 
     private static TypeInfo getType(String fieldName) {
