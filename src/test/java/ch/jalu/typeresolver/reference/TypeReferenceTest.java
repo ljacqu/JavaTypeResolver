@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.assertIsParameterizedType;
+import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.ofParameterizedType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,7 +30,7 @@ class TypeReferenceTest {
         TypeInfo typeInfo = new TypeReference<Map<String, Double>>() {};
 
         // then
-        assertIsParameterizedType(typeInfo, Map.class, String.class, Double.class);
+        assertThat(typeInfo, ofParameterizedType(Map.class, String.class, Double.class));
     }
 
     @Test

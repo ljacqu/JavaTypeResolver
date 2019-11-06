@@ -29,7 +29,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.assertIsParameterizedType;
+import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.isParameterizedType;
+import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.ofParameterizedType;
 import static ch.jalu.typeresolver.TypeInfo.of;
 import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardExtends;
 import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardSuper;
@@ -110,10 +111,10 @@ class TypeVariableResolverTest {
         TypeInfo tuMapResolved2 = twoArgProcessorResolver.resolve(tuMapType);
 
         // then
-        assertIsParameterizedType(tSetResolved, Set.class, Character.class);
-        assertIsParameterizedType(uListResolved, List.class, Character.class);
-        assertIsParameterizedType(tuMapResolved, Map.class, Integer.class, Character.class);
-        assertIsParameterizedType(processParamTypeResolved, List.class, Float.class);
+        assertThat(tSetResolved, ofParameterizedType(Set.class, Character.class));
+        assertThat(uListResolved, ofParameterizedType(List.class, Character.class));
+        assertThat(tuMapResolved, ofParameterizedType(Map.class, Integer.class, Character.class));
+        assertThat(processParamTypeResolved, ofParameterizedType(List.class, Float.class));
 
         assertThat(tSetResolved2.getType(), equalTo(new TypeReference<Set<Map<Float, Set<Float>>>>() { }.getType()));
         assertThat(tuMapResolved2.getType(), equalTo(new TypeReference<Map<Integer, Map<Float, Set<Float>>>>() { }.getType()));
@@ -150,8 +151,8 @@ class TypeVariableResolverTest {
         Type optionalResolved = resolver.resolve(uExtOptional);
 
         // then
-        assertIsParameterizedType(comparableResolved, Comparable.class, newWildcardSuper(newWildcardSuper(Serializable.class)));
-        assertIsParameterizedType(optionalResolved, Optional.class, newWildcardExtends(newWildcardExtends(TimeUnit.class)));
+        assertThat(comparableResolved, isParameterizedType(Comparable.class, newWildcardSuper(newWildcardSuper(Serializable.class))));
+        assertThat(optionalResolved, isParameterizedType(Optional.class, newWildcardExtends(newWildcardExtends(TimeUnit.class))));
     }
 
     @Test
@@ -168,10 +169,10 @@ class TypeVariableResolverTest {
 
         // then
         // Comparable type is: Comparable<capture<? super capture<? extends Serializable>>>
-        assertIsParameterizedType(comparableResolved, Comparable.class, newWildcardSuper(newWildcardExtends(Serializable.class)));
+        assertThat(comparableResolved, isParameterizedType(Comparable.class, newWildcardSuper(newWildcardExtends(Serializable.class))));
 
         // Optional type is: Optional<capture<? extends capture<? super TimeUnit>>>
-        assertIsParameterizedType(optionalResolved, Optional.class, newWildcardExtends(newWildcardSuper(TimeUnit.class)));
+        assertThat(optionalResolved, isParameterizedType(Optional.class, newWildcardExtends(newWildcardSuper(TimeUnit.class))));
     }
 
     @Test
@@ -214,8 +215,8 @@ class TypeVariableResolverTest {
         assertThat(xArraySuperList,   equalTo(new TypeReference<List<? super Double[][]>>() { }));
 
         assertThat(extendsList,        equalTo(new TypeReference<List<? extends TimeUnit[]>>() { }));
-        assertIsParameterizedType(extendsExtendsList, List.class, newWildcardExtends(newWildcardExtends(TimeUnit[].class)));
-        assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(newWildcardExtends(TimeUnit[].class)));
+        assertThat(extendsExtendsList, ofParameterizedType(List.class, newWildcardExtends(newWildcardExtends(TimeUnit[].class))));
+        assertThat(extendsSuperList,   ofParameterizedType(List.class, newWildcardSuper(newWildcardExtends(TimeUnit[].class))));
     }
 
     @Test
@@ -255,15 +256,15 @@ class TypeVariableResolverTest {
 
         Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(
             new WildcardTypeImpl(new Type[]{ Object.class }, new Type[0])));
-        assertIsParameterizedType(xArrayList, List.class, wildcardDoubleArray);
-        assertIsParameterizedType(xArrayExtendsList, List.class, newWildcardExtends(wildcardDoubleArray));
-        assertIsParameterizedType(xArraySuperList, List.class, newWildcardSuper(wildcardDoubleArray));
+        assertThat(xArrayList, ofParameterizedType(List.class, wildcardDoubleArray));
+        assertThat(xArrayExtendsList, ofParameterizedType(List.class, newWildcardExtends(wildcardDoubleArray)));
+        assertThat(xArraySuperList, ofParameterizedType(List.class, newWildcardSuper(wildcardDoubleArray)));
 
         WildcardType wildcardExtendsArrayOfExtendsChronoField = newWildcardExtends(
             new GenericArrayTypeImpl(newWildcardExtends(ChronoField.class)));
-        assertIsParameterizedType(extendsList, List.class, wildcardExtendsArrayOfExtendsChronoField);
-        assertIsParameterizedType(extendsExtendsList, List.class, newWildcardExtends(wildcardExtendsArrayOfExtendsChronoField));
-        assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(wildcardExtendsArrayOfExtendsChronoField));
+        assertThat(extendsList, ofParameterizedType(List.class, wildcardExtendsArrayOfExtendsChronoField));
+        assertThat(extendsExtendsList, ofParameterizedType(List.class, newWildcardExtends(wildcardExtendsArrayOfExtendsChronoField)));
+        assertThat(extendsSuperList, ofParameterizedType(List.class, newWildcardSuper(wildcardExtendsArrayOfExtendsChronoField)));
     }
 
     @Test
@@ -293,15 +294,15 @@ class TypeVariableResolverTest {
         // then
         Type xTypeVariable = ClassWithTypeVariablesContainer.class.getTypeParameters()[0];
         Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(xTypeVariable));
-        assertIsParameterizedType(xArrayList, List.class, wildcardDoubleArray);
-        assertIsParameterizedType(xArrayExtendsList, List.class, newWildcardExtends(wildcardDoubleArray));
-        assertIsParameterizedType(xArraySuperList, List.class, newWildcardSuper(wildcardDoubleArray));
+        assertThat(xArrayList, isParameterizedType(List.class, wildcardDoubleArray));
+        assertThat(xArrayExtendsList, isParameterizedType(List.class, newWildcardExtends(wildcardDoubleArray)));
+        assertThat(xArraySuperList, isParameterizedType(List.class, newWildcardSuper(wildcardDoubleArray)));
 
         WildcardType wildcardExtendsGArrayType = newWildcardExtends(
             new GenericArrayTypeImpl(ClassWithTypeVariablesContainer.class.getTypeParameters()[1]));
-        assertIsParameterizedType(extendsList, List.class, wildcardExtendsGArrayType);
-        assertIsParameterizedType(extendsExtendsList, List.class, newWildcardExtends(wildcardExtendsGArrayType));
-        assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(wildcardExtendsGArrayType));
+        assertThat(extendsList, isParameterizedType(List.class, wildcardExtendsGArrayType));
+        assertThat(extendsExtendsList, isParameterizedType(List.class, newWildcardExtends(wildcardExtendsGArrayType)));
+        assertThat(extendsSuperList, isParameterizedType(List.class, newWildcardSuper(wildcardExtendsGArrayType)));
     }
 
     @Test
