@@ -3,9 +3,9 @@ package ch.jalu.typeresolver;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 
 public final class ParameterizedTypeTestUtil {
 
@@ -20,9 +20,9 @@ public final class ParameterizedTypeTestUtil {
 
     public static void assertIsParameterizedType(Type actualType,
                                                  Class<?> expectedRawType, Type... expectedTypeArguments) {
-        assertTrue(actualType instanceof ParameterizedType);
+        assertThat(actualType, instanceOf(ParameterizedType.class));
         ParameterizedType pt = (ParameterizedType) actualType;
-        assertEquals(expectedRawType, pt.getRawType());
-        assertArrayEquals(expectedTypeArguments, pt.getActualTypeArguments());
+        assertThat(expectedRawType, equalTo(pt.getRawType()));
+        assertThat(expectedTypeArguments, equalTo(pt.getActualTypeArguments()));
     }
 }

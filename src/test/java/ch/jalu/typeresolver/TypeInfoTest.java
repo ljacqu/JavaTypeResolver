@@ -1,9 +1,9 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.reference.TypeReference;
+import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainerExt;
-import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
 import ch.jalu.typeresolver.samples.nestedclasses.TypeNestedClassExtStandalone;
 import ch.jalu.typeresolver.samples.typeinheritance.AbstractTwoArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
@@ -27,7 +27,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static ch.jalu.typeresolver.TypeInfo.of;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
@@ -37,12 +39,12 @@ class TypeInfoTest {
 
     @Test
     void shouldReturnTypeArgumentInfo() {
-        assertEquals(getType("stringList").getTypeArgumentInfo(0),
-            new TypeInfo(String.class));
-        assertEquals(getType("numberIntegerMap").getTypeArgumentInfo(1),
-            new TypeInfo(Integer.class));
-        assertEquals(getType("stringListSet").getTypeArgumentInfo(0),
-            getType("stringList"));
+        assertThat(getType("stringList").getTypeArgumentInfo(0),
+            equalTo(of(String.class)));
+        assertThat(getType("numberIntegerMap").getTypeArgumentInfo(1),
+            equalTo(of(Integer.class)));
+        assertThat(getType("stringListSet").getTypeArgumentInfo(0),
+            equalTo(new TypeReference<List<String>>() { }));
     }
 
     @Test
@@ -55,9 +57,9 @@ class TypeInfoTest {
 
     @Test
     void shouldReturnTypeArgumentAsClass() {
-        assertEquals(getType("stringList").getTypeArgumentAsClass(0), String.class);
-        assertEquals(getType("stringListSet").getTypeArgumentAsClass(0), List.class);
-        assertEquals(getType("numberIntegerMap").getTypeArgumentAsClass(1), Integer.class);
+        assertThat(getType("stringList").getTypeArgumentAsClass(0), equalTo(String.class));
+        assertThat(getType("stringListSet").getTypeArgumentAsClass(0), equalTo(List.class));
+        assertThat(getType("numberIntegerMap").getTypeArgumentAsClass(1), equalTo(Integer.class));
     }
 
     @Test
@@ -77,9 +79,9 @@ class TypeInfoTest {
         TypeInfo collectionInfo = typeInfo.resolveSuperclass(Collection.class);
 
         // then
-        assertEquals(mapInfo, new TypeReference<Map<String, Double>>() { });
-        assertEquals(abstractMapInfo, new TypeReference<AbstractMap<String, Double>>() { });
-        assertNull(collectionInfo);
+        assertThat(mapInfo, equalTo(new TypeReference<Map<String, Double>>() { }));
+        assertThat(abstractMapInfo, equalTo(new TypeReference<AbstractMap<String, Double>>() { }));
+        assertThat(collectionInfo, nullValue());
     }
 
     @Test
@@ -92,8 +94,8 @@ class TypeInfoTest {
         TypeInfo abstrCollInfo = typeInfo.resolveSuperclass(AbstractCollection.class);
 
         // then
-        assertEquals(iterableInfo, new TypeReference<Iterable<ArrayList<String>>>() { });
-        assertEquals(abstrCollInfo, new TypeReference<AbstractCollection<ArrayList<String>>>() { });
+        assertThat(iterableInfo, equalTo(new TypeReference<Iterable<ArrayList<String>>>() { }));
+        assertThat(abstrCollInfo, equalTo(new TypeReference<AbstractCollection<ArrayList<String>>>() { }));
     }
 
     @Test
@@ -109,10 +111,10 @@ class TypeInfoTest {
         TypeInfo abstrTwoArgProcessorFromInt = intDoubleArgProcessor.resolveSuperclass(AbstractTwoArgProcessor.class);
 
         // then
-        assertEquals(oneArgProcessorFromString, new TypeReference<OneArgProcessor<String>>() { });
-        assertNull(abstrTwoArgProcessorFromString);
-        assertEquals(oneArgProcessorFromInt, new TypeReference<OneArgProcessor<BigDecimal>>() { }); // BigDecimal is expected
-        assertEquals(abstrTwoArgProcessorFromInt, new TypeReference<AbstractTwoArgProcessor<Integer, Double>>() { });
+        assertThat(oneArgProcessorFromString, equalTo(new TypeReference<OneArgProcessor<String>>() { }));
+        assertThat(abstrTwoArgProcessorFromString, nullValue());
+        assertThat(oneArgProcessorFromInt, equalTo(new TypeReference<OneArgProcessor<BigDecimal>>() { })); // BigDecimal is expected
+        assertThat(abstrTwoArgProcessorFromInt, equalTo(new TypeReference<AbstractTwoArgProcessor<Integer, Double>>() { }));
     }
 
     @Test
@@ -124,7 +126,7 @@ class TypeInfoTest {
         TypeInfo result = typeInfo.resolveSuperclass(InnerParameterizedClassesContainer.class);
 
         // then
-        assertEquals(result, new TypeReference<InnerParameterizedClassesContainer<Integer>>() { });
+        assertThat(result, equalTo(new TypeReference<InnerParameterizedClassesContainer<Integer>>() { }));
     }
 
     @Test
@@ -136,7 +138,7 @@ class TypeInfoTest {
         TypeInfo nestedClassInfo = typeInfo.resolveSuperclass(InnerParameterizedClassesContainer.TypedInnerClass.class);
 
         // then
-        assertEquals(nestedClassInfo, new TypeReference<InnerParameterizedClassesContainer<Integer>.TypedInnerClass<String>>() { });
+        assertThat(nestedClassInfo, equalTo(new TypeReference<InnerParameterizedClassesContainer<Integer>.TypedInnerClass<String>>() { }));
     }
 
     @Test
@@ -149,7 +151,7 @@ class TypeInfoTest {
             InnerParameterizedClassesContainer.TypedNestedClass.TypedNestedInnerClass.class);
 
         // then
-        assertEquals(typeNestedInnerInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<Float>.TypedNestedInnerClass<Double>>() { });
+        assertThat(typeNestedInnerInfo, equalTo(new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<Float>.TypedNestedInnerClass<Double>>() { }));
     }
 
     @Test
@@ -162,8 +164,8 @@ class TypeInfoTest {
 
         // then
         // check both ways to be explicit but to also guarantee our expectation is the right thing
-        assertEquals(nestedClassInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<Float>>() { });
-        assertEquals(nestedClassInfo, of(TypeNestedClassExtStandalone.class.getGenericSuperclass()));
+        assertThat(nestedClassInfo, equalTo(new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<Float>>() { }));
+        assertThat(nestedClassInfo, equalTo(of(TypeNestedClassExtStandalone.class.getGenericSuperclass())));
     }
 
     /**
@@ -181,8 +183,8 @@ class TypeInfoTest {
 
         // then
         // check both ways to be explicit but to also guarantee our expectation is the right thing
-        assertEquals(nestedClassInfo, new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<String>>() { });
-        assertEquals(nestedClassInfo, of(TypeNestedClassExtStandalone.NestedTypeNestedClassExtStandalone.class.getGenericSuperclass()));
+        assertThat(nestedClassInfo, equalTo(new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<String>>() { }));
+        assertThat(nestedClassInfo, equalTo(of(TypeNestedClassExtStandalone.NestedTypeNestedClassExtStandalone.class.getGenericSuperclass())));
     }
 
     /**
@@ -198,11 +200,11 @@ class TypeInfoTest {
         TypeInfo nestedClassInfo = typeInfo.resolve(InnerParameterizedClassesContainer.TypedNestedClass.class.getTypeParameters()[0]);
 
         // then
-        assertEquals(nestedClassInfo, of(Float.class));
+        assertThat(nestedClassInfo, equalTo(of(Float.class)));
 
         // Check that our expectation also reflects reality
         TypeInfo typeNestedClassInfo = of(TypeNestedClassExtStandalone.NestedTypeNestedClassNoParent.class.getEnclosingClass().getGenericSuperclass());
-        assertEquals(Float.class, typeNestedClassInfo.getTypeArgumentAsClass(0));
+        assertThat(typeNestedClassInfo.getTypeArgumentAsClass(0), equalTo(Float.class));
     }
 
     @Test
@@ -215,8 +217,8 @@ class TypeInfoTest {
 
         // then
         // check both ways to be explicit but to also guarantee our expectation is the right thing
-        assertEquals(innerClassInfo, new TypeReference<InnerParameterizedClassesContainer<Double>.TypedInnerClass<String>>() { });
-        assertEquals(innerClassInfo, of(AdditionalNestedClassExt.Intermediate.TypedInnerClassExt.class.getGenericSuperclass()));
+        assertThat(innerClassInfo, equalTo(new TypeReference<InnerParameterizedClassesContainer<Double>.TypedInnerClass<String>>() { }));
+        assertThat(innerClassInfo, equalTo(of(AdditionalNestedClassExt.Intermediate.TypedInnerClassExt.class.getGenericSuperclass())));
     }
 
     @Test
@@ -227,11 +229,11 @@ class TypeInfoTest {
         TypeInfo doubleArray = new TypeInfo(double[].class);
 
         // when / then
-        assertEquals(string.resolveSuperclass(String.class), of(String.class));
-        assertEquals(string.resolveSuperclass(Object.class), of(Object.class));
-        assertEquals(enumType.resolveSuperclass(Serializable.class), of(Serializable.class));
-        assertEquals(doubleArray.resolveSuperclass(double[].class), of(double[].class));
-        assertEquals(doubleArray.resolveSuperclass(Object.class), of(Object.class));
+        assertThat(string.resolveSuperclass(String.class), equalTo(of(String.class)));
+        assertThat(string.resolveSuperclass(Object.class), equalTo(of(Object.class)));
+        assertThat(enumType.resolveSuperclass(Serializable.class), equalTo(of(Serializable.class)));
+        assertThat(doubleArray.resolveSuperclass(double[].class), equalTo(of(double[].class)));
+        assertThat(doubleArray.resolveSuperclass(Object.class), equalTo(of(Object.class)));
     }
 
     @Test
@@ -242,17 +244,17 @@ class TypeInfoTest {
         TypeInfo list2dArray = new TypeReference<ArrayList<Short>[][]>() { };
 
         // when / then
-        assertEquals(double3dArray.resolveSuperclass(Object[][].class), of(Object[][].class));
-        assertEquals(double3dArray.resolveSuperclass(Object[].class), of(Object[].class));
-        assertEquals(double3dArray.resolveSuperclass(Object.class), of(Object.class));
+        assertThat(double3dArray.resolveSuperclass(Object[][].class), equalTo(of(Object[][].class)));
+        assertThat(double3dArray.resolveSuperclass(Object[].class), equalTo(of(Object[].class)));
+        assertThat(double3dArray.resolveSuperclass(Object.class), equalTo(of(Object.class)));
 
-        assertEquals(stringArr.resolveSuperclass(Object[].class), of(Object[].class));
-        assertEquals(stringArr.resolveSuperclass(Serializable[].class), of(Serializable[].class));
+        assertThat(stringArr.resolveSuperclass(Object[].class), equalTo(of(Object[].class)));
+        assertThat(stringArr.resolveSuperclass(Serializable[].class), equalTo(of(Serializable[].class)));
 
-        assertEquals(list2dArray.resolveSuperclass(List[][].class), new TypeReference<List<Short>[][]>(){ });
-        assertEquals(list2dArray.resolveSuperclass(AbstractList[][].class), new TypeReference<AbstractList<Short>[][]>(){ });
-        assertEquals(list2dArray.resolveSuperclass(RandomAccess[][].class), of(RandomAccess[][].class));
-        assertEquals(list2dArray.resolveSuperclass(Object[].class), of(Object[].class));
+        assertThat(list2dArray.resolveSuperclass(List[][].class), equalTo(new TypeReference<List<Short>[][]>(){ }));
+        assertThat(list2dArray.resolveSuperclass(AbstractList[][].class), equalTo(new TypeReference<AbstractList<Short>[][]>(){ }));
+        assertThat(list2dArray.resolveSuperclass(RandomAccess[][].class), equalTo(of(RandomAccess[][].class)));
+        assertThat(list2dArray.resolveSuperclass(Object[].class), equalTo(of(Object[].class)));
     }
 
     @Test

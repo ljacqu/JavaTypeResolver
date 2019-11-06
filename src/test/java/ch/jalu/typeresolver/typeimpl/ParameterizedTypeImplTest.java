@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test for {@link ParameterizedTypeImpl}.
@@ -27,21 +28,21 @@ class ParameterizedTypeImplTest {
         ParameterizedTypeImpl mapPt = new ParameterizedTypeImpl(Map.class, null, new Type[]{ String.class, setPt });
 
         // when / then
-        assertEquals(doubleListType, listPt);
-        assertEquals(listPt, doubleListType);
-        assertEquals(listPt, listPt);
-        assertEquals(listPt.hashCode(), doubleListType.hashCode());
+        assertThat(doubleListType, equalTo(listPt));
+        assertThat(listPt, equalTo(doubleListType));
+        assertThat(listPt, equalTo(listPt));
+        assertThat(listPt.hashCode(), equalTo(doubleListType.hashCode()));
 
-        assertEquals(mapType, mapPt);
-        assertEquals(mapPt, mapType);
-        assertEquals(mapPt, mapPt);
-        assertEquals(mapPt.hashCode(), mapType.hashCode());
+        assertThat(mapType, equalTo(mapPt));
+        assertThat(mapPt, equalTo(mapType));
+        assertThat(mapPt, equalTo(mapPt));
+        assertThat(mapPt.hashCode(), equalTo(mapType.hashCode()));
 
-        assertNotEquals(doubleListType, mapPt);
-        assertNotEquals(mapPt, doubleListType);
-        assertNotEquals(listPt, mapType);
-        assertNotEquals(mapType, listPt);
-        assertNotEquals(mapPt, listPt);
+        assertThat(doubleListType, not(mapPt));
+        assertThat(mapPt, not(doubleListType));
+        assertThat(listPt, not(mapType));
+        assertThat(mapType, not(listPt));
+        assertThat(mapPt, not(listPt));
     }
 
     @Test
@@ -55,7 +56,7 @@ class ParameterizedTypeImplTest {
         ParameterizedTypeImpl mapPt = new ParameterizedTypeImpl(Map.class, null, new Type[]{ String.class, setPt });
 
         // when / then
-        assertEquals(listPt.toString(), doubleListType.toString());
-        assertEquals(mapPt.toString(), mapType.toString());
+        assertThat(listPt.toString(), equalTo(doubleListType.toString()));
+        assertThat(mapPt.toString(), equalTo(mapType.toString()));
     }
 }

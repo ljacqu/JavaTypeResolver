@@ -8,7 +8,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Test for {@link GenericArrayTypeProperties}.
@@ -35,7 +36,7 @@ class GenericArrayTypePropertiesTest {
                                                     TypeReference<?> expectedComponentType, int expectedDimension) {
         GenericArrayTypeProperties actualDescription = GenericArrayTypeProperties.getArrayPropertiesOfType((GenericArrayType) givenArrayClass);
 
-        assertEquals(actualDescription.getComponentType(), expectedComponentType.getType());
-        assertEquals(actualDescription.getDimension(), expectedDimension);
+        assertThat(actualDescription.getComponentType(), equalTo(expectedComponentType.getType()));
+        assertThat(actualDescription.getDimension(), equalTo(expectedDimension));
     }
 }

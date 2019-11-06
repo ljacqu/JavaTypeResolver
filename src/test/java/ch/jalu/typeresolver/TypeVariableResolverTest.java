@@ -30,10 +30,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.assertIsParameterizedType;
+import static ch.jalu.typeresolver.TypeInfo.of;
 import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardExtends;
 import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardSuper;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Test for {@link TypeVariableResolver}.
@@ -53,10 +55,10 @@ class TypeVariableResolverTest {
         TypeInfo resolvedTuMapTypeInfo = typeInfo.resolve(tuMap.getGenericType());
 
         // then
-        assertEquals(processArgMethodType.getType(), BigDecimal.class);
-        assertEquals(resolvedTuMapTypeInfo.toClass(), Map.class);
-        assertEquals(resolvedTuMapTypeInfo.getTypeArgumentAsClass(0), Integer.class);
-        assertEquals(resolvedTuMapTypeInfo.getTypeArgumentAsClass(1), Double.class);
+        assertThat(processArgMethodType.getType(), equalTo(BigDecimal.class));
+        assertThat(resolvedTuMapTypeInfo.toClass(), equalTo(Map.class));
+        assertThat(resolvedTuMapTypeInfo.getTypeArgumentAsClass(0), equalTo(Integer.class));
+        assertThat(resolvedTuMapTypeInfo.getTypeArgumentAsClass(1), equalTo(Double.class));
     }
 
     @Test
@@ -69,7 +71,7 @@ class TypeVariableResolverTest {
         Type resolvedType = resolver.resolve(optionalValueField.getGenericType());
 
         // then
-        assertEquals(resolvedType, optionalValueField.getGenericType());
+        assertThat(resolvedType, equalTo(optionalValueField.getGenericType()));
     }
 
     @Test
@@ -78,11 +80,11 @@ class TypeVariableResolverTest {
         TypeVariableResolver resolver = new TypeVariableResolver(IntegerDoubleArgProcessor.class);
 
         // when / then
-        assertEquals(resolver.resolve(String.class), String.class);
-        assertEquals(resolver.resolve(int.class), int.class);
-        assertEquals(resolver.resolve(BigDecimal[][].class), BigDecimal[][].class);
-        assertEquals(resolver.resolve(char[].class), char[].class);
-        assertNull(resolver.resolve(null));
+        assertThat(resolver.resolve(String.class), equalTo(String.class));
+        assertThat(resolver.resolve(int.class), equalTo(int.class));
+        assertThat(resolver.resolve(BigDecimal[][].class), equalTo(BigDecimal[][].class));
+        assertThat(resolver.resolve(char[].class), equalTo(char[].class));
+        assertThat(resolver.resolve(null), nullValue());
     }
 
     @Test
@@ -113,8 +115,8 @@ class TypeVariableResolverTest {
         assertIsParameterizedType(tuMapResolved, Map.class, Integer.class, Character.class);
         assertIsParameterizedType(processParamTypeResolved, List.class, Float.class);
 
-        assertEquals(tSetResolved2.getType(), new TypeReference<Set<Map<Float, Set<Float>>>>() { }.getType());
-        assertEquals(tuMapResolved2.getType(), new TypeReference<Map<Integer, Map<Float, Set<Float>>>>() { }.getType());
+        assertThat(tSetResolved2.getType(), equalTo(new TypeReference<Set<Map<Float, Set<Float>>>>() { }.getType()));
+        assertThat(tuMapResolved2.getType(), equalTo(new TypeReference<Map<Integer, Map<Float, Set<Float>>>>() { }.getType()));
     }
 
     @Test
@@ -130,9 +132,9 @@ class TypeVariableResolverTest {
 
         // then
         Type expectedOptionalType = new TypeReference<Optional<? extends Double>>() { }.getType();
-        assertEquals(resolvedOptionalType, expectedOptionalType);
+        assertThat(resolvedOptionalType, equalTo(expectedOptionalType));
         Type expectedComparableType = new TypeReference<Comparable<? super Integer>>() { }.getType();
-        assertEquals(resolvedComparableType, expectedComparableType);
+        assertThat(resolvedComparableType, equalTo(expectedComparableType));
     }
 
     @Test
@@ -203,15 +205,15 @@ class TypeVariableResolverTest {
         TypeInfo extendsSuperList = extendsZArrayContainerResolver.resolve(superListType);
 
         // then
-        assertEquals(comparableYList,        new TypeReference<List<Comparable<Double>>>() { });
-        assertEquals(comparableYExtendsList, new TypeReference<List<? extends Comparable<Double>>>() { });
-        assertEquals(comparableYSuperList,   new TypeReference<List<? super Comparable<Double>>>() { });
+        assertThat(comparableYList,        equalTo(new TypeReference<List<Comparable<Double>>>() { }));
+        assertThat(comparableYExtendsList, equalTo(new TypeReference<List<? extends Comparable<Double>>>() { }));
+        assertThat(comparableYSuperList,   equalTo(new TypeReference<List<? super Comparable<Double>>>() { }));
 
-        assertEquals(xArrayList,        new TypeReference<List<Double[][]>>() { });
-        assertEquals(xArrayExtendsList, new TypeReference<List<? extends Double[][]>>() { });
-        assertEquals(xArraySuperList,   new TypeReference<List<? super Double[][]>>() { });
+        assertThat(xArrayList,        equalTo(new TypeReference<List<Double[][]>>() { }));
+        assertThat(xArrayExtendsList, equalTo(new TypeReference<List<? extends Double[][]>>() { }));
+        assertThat(xArraySuperList,   equalTo(new TypeReference<List<? super Double[][]>>() { }));
 
-        assertEquals(extendsList,        new TypeReference<List<? extends TimeUnit[]>>() { });
+        assertThat(extendsList,        equalTo(new TypeReference<List<? extends TimeUnit[]>>() { }));
         assertIsParameterizedType(extendsExtendsList, List.class, newWildcardExtends(newWildcardExtends(TimeUnit[].class)));
         assertIsParameterizedType(extendsSuperList, List.class, newWildcardSuper(newWildcardExtends(TimeUnit[].class)));
     }
@@ -247,9 +249,9 @@ class TypeVariableResolverTest {
         TypeInfo extendsSuperList = extendsZArrayResolver.resolve(superListType);
 
         // then
-        assertEquals(comparableYList,        new TypeReference<List<Comparable<?>>>(){ });
-        assertEquals(comparableYExtendsList, new TypeReference<List<? extends Comparable<?>>>(){ });
-        assertEquals(comparableYSuperList,   new TypeReference<List<? super Comparable<?>>>(){ });
+        assertThat(comparableYList,        equalTo(new TypeReference<List<Comparable<?>>>(){ }));
+        assertThat(comparableYExtendsList, equalTo(new TypeReference<List<? extends Comparable<?>>>(){ }));
+        assertThat(comparableYSuperList,   equalTo(new TypeReference<List<? super Comparable<?>>>(){ }));
 
         Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(
             new WildcardTypeImpl(new Type[]{ Object.class }, new Type[0])));
@@ -321,10 +323,10 @@ class TypeVariableResolverTest {
         TypeInfo superListResolved = nestedContainerInfo.resolve(superListType);
 
         // then
-        assertEquals(nestedContainerInfo, new TypeReference<TypedContainer<TypedContainer<? extends AccessMode>>>(){ });
-        assertEquals(listResolved,        new TypeReference<List<TypedContainer<? extends AccessMode>>>(){ });
-        assertEquals(extendsListResolved, new TypeReference<List<? extends TypedContainer<? extends AccessMode>>>(){ });
-        assertEquals(superListResolved,   new TypeReference<List<? super   TypedContainer<? extends AccessMode>>>(){ });
+        assertThat(nestedContainerInfo, equalTo(new TypeReference<TypedContainer<TypedContainer<? extends AccessMode>>>(){ }));
+        assertThat(listResolved,        equalTo(new TypeReference<List<TypedContainer<? extends AccessMode>>>(){ }));
+        assertThat(extendsListResolved, equalTo(new TypeReference<List<? extends TypedContainer<? extends AccessMode>>>(){ }));
+        assertThat(superListResolved,   equalTo(new TypeReference<List<? super   TypedContainer<? extends AccessMode>>>(){ }));
     }
 
     @Test
@@ -339,8 +341,8 @@ class TypeVariableResolverTest {
         TypeInfo pFieldRes = typeInfo.resolve(pField);
 
         // then
-        assertEquals(tFieldRes, TypeInfo.of(String.class));
-        assertEquals(pFieldRes, TypeInfo.of(Integer.class));
+        assertThat(tFieldRes, equalTo(of(String.class)));
+        assertThat(pFieldRes, equalTo(of(Integer.class)));
     }
 
     private static TypeInfo createChildTypeInfo(TypeInfo parentTypeInfo,

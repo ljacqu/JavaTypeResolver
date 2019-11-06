@@ -9,9 +9,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Test for {@link CommonTypeUtil}.
@@ -25,8 +24,8 @@ class CommonTypeUtilTest {
         ParameterizedType map = (ParameterizedType) new TypeReference<Map<Integer, ?>>() { }.getType();
 
         // when / then
-        assertEquals(CommonTypeUtil.getRawType(list), List.class);
-        assertEquals(CommonTypeUtil.getRawType(map), Map.class);
+        assertThat(CommonTypeUtil.getRawType(list), equalTo(List.class));
+        assertThat(CommonTypeUtil.getRawType(map), equalTo(Map.class));
     }
 
     @Test
@@ -36,8 +35,8 @@ class CommonTypeUtilTest {
         Class<?> byte3dArr = CommonTypeUtil.createArrayClass(byte[][].class);
 
         // then
-        assertEquals(stringArr, String[].class);
-        assertEquals(byte3dArr, byte[][][].class);
+        assertThat(stringArr, equalTo(String[].class));
+        assertThat(byte3dArr, equalTo(byte[][][].class));
     }
 
     @Test
@@ -51,10 +50,10 @@ class CommonTypeUtilTest {
         WildcardTypeImpl wildcardWithObjectAndString = new WildcardTypeImpl(new Type[]{ Object.class, String.class }, new Type[0]);
 
         // when / then
-        assertFalse(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObject));
-        assertTrue(CommonTypeUtil.hasExplicitUpperBound(wildcardWithString));
+        assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObject), equalTo(false));
+        assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithString), equalTo(true));
 
-        assertFalse(CommonTypeUtil.hasExplicitUpperBound(emptyWildcard));
-        assertTrue(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObjectAndString));
+        assertThat(CommonTypeUtil.hasExplicitUpperBound(emptyWildcard), equalTo(false));
+        assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObjectAndString), equalTo(true));
     }
 }

@@ -4,8 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test for {@link GenericArrayTypeImpl}.
@@ -21,18 +22,18 @@ class GenericArrayTypeImplTest {
         Type impl3dArrayType = new GenericArrayTypeImpl(new GenericArrayTypeImpl(impl1dArrayType));
 
         // when / then
-        assertEquals(jvm1dArrayType, impl1dArrayType);
-        assertEquals(impl1dArrayType, jvm1dArrayType);
-        assertEquals(jvm1dArrayType.hashCode(), impl1dArrayType.hashCode());
+        assertThat(jvm1dArrayType, equalTo(impl1dArrayType));
+        assertThat(impl1dArrayType, equalTo(jvm1dArrayType));
+        assertThat(jvm1dArrayType.hashCode(), equalTo(impl1dArrayType.hashCode()));
 
-        assertEquals(jvm3dArrayType, impl3dArrayType);
-        assertEquals(impl3dArrayType, jvm3dArrayType);
-        assertEquals(jvm3dArrayType.hashCode(), jvm1dArrayType.hashCode());
+        assertThat(jvm3dArrayType, equalTo(impl3dArrayType));
+        assertThat(impl3dArrayType, equalTo(jvm3dArrayType));
+        assertThat(jvm3dArrayType.hashCode(), equalTo(jvm1dArrayType.hashCode()));
 
-        assertNotEquals(jvm1dArrayType, impl3dArrayType);
-        assertNotEquals(impl3dArrayType, jvm1dArrayType);
-        assertNotEquals(impl1dArrayType, jvm3dArrayType);
-        assertNotEquals(jvm3dArrayType, impl1dArrayType);
+        assertThat(jvm1dArrayType, not(impl3dArrayType));
+        assertThat(impl3dArrayType, not(jvm1dArrayType));
+        assertThat(impl1dArrayType, not(jvm3dArrayType));
+        assertThat(jvm3dArrayType, not(impl1dArrayType));
     }
 
     @Test
@@ -42,8 +43,8 @@ class GenericArrayTypeImplTest {
         Type impl3dArrayType = new GenericArrayTypeImpl(new GenericArrayTypeImpl(impl1dArrayType));
 
         // when / then
-        assertEquals(impl1dArrayType.toString(), "T[]");
-        assertEquals(impl3dArrayType.toString(), "T[][][]");
+        assertThat(impl1dArrayType.toString(), equalTo("T[]"));
+        assertThat(impl3dArrayType.toString(), equalTo("T[][][]"));
     }
 
     private static final class GenericArrayTypes<T> {

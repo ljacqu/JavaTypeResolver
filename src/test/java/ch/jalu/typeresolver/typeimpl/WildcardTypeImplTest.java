@@ -8,8 +8,8 @@ import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Test for {@link WildcardTypeImpl}.
@@ -29,17 +29,17 @@ class WildcardTypeImplTest {
         WildcardType emptyWildcard = WildcardTypeImpl.newUnboundedWildcard();
 
         // then
-        assertEquals(extendsSerializable, jreExtendsSerializable);
-        assertArrayEquals(extendsSerializable.getUpperBounds(), jreExtendsSerializable.getUpperBounds());
-        assertArrayEquals(extendsSerializable.getLowerBounds(), jreExtendsSerializable.getLowerBounds());
+        assertThat(extendsSerializable, equalTo(jreExtendsSerializable));
+        assertThat(extendsSerializable.getUpperBounds(), equalTo(jreExtendsSerializable.getUpperBounds()));
+        assertThat(extendsSerializable.getLowerBounds(), equalTo(jreExtendsSerializable.getLowerBounds()));
 
-        assertEquals(superString, jreSuperString);
-        assertArrayEquals(superString.getUpperBounds(), jreSuperString.getUpperBounds());
-        assertArrayEquals(superString.getLowerBounds(), jreSuperString.getLowerBounds());
+        assertThat(superString, equalTo(jreSuperString));
+        assertThat(superString.getUpperBounds(), equalTo(jreSuperString.getUpperBounds()));
+        assertThat(superString.getLowerBounds(), equalTo(jreSuperString.getLowerBounds()));
 
-        assertEquals(emptyWildcard, jreEmptyWildcard);
-        assertArrayEquals(emptyWildcard.getUpperBounds(), jreEmptyWildcard.getUpperBounds());
-        assertArrayEquals(emptyWildcard.getLowerBounds(), jreEmptyWildcard.getLowerBounds());
+        assertThat(emptyWildcard, equalTo(jreEmptyWildcard));
+        assertThat(emptyWildcard.getUpperBounds(), equalTo(jreEmptyWildcard.getUpperBounds()));
+        assertThat(emptyWildcard.getLowerBounds(), equalTo(jreEmptyWildcard.getLowerBounds()));
     }
 
     @Test
@@ -62,9 +62,9 @@ class WildcardTypeImplTest {
                 Type jdkType = jreTypes[j];
 
                 boolean shouldMatch = (i == j);
-                assertEquals(givenType.equals(jdkType), shouldMatch, i + "," + j);
-                assertEquals(jdkType.equals(givenType), shouldMatch);
-                assertEquals(givenType.hashCode() == jdkType.hashCode(), shouldMatch);
+                assertThat(i + "," + j, givenType.equals(jdkType), equalTo(shouldMatch));
+                assertThat(i + "," + j, jdkType.equals(givenType), equalTo(shouldMatch));
+                assertThat(i + "," + j, givenType.hashCode() == jdkType.hashCode(), equalTo(shouldMatch));
             }
         }
     }
@@ -77,8 +77,8 @@ class WildcardTypeImplTest {
         WildcardTypeImpl type3 = new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ String.class });
 
         // when / then
-        assertEquals(type1.toString(), "?");
-        assertEquals(type2.toString(), "? extends java.io.Serializable");
-        assertEquals(type3.toString(), "? super java.lang.String");
+        assertThat(type1.toString(), equalTo("?"));
+        assertThat(type2.toString(), equalTo("? extends java.io.Serializable"));
+        assertThat(type3.toString(), equalTo("? super java.lang.String"));
     }
 }

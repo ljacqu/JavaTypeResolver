@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static ch.jalu.typeresolver.ParameterizedTypeTestUtil.assertIsParameterizedType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -20,7 +21,7 @@ class TypeReferenceTest {
         TypeInfo typeInfo = new TypeReference<String>() {};
 
         // then
-        assertEquals(typeInfo.getType(), String.class);
+        assertThat(typeInfo.getType(), equalTo(String.class));
     }
 
     @Test
@@ -35,8 +36,8 @@ class TypeReferenceTest {
     @Test
     void shouldHaveArrayAsTypeArgument() {
         // given / when / then
-        assertEquals(new TypeReference<Double[][]>() { }.getType(), Double[][].class);
-        assertEquals(new TypeReference<char[]>() { }.getType(), char[].class);
+        assertThat(new TypeReference<Double[][]>() { }.getType(), equalTo(Double[][].class));
+        assertThat(new TypeReference<char[]>() { }.getType(), equalTo(char[].class));
     }
 
     @Test
