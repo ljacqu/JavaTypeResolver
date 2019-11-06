@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Watchable;
 import java.util.AbstractCollection;
 import java.util.AbstractList;
 import java.util.AbstractMap;
@@ -21,17 +24,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static ch.jalu.typeresolver.TypeInfo.of;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -288,7 +294,9 @@ class TypeInfoTest {
         // then
         TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
         assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
-        assertThat(stringArrayAll, containsInAnyOrder(String[].class, Object.class, Cloneable.class, Serializable.class));
+        assertThat(stringArrayAll, containsInAnyOrder(
+            String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
+            Object.class, Cloneable.class, Serializable.class));
         assertThat(arrayListAll, containsInAnyOrder(
             new TypeReference<ArrayList<String>>() { },
             new TypeReference<AbstractList<String>>() { },
@@ -300,6 +308,89 @@ class TypeInfoTest {
             of(Object.class)));
         assertThat(primitiveIntAll, contains(int.class));
         assertThat(primitiveIntArrAll, containsInAnyOrder(int[].class, Object.class, Cloneable.class, Serializable.class));
+    }
+
+    @Test
+    void shouldReturnAllArrayTypesForArrays() {
+        // given
+        TypeInfo stringArray = of(String[].class);
+        TypeInfo list2dArray = new TypeReference<List<String>[][]>() { };
+        TypeInfo float3dArray = of(float[][][].class);
+
+        // when
+        Set<Type> stringArrayAll = stringArray.getAllTypes();
+        Set<TypeInfo> list2dArrayAll = list2dArray.getAllTypeInfos();
+        Set<Type> float3dArrayAll = float3dArray.getAllTypes();
+
+        // then
+        Type comparableOfString = new TypeReference<Comparable<String>[]>() { }.getType();
+        assertThat(stringArrayAll, containsInAnyOrder(String[].class, CharSequence[].class, comparableOfString, Serializable[].class, Object[].class,
+            Serializable.class, Cloneable.class, Object.class));
+
+        assertThat(list2dArrayAll, containsInAnyOrder(
+            new TypeReference<List<String>[][]>() { },
+            new TypeReference<Collection<String>[][]>() { },
+            new TypeReference<Iterable<String>[][]>() { },
+            new TypeReference<Object[][]>() { },
+            of(Serializable[].class), of(Cloneable[].class), of(Object[].class),
+            of(Serializable.class), of(Cloneable.class), of(Object.class)));
+
+        assertThat(float3dArrayAll, containsInAnyOrder(
+            float[][][].class,
+            Serializable[][].class, Cloneable[][].class, Object[][].class,
+            Serializable[].class,   Cloneable[].class,   Object[].class,
+            Serializable.class,     Cloneable.class,     Object.class));
+    }
+
+    @Test
+    void shouldReturnAllTypes2() {
+        // given
+        TypeInfo timeUnit = of(TimeUnit.class);
+        TypeInfo linkedHashMap = new TypeReference<LinkedHashMap<String, ? extends Integer>>() { };
+
+        // when
+        Set<Type> timeUnitAll = timeUnit.getAllTypes();
+        Set<TypeInfo> linkedHashMapAll = linkedHashMap.getAllTypeInfos();
+
+        // then
+        assertThat(timeUnitAll, containsInAnyOrder(TimeUnit.class, Serializable.class, Object.class,
+            new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
+        assertThat(linkedHashMapAll, containsInAnyOrder(
+            new TypeReference<LinkedHashMap<String, ? extends Integer>>() { },
+            new TypeReference<HashMap<String, ? extends Integer>>() { },
+            new TypeReference<AbstractMap<String, ? extends Integer>>() { },
+            new TypeReference<Map<String, ? extends Integer>>() { },
+            of(Cloneable.class), of(Serializable.class), of(Object.class)));
+    }
+
+    @Test
+    void shouldReturnTypesWithGivenCollectionAndFunction() {
+        // given
+        TypeInfo typeInfo = new TypeInfo(BigDecimal.class);
+        Function<Type, String> typeToString = type -> CommonTypeUtil.getDefinitiveClass(type).getSimpleName();
+        List<String> typesOfBigDecimal = new ArrayList<>();
+
+        // when
+        typeInfo.gatherAllTypes(typesOfBigDecimal, typeToString);
+
+        // then
+        assertThat(typesOfBigDecimal, contains("BigDecimal", "Number", "Object", "Serializable", "Comparable"));
+    }
+
+    @Test
+    void shouldConsiderInterfaceOfInterfaces() {
+        // given
+        Path emptyPath = Paths.get("");
+        TypeInfo pathTypeInfo = of(emptyPath.getClass());
+
+        // when
+        Set<TypeInfo> pathsAll = pathTypeInfo.getAllTypeInfos();
+
+        // then
+        assertThat(pathsAll, hasItems(of(Path.class),
+            new TypeReference<Comparable<Path>>() { },
+            new TypeReference<Iterable<Path>>() { },
+            of(Watchable.class), of(Object.class)));
     }
 
     private static TypeInfo getType(String fieldName) {

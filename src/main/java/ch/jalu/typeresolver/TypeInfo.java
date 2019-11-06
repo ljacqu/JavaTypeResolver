@@ -1,15 +1,20 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.array.AbstractArrayProperties;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 
 import javax.annotation.Nullable;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -236,36 +241,69 @@ public class TypeInfo {
     }
 
     public Set<Type> getAllTypes() {
-        TypeVariableResolver resolver = getOrInitResolver();
-        return getAllTypesInternal(new HashSet<>(), resolver::resolve);
+        return getAllTypesInternal(new HashSet<>(), Function.identity());
     }
 
     public Set<TypeInfo> getAllTypeInfos() {
-        return getAllTypesInternal(new HashSet<>(), this::resolve);
+        return getAllTypesInternal(new HashSet<>(), TypeInfo::new);
     }
 
-    public <T> void gatherAllTypes(Collection<? super T> container, Function<Type, T> typeToElement) {
-        getAllTypesInternal(container, typeToElement);
+    public <E> void gatherAllTypes(Collection<? super E> container, Function<Type, E> typeToElementFn) {
+        getAllTypesInternal(container, typeToElementFn);
     }
 
-    private <T, C extends Collection<? super T>> C getAllTypesInternal(C container, Function<Type, T> typeFunction) {
+    private <E, C extends Collection<? super E>> C getAllTypesInternal(C container, Function<Type, E> typeToElementFn) {
         if (CommonTypeUtil.getDefinitiveClass(type) != null) {
-            addClassesRecursively(type, typeFunction, container);
+            addClassesRecursively(type, getOrInitResolver(), container, typeToElementFn);
         }
         return container;
     }
 
-    private <T> void addClassesRecursively(@Nullable Type type,
-                                           Function<Type, T> typeToTFunction, Collection<? super T> allTypes) {
-        if (type != null) {
-            allTypes.add(typeToTFunction.apply(type));
+    private <E> void addClassesRecursively(@Nullable Type type, TypeVariableResolver resolver,
+                                           Collection<? super E> container, Function<Type, E> typeToElementFn) {
+        if (type == null) {
+            return;
+        }
 
-            Class<?> typeAsClass = CommonTypeUtil.getDefinitiveClass(type);
-            addClassesRecursively(typeAsClass.getGenericSuperclass(), typeToTFunction, allTypes);
+        Class<?> typeAsClass = CommonTypeUtil.getDefinitiveClass(type);
+        if (!typeAsClass.isArray()) {
+            container.add(typeToElementFn.apply(resolver.resolve(type)));
+            addClassesRecursively(typeAsClass.getGenericSuperclass(), resolver, container, typeToElementFn);
             for (Type genericInterface : typeAsClass.getGenericInterfaces()) {
-                addClassesRecursively(genericInterface, typeToTFunction, allTypes);
+                addClassesRecursively(genericInterface, resolver, container, typeToElementFn);
+            }
+        } else {
+            AbstractArrayProperties arrayProperties = CommonTypeUtil.getArrayProperty(type);
+            List<Type> typesOfComponent = gatherAllTypesOfComponent(arrayProperties);
+
+            // An array like Double[][] is also a Number[][] or an Object[][], but only for the same dimension
+            for (Type comp : typesOfComponent) {
+                Type arrayType = CommonTypeUtil.createArrayType(comp, arrayProperties.getDimension());
+                container.add(typeToElementFn.apply(arrayType));
+            }
+
+            // Arrays implement Serializable & Cloneable, so a Double[][] is also a Serializable[] and a Serializable...
+            List<Type> typesOfArrayClass = Arrays.asList(Serializable.class, Cloneable.class, Object.class);
+            for (int i = arrayProperties.getDimension() - 1; i >= 0; --i) {
+                for (Type typeFromArr : typesOfArrayClass) {
+                    Type arrayType = CommonTypeUtil.createArrayType(typeFromArr, i);
+                    container.add(typeToElementFn.apply(arrayType));
+                }
             }
         }
+    }
+
+    private List<Type> gatherAllTypesOfComponent(AbstractArrayProperties arrayProperties) {
+        TypeVariableResolver componentResolver = new TypeVariableResolver(arrayProperties.getComponentType());
+        List<Type> typesOfComponent = new ArrayList<>();
+        addClassesRecursively(arrayProperties.getComponentType(), componentResolver,
+            typesOfComponent, Function.identity());
+
+        if (!CommonTypeUtil.getDefinitiveClass(arrayProperties.getComponentType()).isPrimitive()
+                && !typesOfComponent.contains(Object.class)) {
+            typesOfComponent.add(Object.class);
+        }
+        return typesOfComponent;
     }
 
     @Nullable

@@ -1,5 +1,8 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.array.AbstractArrayProperties;
+import ch.jalu.typeresolver.array.ArrayClassProperties;
+import ch.jalu.typeresolver.array.GenericArrayTypeProperties;
 import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 
 import javax.annotation.Nullable;
@@ -41,6 +44,14 @@ public final class CommonTypeUtil {
         return Array.newInstance(componentType, 0).getClass();
     }
 
+    public static Class<?> createArrayClass(Class<?> componentType, int dimension) {
+        Class<?> clazz = componentType;
+        for (int i = 0; i < dimension; ++i) {
+            clazz = createArrayClass(clazz);
+        }
+        return clazz;
+    }
+
     /**
      * Returns an array class or a {@link java.lang.reflect.GenericArrayType} instance whose component type is
      * the {@code componentType} argument.
@@ -49,10 +60,23 @@ public final class CommonTypeUtil {
      * @return the appropriate array type
      */
     public static Type createArrayType(Type componentType) {
+        return createArrayType(componentType, 1);
+    }
+
+    public static Type createArrayType(Type componentType, int dimension) {
         if (componentType instanceof Class<?>) {
-            return createArrayClass((Class<?>) componentType);
+            return createArrayClass((Class<?>) componentType, dimension);
         }
-        return new GenericArrayTypeImpl(componentType);
+        return GenericArrayTypeImpl.create(componentType, dimension);
+    }
+
+    public static AbstractArrayProperties getArrayProperty(Type type) {
+        if (type instanceof Class<?>) {
+            return ArrayClassProperties.getArrayPropertiesOfClass((Class<?>) type);
+        } else if (type instanceof GenericArrayType) {
+            return GenericArrayTypeProperties.getArrayPropertiesOfType((GenericArrayType) type);
+        }
+        return new GenericArrayTypeProperties(type, 0);
     }
 
     /**

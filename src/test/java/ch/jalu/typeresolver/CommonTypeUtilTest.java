@@ -9,6 +9,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -80,5 +82,33 @@ class CommonTypeUtilTest {
         // when / then
         assertThat(CommonTypeUtil.getDefinitiveClass(wildcard), nullValue());
         assertThat(CommonTypeUtil.getDefinitiveClass(wildcardArray), nullValue());
+    }
+
+    @Test
+    void shouldCreateArrayTypeWithCorrectDimension() {
+        // given
+        Type integer = Integer.class;
+        Type genericList = new TypeReference<List<Double>>() { }.getType();
+
+        // when
+        Type integerArray = CommonTypeUtil.createArrayType(integer, 2);
+        Type genericListArray = CommonTypeUtil.createArrayType(genericList, 3);
+
+        // then
+        assertThat(integerArray, equalTo(Integer[][].class));
+        assertThat(genericListArray, equalTo(new TypeReference<List<Double>[][][]>() { }.getType()));
+    }
+
+    @Test
+    void shouldReturnSameTypeForZeroOrNegativeDimension() {
+        // given
+        Type string = String.class;
+        Type genericSet = new TypeReference<Set<TimeUnit>>() { }.getType();
+
+        // when / then
+        assertThat(CommonTypeUtil.createArrayType(string, 0), equalTo(string));
+        assertThat(CommonTypeUtil.createArrayType(string, -2), equalTo(string));
+        assertThat(CommonTypeUtil.createArrayType(genericSet, 0), equalTo(genericSet));
+        assertThat(CommonTypeUtil.createArrayType(genericSet, -1), equalTo(genericSet));
     }
 }

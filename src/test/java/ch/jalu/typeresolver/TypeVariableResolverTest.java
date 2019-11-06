@@ -292,11 +292,11 @@ class TypeVariableResolverTest {
         Type extendsSuperList = extendsZArrayType.resolve(superListType).getType();
 
         // then
-        Type xTypeVariable = ClassWithTypeVariablesContainer.class.getTypeParameters()[0];
-        Type wildcardDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(xTypeVariable));
-        assertThat(xArrayList, isParameterizedType(List.class, wildcardDoubleArray));
-        assertThat(xArrayExtendsList, isParameterizedType(List.class, newWildcardExtends(wildcardDoubleArray)));
-        assertThat(xArraySuperList, isParameterizedType(List.class, newWildcardSuper(wildcardDoubleArray)));
+        Type fTypeVariable = ClassWithTypeVariablesContainer.class.getTypeParameters()[0];
+        Type typeVariableDoubleArray = new GenericArrayTypeImpl(new GenericArrayTypeImpl(fTypeVariable));
+        assertThat(xArrayList, isParameterizedType(List.class, typeVariableDoubleArray));
+        assertThat(xArrayExtendsList, isParameterizedType(List.class, newWildcardExtends(typeVariableDoubleArray)));
+        assertThat(xArraySuperList, isParameterizedType(List.class, newWildcardSuper(typeVariableDoubleArray)));
 
         WildcardType wildcardExtendsGArrayType = newWildcardExtends(
             new GenericArrayTypeImpl(ClassWithTypeVariablesContainer.class.getTypeParameters()[1]));
