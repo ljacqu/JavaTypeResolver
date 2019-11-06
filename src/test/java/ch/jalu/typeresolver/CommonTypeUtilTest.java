@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.reference.TypeReference;
+import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Test for {@link CommonTypeUtil}.
@@ -55,5 +57,28 @@ class CommonTypeUtilTest {
 
         assertThat(CommonTypeUtil.hasExplicitUpperBound(emptyWildcard), equalTo(false));
         assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObjectAndString), equalTo(true));
+    }
+
+    @Test
+    void shouldReturnDefinitiveClassAsType() {
+        // given
+        Type stringList = new TypeReference<List<String>>() { }.getType();
+        Type stringListArr = new TypeReference<List<String>[][]>() { }.getType();
+
+        // when / then
+        assertThat(CommonTypeUtil.getDefinitiveClass(String.class), equalTo(String.class));
+        assertThat(CommonTypeUtil.getDefinitiveClass(stringList), equalTo(List.class));
+        assertThat(CommonTypeUtil.getDefinitiveClass(stringListArr), equalTo(List[][].class));
+    }
+
+    @Test
+    void shouldReturnNullIfNoDefinitiveClassIsApplicable() {
+        // given
+        Type wildcard = WildcardTypeImpl.newWildcardExtends(String.class);
+        Type wildcardArray = new GenericArrayTypeImpl(wildcard);
+
+        // when / then
+        assertThat(CommonTypeUtil.getDefinitiveClass(wildcard), nullValue());
+        assertThat(CommonTypeUtil.getDefinitiveClass(wildcardArray), nullValue());
     }
 }

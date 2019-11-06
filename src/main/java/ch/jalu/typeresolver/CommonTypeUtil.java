@@ -2,7 +2,9 @@ package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
@@ -68,5 +70,28 @@ public final class CommonTypeUtil {
             return false;
         }
         return !Object.class.equals(upperBounds[0]) || upperBounds.length > 1;
+    }
+
+    /**
+     * Returns the Class equivalent of the type for which there is an absolute class equivalent,
+     * i.e. for all Class, ParameterizedType and for some GenericArrayType instances.
+     *
+     * @param type the type to return as class if possible
+     * @return the type as class, or null if not applicable
+     */
+    @Nullable
+    public static Class<?> getDefinitiveClass(Type type) {
+        if (type instanceof Class<?>) {
+            return (Class<?>) type;
+        } else if (type instanceof ParameterizedType) {
+            return getRawType((ParameterizedType) type);
+        } else if (type instanceof GenericArrayType) {
+            GenericArrayType gat = (GenericArrayType) type;
+            Class<?> componentAsClass = getDefinitiveClass(gat.getGenericComponentType());
+            if (componentAsClass != null) {
+                return createArrayClass(componentAsClass);
+            }
+        }
+        return null;
     }
 }

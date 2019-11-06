@@ -8,7 +8,11 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Wraps a {@link Type} to offer easy retrieval of generic type information.
@@ -229,6 +233,39 @@ public class TypeInfo {
                 resolver.resolveTypes(clazz.getTypeParameters())));
         }
         return new TypeInfo(clazz);
+    }
+
+    public Set<Type> getAllTypes() {
+        TypeVariableResolver resolver = getOrInitResolver();
+        return getAllTypesInternal(new HashSet<>(), resolver::resolve);
+    }
+
+    public Set<TypeInfo> getAllTypeInfos() {
+        return getAllTypesInternal(new HashSet<>(), this::resolve);
+    }
+
+    public <T> void gatherAllTypes(Collection<? super T> container, Function<Type, T> typeToElement) {
+        getAllTypesInternal(container, typeToElement);
+    }
+
+    private <T, C extends Collection<? super T>> C getAllTypesInternal(C container, Function<Type, T> typeFunction) {
+        if (CommonTypeUtil.getDefinitiveClass(type) != null) {
+            addClassesRecursively(type, typeFunction, container);
+        }
+        return container;
+    }
+
+    private <T> void addClassesRecursively(@Nullable Type type,
+                                           Function<Type, T> typeToTFunction, Collection<? super T> allTypes) {
+        if (type != null) {
+            allTypes.add(typeToTFunction.apply(type));
+
+            Class<?> typeAsClass = CommonTypeUtil.getDefinitiveClass(type);
+            addClassesRecursively(typeAsClass.getGenericSuperclass(), typeToTFunction, allTypes);
+            for (Type genericInterface : typeAsClass.getGenericInterfaces()) {
+                addClassesRecursively(genericInterface, typeToTFunction, allTypes);
+            }
+        }
     }
 
     @Nullable

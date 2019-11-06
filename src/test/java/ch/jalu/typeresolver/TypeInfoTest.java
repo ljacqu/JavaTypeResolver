@@ -12,6 +12,7 @@ import ch.jalu.typeresolver.samples.typeinheritance.StringArgProcessorExtension;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.AbstractCollection;
 import java.util.AbstractList;
@@ -28,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 
 import static ch.jalu.typeresolver.TypeInfo.of;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -264,6 +267,39 @@ class TypeInfoTest {
         assertNull(of(double[].class).resolveSuperclass(Object[].class));
         assertNull(of(ArrayList.class).resolveSuperclass(Iterator.class));
         assertNull(of(List.class).resolveSuperclass(ArrayList.class));
+    }
+
+    @Test
+    void shouldReturnAllTypes() {
+        // given
+        TypeInfo string = of(String.class);
+        TypeInfo stringArray = of(String[].class);
+        TypeInfo arrayList = new TypeReference<ArrayList<String>>() {};
+        TypeInfo primitiveInt = of(int.class);
+        TypeInfo primitiveIntArr = of(int[].class);
+
+        // when
+        Set<Type> stringAll = string.getAllTypes();
+        Set<Type> stringArrayAll = stringArray.getAllTypes();
+        Set<TypeInfo> arrayListAll = arrayList.getAllTypeInfos();
+        Set<Type> primitiveIntAll = primitiveInt.getAllTypes();
+        Set<Type> primitiveIntArrAll = primitiveIntArr.getAllTypes();
+
+        // then
+        TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
+        assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
+        assertThat(stringArrayAll, containsInAnyOrder(String[].class, Object.class, Cloneable.class, Serializable.class));
+        assertThat(arrayListAll, containsInAnyOrder(
+            new TypeReference<ArrayList<String>>() { },
+            new TypeReference<AbstractList<String>>() { },
+            new TypeReference<AbstractCollection<String>>() { },
+            new TypeReference<List<String>>() { },
+            new TypeReference<Collection<String>>() { },
+            new TypeReference<Iterable<String>>() { },
+            of(Cloneable.class), of(Serializable.class), of(RandomAccess.class),
+            of(Object.class)));
+        assertThat(primitiveIntAll, contains(int.class));
+        assertThat(primitiveIntArrAll, containsInAnyOrder(int[].class, Object.class, Cloneable.class, Serializable.class));
     }
 
     private static TypeInfo getType(String fieldName) {
