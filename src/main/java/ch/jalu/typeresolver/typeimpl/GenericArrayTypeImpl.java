@@ -15,6 +15,14 @@ public class GenericArrayTypeImpl implements GenericArrayType {
         this.genericComponentType = genericComponentType;
     }
 
+    public static Type create(Type genericComponentType, int dimension) {
+        Type type = genericComponentType;
+        for (int i = 0; i < dimension; ++i) {
+            type = new GenericArrayTypeImpl(type);
+        }
+        return type;
+    }
+
     @Override
     public Type getGenericComponentType() {
         return genericComponentType;

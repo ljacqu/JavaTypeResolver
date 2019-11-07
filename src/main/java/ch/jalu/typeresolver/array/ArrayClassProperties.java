@@ -8,7 +8,7 @@ package ch.jalu.typeresolver.array;
  * <p>
  * {@code getArrayPropertiesOfClass(String.class); // description with componentType=String.class and dimension=0}
  */
-public class ArrayClassProperties {
+public class ArrayClassProperties implements AbstractArrayProperties {
 
     private final Class<?> componentType;
     private final int dimension;
@@ -40,10 +40,12 @@ public class ArrayClassProperties {
         return new ArrayClassProperties(clazz);
     }
 
+    @Override
     public Class<?> getComponentType() {
         return componentType;
     }
 
+    @Override
     public int getDimension() {
         return dimension;
     }

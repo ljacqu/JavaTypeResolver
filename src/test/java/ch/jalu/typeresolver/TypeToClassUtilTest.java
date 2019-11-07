@@ -16,7 +16,8 @@ import java.util.Set;
 
 import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardExtends;
 import static ch.jalu.typeresolver.typeimpl.WildcardTypeImpl.newWildcardSuper;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Test for {@link TypeToClassUtil}.
@@ -131,8 +132,8 @@ class TypeToClassUtilTest {
     }
 
     private static void checkHasReadAndWriteClass(Type givenType, Class<?> expectedSafeToRead, Class<?> expectedSafeToWrite) {
-        assertEquals(TypeToClassUtil.getSafeToReadClass(givenType), expectedSafeToRead);
-        assertEquals(TypeToClassUtil.getSafeToWriteClass(givenType), expectedSafeToWrite);
+        assertThat(TypeToClassUtil.getSafeToReadClass(givenType), equalTo(expectedSafeToRead));
+        assertThat(TypeToClassUtil.getSafeToWriteClass(givenType), equalTo(expectedSafeToWrite));
     }
 
     // -----------

@@ -2,7 +2,8 @@ package ch.jalu.typeresolver.array;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Test for {@link ArrayClassProperties}.
@@ -21,7 +22,7 @@ class ArrayClassPropertiesTest {
                                              Class<?> expectedComponentType, int expectedDimension) {
         ArrayClassProperties actualDescription = ArrayClassProperties.getArrayPropertiesOfClass(givenArrayClass);
 
-        assertEquals(actualDescription.getComponentType(), expectedComponentType);
-        assertEquals(actualDescription.getDimension(), expectedDimension);
+        assertThat(actualDescription.getComponentType(), equalTo(expectedComponentType));
+        assertThat(actualDescription.getDimension(), equalTo(expectedDimension));
     }
 }

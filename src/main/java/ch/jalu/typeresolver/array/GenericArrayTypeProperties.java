@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
  * Example: given generic array type {@code List<String>[][]},
  * <br>{@code getArrayPropertiesOfType(type); // description with dimension=2 and componentType=String.class}
  */
-public class GenericArrayTypeProperties {
+public class GenericArrayTypeProperties implements AbstractArrayProperties {
 
     private final Type componentType;
     private final int dimension;
@@ -31,6 +31,11 @@ public class GenericArrayTypeProperties {
         this.dimension = dimension;
     }
 
+    public GenericArrayTypeProperties(Type componentType, int dimension) {
+        this.componentType = componentType;
+        this.dimension = dimension;
+    }
+
     /**
      * Returns the array properties of the given generic array type.
      *
@@ -41,10 +46,12 @@ public class GenericArrayTypeProperties {
         return new GenericArrayTypeProperties(genericArrayType);
     }
 
+    @Override
     public Type getComponentType() {
         return componentType;
     }
 
+    @Override
     public int getDimension() {
         return dimension;
     }

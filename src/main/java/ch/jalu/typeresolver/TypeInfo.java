@@ -8,7 +8,10 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Wraps a {@link Type} to offer easy retrieval of generic type information.
@@ -234,6 +237,35 @@ public class TypeInfo {
                 resolver.resolveTypes(clazz.getTypeParameters())));
         }
         return new TypeInfo(clazz);
+    }
+
+    /**
+     * Returns all types that this wrapped type is an instance of, i.e. returns all superclasses and interfaces
+     * that the class can be assigned to.
+     *
+     * @return all types that this wrapped type can be assigned to
+     */
+    public Set<Type> getAllTypes() {
+        return TypeVisitor.gatherAllTypes(type, getOrInitResolver());
+    }
+
+    /**
+     * Returns all types that this wrapped type is an instance of, as TypeInfo instances.
+     *
+     * @return all types this wrapped type can be assigned to
+     */
+    public Set<TypeInfo> getAllTypeInfos() {
+        return TypeVisitor.gatherAllTypes(type, getOrInitResolver(), new HashSet<>(), TypeInfo::new);
+    }
+
+    /**
+     * Invokes the given consumer for each type that this wrapped type can be assigned to (i.e. all parents
+     * and interfaces).
+     *
+     * @param typeVisitor callback run for each type that this wrapped type can be assigned to
+     */
+    public void visitAllTypes(Consumer<Type> typeVisitor) {
+        TypeVisitor.visitAllTypes(type, getOrInitResolver(), typeVisitor);
     }
 
     public boolean isAssignableTo(TypeInfo typeInfo) {

@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.WildcardType;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -21,7 +22,7 @@ class NestedTypeReferenceTest {
         TypeInfo typeInfo = new NestedTypeReference<List<? super String>>() { };
 
         // then
-        assertEquals(typeInfo.getType(), WildcardTypeImpl.newWildcardSuper(String.class));
+        assertThat(typeInfo.getType(), equalTo(WildcardTypeImpl.newWildcardSuper(String.class)));
     }
 
     @Test
@@ -40,7 +41,7 @@ class NestedTypeReferenceTest {
         WildcardType wildcard = typeInfo.wildcardType();
 
         // then
-        assertEquals(wildcard, WildcardTypeImpl.newUnboundedWildcard());
+        assertThat(wildcard, equalTo(WildcardTypeImpl.newUnboundedWildcard()));
     }
 
     @Test

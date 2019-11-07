@@ -6,7 +6,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Implementation of {@link ParameterizedType}.
+ * Implementation of {@link ParameterizedType}, with same {@link Object#equals} and {@link Object#hashCode()}
+ * as the JRE implementation.
  */
 public class ParameterizedTypeImpl implements ParameterizedType {
 
@@ -14,7 +15,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     private final Type ownerType;
     private final Type[] actualTypeArguments;
 
-    public ParameterizedTypeImpl(Class<?> rawType, Type ownerType, Type[] actualTypeArguments) {
+    public ParameterizedTypeImpl(Class<?> rawType, Type ownerType, Type... actualTypeArguments) {
         this.rawType = rawType;
         this.ownerType = ownerType;
         this.actualTypeArguments = actualTypeArguments;
