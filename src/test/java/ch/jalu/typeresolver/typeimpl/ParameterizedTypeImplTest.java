@@ -1,62 +1,43 @@
 package ch.jalu.typeresolver.typeimpl;
 
 import ch.jalu.typeresolver.reference.TypeReference;
+import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
 
 /**
  * Test for {@link ParameterizedTypeImpl}.
  */
-class ParameterizedTypeImplTest {
+class ParameterizedTypeImplTest extends AbstractTypeImplTest {
 
-    @Test
-    public void shouldBeEqualToOtherImplementations() {
-        // given
-        Type doubleListType = new TypeReference<List<Double>>() { }.getType();
-        Type mapType = new TypeReference<Map<String, Set<Short[]>>>() { }.getType();
-
-        ParameterizedTypeImpl listPt = new ParameterizedTypeImpl(List.class, null, new Type[]{ Double.class });
-        ParameterizedTypeImpl setPt = new ParameterizedTypeImpl(Set.class, null, new Type[]{ Short[].class });
-        ParameterizedTypeImpl mapPt = new ParameterizedTypeImpl(Map.class, null, new Type[]{ String.class, setPt });
-
-        // when / then
-        assertThat(doubleListType, equalTo(listPt));
-        assertThat(listPt, equalTo(doubleListType));
-        assertThat(listPt, equalTo(listPt));
-        assertThat(listPt.hashCode(), equalTo(doubleListType.hashCode()));
-
-        assertThat(mapType, equalTo(mapPt));
-        assertThat(mapPt, equalTo(mapType));
-        assertThat(mapPt, equalTo(mapPt));
-        assertThat(mapPt.hashCode(), equalTo(mapType.hashCode()));
-
-        assertThat(doubleListType, not(mapPt));
-        assertThat(mapPt, not(doubleListType));
-        assertThat(listPt, not(mapType));
-        assertThat(mapType, not(listPt));
-        assertThat(mapPt, not(listPt));
+    ParameterizedTypeImplTest() {
+        super(
+            new ParameterizedTypeImpl(List.class, null, Double.class),
+            new ParameterizedTypeImpl(Set.class, null, Short[].class),
+            new ParameterizedTypeImpl(Map.class, null, String.class,
+                    new ParameterizedTypeImpl(Set.class, null, Short[].class)),
+            new TypeReference<List<Double>>() { }.getType(),
+            new TypeReference<Set<Short[]>>() { }.getType(),
+            new TypeReference<Map<String, Set<Short[]>>>() { }.getType());
     }
 
     @Test
-    void shouldDefineUsableToString() {
+    void shouldIncludeOwnerTypeInToString() {
         // given
-        Type doubleListType = new TypeReference<List<Double>>() { }.getType();
-        Type mapType = new TypeReference<Map<String, Set<Short[]>>>() { }.getType();
-
-        ParameterizedTypeImpl listPt = new ParameterizedTypeImpl(List.class, null, new Type[]{ Double.class });
-        ParameterizedTypeImpl setPt = new ParameterizedTypeImpl(Set.class, null, new Type[]{ Short[].class });
-        ParameterizedTypeImpl mapPt = new ParameterizedTypeImpl(Map.class, null, new Type[]{ String.class, setPt });
+        ParameterizedTypeImpl parameterizedType = new ParameterizedTypeImpl(
+            InnerParameterizedClassesContainer.TypedNestedClass.class, InnerParameterizedClassesContainer.class, BigDecimal.class);
+        Type jreType = new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<BigDecimal>>() { }.getType();
 
         // when / then
-        assertThat(listPt.toString(), equalTo(doubleListType.toString()));
-        assertThat(mapPt.toString(), equalTo(mapType.toString()));
+        assertThat(parameterizedType.toString(), equalTo("ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer$TypedNestedClass<java.math.BigDecimal>"));
+        assertThat(parameterizedType.toString(), equalTo(jreType.toString()));
     }
 }

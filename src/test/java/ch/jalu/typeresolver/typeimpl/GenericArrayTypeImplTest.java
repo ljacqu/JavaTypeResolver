@@ -1,56 +1,53 @@
 package ch.jalu.typeresolver.typeimpl;
 
+import ch.jalu.typeresolver.reference.TypeReference;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
 
 /**
  * Test for {@link GenericArrayTypeImpl}.
  */
-class GenericArrayTypeImplTest {
+class GenericArrayTypeImplTest extends AbstractTypeImplTest {
 
-    @Test
-    void shouldBeEqualsToOtherImplementations() throws NoSuchFieldException {
-        // given
-        Type jvm1dArrayType = GenericArrayTypes.class.getDeclaredField("tArray1d").getGenericType();
-        Type jvm3dArrayType = GenericArrayTypes.class.getDeclaredField("tArray3d").getGenericType();
-        Type impl1dArrayType = new GenericArrayTypeImpl(GenericArrayTypes.class.getTypeParameters()[0]);
-        Type impl3dArrayType = new GenericArrayTypeImpl(new GenericArrayTypeImpl(impl1dArrayType));
-
-        // when / then
-        assertThat(jvm1dArrayType, equalTo(impl1dArrayType));
-        assertThat(impl1dArrayType, equalTo(jvm1dArrayType));
-        assertThat(jvm1dArrayType.hashCode(), equalTo(impl1dArrayType.hashCode()));
-
-        assertThat(jvm3dArrayType, equalTo(impl3dArrayType));
-        assertThat(impl3dArrayType, equalTo(jvm3dArrayType));
-        assertThat(jvm3dArrayType.hashCode(), equalTo(jvm1dArrayType.hashCode()));
-
-        assertThat(jvm1dArrayType, not(impl3dArrayType));
-        assertThat(impl3dArrayType, not(jvm1dArrayType));
-        assertThat(impl1dArrayType, not(jvm3dArrayType));
-        assertThat(jvm3dArrayType, not(impl1dArrayType));
+    GenericArrayTypeImplTest() throws NoSuchFieldException {
+        super(
+            new GenericArrayTypeImpl(GenericArrayTypes.class.getTypeParameters()[0]), // T[]
+            GenericArrayTypeImpl.create(GenericArrayTypes.class.getTypeParameters()[0], 3), // T[][][]
+            GenericArrayTypeImpl.create(new TypeReference<List<String>>(){ }.getType(), 2), // List<String>[][]
+            GenericArrayTypes.class.getDeclaredField("tArray1d").getGenericType(),
+            GenericArrayTypes.class.getDeclaredField("tArray3d").getGenericType(),
+            GenericArrayTypes.class.getDeclaredField("stringListArray").getGenericType());
     }
 
     @Test
-    void shouldDefineToString() {
+    @Override
+    void shouldHaveSameHashCodeAsImplementation() {
+        // given / when / then
+        assertThat(types[0].hashCode(), equalTo(jreTypes[0].hashCode()));
+        assertThat(types[1].hashCode(), equalTo(jreTypes[1].hashCode()));
+        assertThat(types[2].hashCode(), equalTo(jreTypes[2].hashCode()));
+    }
+
+    @Test
+    void shouldOutputClassNameInToString() {
         // given
-        Type impl1dArrayType = new GenericArrayTypeImpl(GenericArrayTypes.class.getTypeParameters()[0]);
-        Type impl3dArrayType = new GenericArrayTypeImpl(new GenericArrayTypeImpl(impl1dArrayType));
+        Type genericArrayType = GenericArrayTypeImpl.create(TimeUnit.class, 2);
 
         // when / then
-        assertThat(impl1dArrayType.toString(), equalTo("T[]"));
-        assertThat(impl3dArrayType.toString(), equalTo("T[][][]"));
+        assertThat(genericArrayType.toString(), equalTo("java.util.concurrent.TimeUnit[][]"));
     }
 
     private static final class GenericArrayTypes<T> {
 
         private T[] tArray1d;
         private T[][][] tArray3d;
+        private List<String>[][] stringListArray;
 
     }
 }
