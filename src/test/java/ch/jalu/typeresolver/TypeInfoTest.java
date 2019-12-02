@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.reference.NestedTypeReference;
 import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
@@ -33,7 +34,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test for {@link TypeInfo}.
@@ -300,6 +304,52 @@ class TypeInfoTest {
             String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
             Object.class, Cloneable.class, Serializable.class));
         assertThat(primitiveIntArrAll, containsInAnyOrder(of(int[].class), of(Object.class), of(Cloneable.class), of(Serializable.class)));
+    }
+
+    @Test
+    void shouldReturnSafeToReadClass() {
+        // given
+        TypeInfo typeInfo1 = new TypeInfo(Double[].class);
+        TypeInfo typeInfo2 = new NestedTypeReference<List<? extends Serializable>>() {};
+        TypeInfo typeInfo3 = new NestedTypeReference<List<? super String>>() {};
+
+        // when / then
+        assertThat(typeInfo1.getSafeToReadClass(), equalTo(Double[].class));
+        assertThat(typeInfo2.getSafeToReadClass(), equalTo(Serializable.class));
+        assertThat(typeInfo3.getSafeToReadClass(), equalTo(Object.class));
+    }
+
+    @Test
+    void shouldDefineEquals() {
+        // given
+        TypeInfo strInfo1 = new TypeInfo(String.class);
+        TypeInfo strInfo2 = new TypeReference<String>() {};
+        TypeInfo doubleInfo = new TypeInfo(double.class);
+
+        // when / then
+        assertTrue(strInfo1.equals(strInfo2));
+        assertTrue(strInfo2.equals(strInfo1));
+        assertTrue(strInfo1.equals(strInfo1));
+
+        assertFalse(strInfo1.equals(doubleInfo));
+        assertFalse(strInfo1.equals(null));
+    }
+
+    @Test
+    void shouldDefineToString() {
+        // given
+        TypeInfo rawList = new TypeInfo(List.class);
+        TypeInfo typedList = new TypeReference<List<Double>>() {};
+
+        // when / then
+        assertThat(rawList.toString(), equalTo("TypeInfo[type=interface java.util.List]"));
+        assertThat(typedList.toString(), equalTo("TypeInfo[type=java.util.List<java.lang.Double>]"));
+    }
+
+    @Test
+    void shouldThrowForConstructorWithNotOverriddenMethod() {
+        // given / when / then
+        assertThrows(UnsupportedOperationException.class, TypeInfo::new);
     }
 
     private static TypeInfo getType(String fieldName) {
