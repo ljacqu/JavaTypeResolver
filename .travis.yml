@@ -1,6 +1,7 @@
 sudo: false
-dist: trusty
+# Note: use xenial dist so JDK 8 version is >= 8u162 to avoid JDK-8054213 (affects ParameterizedTypeImplTest)
+dist: xenial
 language: java
-jdk: oraclejdk8
+jdk: openjdk8
 
 script: mvn clean package jacoco:report coveralls:report -B

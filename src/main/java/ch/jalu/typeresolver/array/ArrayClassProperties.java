@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver.array;
 
+import java.util.Objects;
+
 /**
  * Describes a class' array details by specifying the array dimension of this class and its component type.
  * <p>
@@ -31,6 +33,17 @@ public class ArrayClassProperties implements AbstractArrayProperties {
     }
 
     /**
+     * Constructor for manual creation.
+     *
+     * @param componentType the component type
+     * @param dimension the dimension
+     */
+    public ArrayClassProperties(Class<?> componentType, int dimension) {
+        this.componentType = componentType;
+        this.dimension = dimension;
+    }
+
+    /**
      * Returns the array properties of the given class.
      *
      * @param clazz the class to process
@@ -48,5 +61,26 @@ public class ArrayClassProperties implements AbstractArrayProperties {
     @Override
     public int getDimension() {
         return dimension;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof ArrayClassProperties) {
+            ArrayClassProperties that = (ArrayClassProperties) obj;
+            return this.dimension == that.dimension && Objects.equals(this.componentType, that.componentType);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dimension, componentType);
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayClassProperties[dimension=" + dimension + ",componentType='" + componentType + "']";
     }
 }

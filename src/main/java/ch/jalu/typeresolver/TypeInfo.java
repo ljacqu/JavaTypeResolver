@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 public class TypeInfo {
 
     private final Type type;
-    private TypeVariableResolver resolver;
+    private transient TypeVariableResolver resolverLazy;
 
     /**
      * Constructor. Alternatively, use {@link #of(Type)} or {@link #of(Field)}.
@@ -312,9 +312,9 @@ public class TypeInfo {
     }
 
     private TypeVariableResolver getOrInitResolver() {
-        if (resolver == null) {
-            resolver = new TypeVariableResolver(type);
+        if (resolverLazy == null) {
+            resolverLazy = new TypeVariableResolver(type);
         }
-        return resolver;
+        return resolverLazy;
     }
 }

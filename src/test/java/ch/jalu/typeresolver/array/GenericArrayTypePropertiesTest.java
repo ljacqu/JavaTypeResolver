@@ -10,6 +10,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test for {@link GenericArrayTypeProperties}.
@@ -30,6 +31,37 @@ class GenericArrayTypePropertiesTest {
             new TypeReference<Map<Double, String>>() { }, 1);
         testGenericArrayDescription(typeVar2d.getType(),
             new TypeReference<T>() { }, 2);
+    }
+
+    @Test
+    void shouldDefineProperEqualsAndHashCode() {
+        // given
+        Type stringList = new TypeReference<List<String>>() { }.getType();
+        GenericArrayType stringList2d = (GenericArrayType) new TypeReference<List<String>[][]>() { }.getType();
+        Type map = new TypeReference<Map<Double, Float>>() { }.getType();
+
+        GenericArrayTypeProperties prop1 = new GenericArrayTypeProperties(stringList, 2);
+        GenericArrayTypeProperties prop2 = new GenericArrayTypeProperties(stringList2d);
+        GenericArrayTypeProperties prop3 = new GenericArrayTypeProperties(map, 2);
+
+        // when / then
+        assertThat(prop1, equalTo(prop2));
+        assertThat(prop1.hashCode(), equalTo(prop2.hashCode()));
+        assertThat(prop1, not(equalTo(prop3)));
+        assertThat(prop1.hashCode(), not(equalTo(prop3.hashCode())));
+
+        assertThat(prop1.equals(prop1), equalTo(true));
+        assertThat(prop1.equals(new Object()), equalTo(false));
+    }
+
+    @Test
+    void shouldDefineToString() {
+        // given
+        Type listType = new TypeReference<List<Integer>>() { }.getType();
+        GenericArrayTypeProperties prop = new GenericArrayTypeProperties(listType, 3);
+
+        // when / then
+        assertThat(prop.toString(), equalTo(prop.getClass().getSimpleName() + "[dimension=3,componentType='java.util.List<java.lang.Integer>']"));
     }
 
     private static void testGenericArrayDescription(Type givenArrayClass,
