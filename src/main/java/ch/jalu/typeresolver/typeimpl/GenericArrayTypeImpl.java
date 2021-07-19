@@ -16,6 +16,10 @@ public class GenericArrayTypeImpl implements GenericArrayType {
     }
 
     public static Type create(Type genericComponentType, int dimension) {
+        if (dimension < 0) {
+            throw new IllegalArgumentException("Dimension may not be negative");
+        }
+
         Type type = genericComponentType;
         for (int i = 0; i < dimension; ++i) {
             type = new GenericArrayTypeImpl(type);

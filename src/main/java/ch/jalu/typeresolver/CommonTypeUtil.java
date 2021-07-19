@@ -49,10 +49,14 @@ public final class CommonTypeUtil {
      * {@code double.class} and the dimension is 3, then {@code double[][][].class} is returned.
      *
      * @param componentType the component type of the array
-     * @param dimension the dimension of the class
+     * @param dimension the dimension of the class (may not be negative)
      * @return array class of the provided dimension with the given component
      */
     public static Class<?> createArrayClass(Class<?> componentType, int dimension) {
+        if (dimension < 0) {
+            throw new IllegalArgumentException("Dimension may not be negative");
+        }
+
         Class<?> clazz = componentType;
         for (int i = 0; i < dimension; ++i) {
             clazz = createArrayClass(clazz);
@@ -76,7 +80,7 @@ public final class CommonTypeUtil {
      * with the given dimension.
      *
      * @param componentType the component type
-     * @param dimension the dimension of the array
+     * @param dimension the dimension of the array (may not be negative)
      * @return the appropriate array type of the given dimension
      */
     public static Type createArrayType(Type componentType, int dimension) {

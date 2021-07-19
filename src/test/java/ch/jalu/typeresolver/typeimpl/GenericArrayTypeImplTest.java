@@ -1,14 +1,17 @@
 package ch.jalu.typeresolver.typeimpl;
 
+import ch.jalu.typeresolver.reference.NestedTypeReference;
 import ch.jalu.typeresolver.reference.TypeReference;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for {@link GenericArrayTypeImpl}.
@@ -41,6 +44,27 @@ class GenericArrayTypeImplTest extends AbstractTypeImplTest {
 
         // when / then
         assertThat(genericArrayType.toString(), equalTo("java.util.concurrent.TimeUnit[][]"));
+    }
+
+    @Test
+    void shouldReturnSameTypeForZeroDimension() {
+        // given
+        Type type1 = new TypeReference<Optional<String>>() { }.getType();
+        Type type2 = new NestedTypeReference<List<? extends TimeUnit>>() { }.getType();
+
+        // when / then
+        assertThat(GenericArrayTypeImpl.create(type1, 0), equalTo(type1));
+        assertThat(GenericArrayTypeImpl.create(type2, 0), equalTo(type2));
+    }
+
+    @Test
+    void shouldThrowForNegativeDimensions() {
+        // given
+        Type type = new TypeReference<List<double[]>>() { }.getType();
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> GenericArrayTypeImpl.create(type, -1));
+        assertThrows(IllegalArgumentException.class, () -> GenericArrayTypeImpl.create(type, -5));
     }
 
     private static final class GenericArrayTypes<T> {

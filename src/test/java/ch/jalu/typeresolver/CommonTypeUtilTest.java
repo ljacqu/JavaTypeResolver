@@ -6,6 +6,7 @@ import ch.jalu.typeresolver.typeimpl.GenericArrayTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for {@link CommonTypeUtil}.
@@ -56,6 +58,14 @@ class CommonTypeUtilTest {
         assertThat(stringArr, equalTo(String[][][].class));
         assertThat(charArr, equalTo(char.class));
         assertThat(bigDecimalArr, equalTo(BigDecimal[][].class));
+    }
+
+    @Test
+    void shouldCreateClassWithAdditionalArrayDimension() {
+        // given / when / then
+        assertThat(CommonTypeUtil.createArrayClass(String.class), equalTo(String[].class));
+        assertThat(CommonTypeUtil.createArrayClass(byte[].class), equalTo(byte[][].class));
+        assertThat(CommonTypeUtil.createArrayClass(Serializable[][][].class), equalTo(Serializable[][][][].class));
     }
 
     @Test
@@ -115,16 +125,25 @@ class CommonTypeUtilTest {
     }
 
     @Test
-    void shouldReturnSameTypeForZeroOrNegativeDimension() {
+    void shouldReturnSameTypeForZeroDimension() {
         // given
         Type string = String.class;
         Type genericSet = new TypeReference<Set<TimeUnit>>() { }.getType();
 
         // when / then
         assertThat(CommonTypeUtil.createArrayType(string, 0), equalTo(string));
-        assertThat(CommonTypeUtil.createArrayType(string, -2), equalTo(string));
         assertThat(CommonTypeUtil.createArrayType(genericSet, 0), equalTo(genericSet));
-        assertThat(CommonTypeUtil.createArrayType(genericSet, -1), equalTo(genericSet));
+    }
+
+    @Test
+    void shouldThrowForNegativeDimensions() {
+        // given
+        Type string = String.class;
+        Type genericSet = new TypeReference<Set<TimeUnit>>() { }.getType();
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> CommonTypeUtil.createArrayType(string, -2));
+        assertThrows(IllegalArgumentException.class, () -> CommonTypeUtil.createArrayType(genericSet, -1));
     }
 
     @Test
