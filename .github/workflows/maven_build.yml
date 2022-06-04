@@ -1,0 +1,22 @@
+name: Maven build with various JDK versions
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java: ['8', '11', '17']
+    name: Java ${{ matrix.java }} build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'adopt'
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
