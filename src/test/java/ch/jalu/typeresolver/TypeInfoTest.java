@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.JavaVersionHelper.ConstableAndConstantDescTypes;
 import ch.jalu.typeresolver.reference.NestedTypeReference;
 import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.RandomAccess;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -299,10 +301,25 @@ class TypeInfoTest {
 
         // then
         TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
-        assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
-        assertThat(stringArrayAll, containsInAnyOrder(
-            String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
-            Object.class, Cloneable.class, Serializable.class));
+        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
+
+        if (constableTypes.isPresent()) {
+            Class<?> constable = constableTypes.get().getConstableClass();
+            Class<?> constantDesc = constableTypes.get().getConstantDescClass();
+            assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, constable, constantDesc, Object.class));
+
+            Class<?> constableArray = CommonTypeUtil.createArrayClass(constable);
+            Class<?> constantDescArray = CommonTypeUtil.createArrayClass(constantDesc);
+            assertThat(stringArrayAll, containsInAnyOrder(
+                String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), constableArray, constantDescArray, Object[].class,
+                Object.class, Cloneable.class, Serializable.class));
+        } else {
+            assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
+            assertThat(stringArrayAll, containsInAnyOrder(
+                String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
+                Object.class, Cloneable.class, Serializable.class));
+        }
+
         assertThat(primitiveIntArrAll, containsInAnyOrder(of(int[].class), of(Object.class), of(Cloneable.class), of(Serializable.class)));
     }
 
