@@ -2,6 +2,7 @@ package ch.jalu.typeresolver.typeimpl;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -19,6 +20,22 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         this.rawType = rawType;
         this.ownerType = ownerType;
         this.actualTypeArguments = actualTypeArguments;
+    }
+
+    /**
+     * Creates a new {@link ParameterizedTypeImpl} instance which represents the given class as a
+     * parameterized type with the original type arguments. Throws an exception if the given raw type
+     * has no type parameters.
+     *
+     * @param rawType the type to create a parameterized type object for
+     * @return parameterized type of the class and its type arguments
+     */
+    public static ParameterizedTypeImpl newTypeWithTypeParameters(Class<?> rawType) {
+        TypeVariable<? extends Class<?>>[] typeParams = rawType.getTypeParameters();
+        if (typeParams.length == 0) {
+            throw new IllegalArgumentException("Class '" + rawType + "' has no type arguments");
+        }
+        return new ParameterizedTypeImpl(rawType, rawType.getDeclaringClass(), typeParams);
     }
 
     @Override
