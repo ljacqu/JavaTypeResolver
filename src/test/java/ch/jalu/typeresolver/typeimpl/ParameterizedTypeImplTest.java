@@ -206,6 +206,70 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         assertThat(result2, equalTo(type2));
     }
 
+    /*
+     * TopClass<A>
+     *  - static SP1<B>
+     *    - static SP2<C>
+     *    - N
+     *      - NP<X>
+     *  - static S
+     *    - N
+     *      - NP<P>
+     */
+    @Test
+    void shouldCreateParameterizedTypesForClassesNestedInClassWithTypeParam() throws NoSuchFieldException {
+        // given
+        Class<?> clazz1 = ClassWithTypeParamEnclosingOthers.SP1.SP2.class;
+        Class<?> clazz2 = ClassWithTypeParamEnclosingOthers.SP1.N.NP.class;
+        Class<?> clazz3 = ClassWithTypeParamEnclosingOthers.S.N.NP.class;
+
+        // when
+        ParameterizedTypeImpl result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz1);
+        ParameterizedTypeImpl result2 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz2);
+        ParameterizedTypeImpl result3 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz3);
+
+        // then
+        Type type1 = clazz1.getDeclaredField("selfTyped").getGenericType();
+        Type type2 = clazz2.getDeclaredField("selfTyped").getGenericType();
+        Type type3 = clazz3.getDeclaredField("selfTyped").getGenericType();
+
+        verifyOwnerTypeConsistsOfTypes(type1, result1.getOwnerType(),
+            cls(ClassWithTypeParamEnclosingOthers.SP1.class));
+        verifyOwnerTypeConsistsOfTypes(type2, result2.getOwnerType(),
+            pt(ClassWithTypeParamEnclosingOthers.SP1.N.class),
+            pt(ClassWithTypeParamEnclosingOthers.SP1.class),
+            cls(ClassWithTypeParamEnclosingOthers.class));
+        verifyOwnerTypeConsistsOfTypes(type3, result3.getOwnerType(),
+            cls(ClassWithTypeParamEnclosingOthers.S.N.class));
+
+        assertThat(result1, equalTo(type1));
+        assertThat(result2, equalTo(type2));
+        assertThat(result3, equalTo(type3));
+    }
+
+    /*
+     * Checks the creation of a ParameterizedType for a class that is nested in multiple non-static classes:
+     *   TopClass<A>.N.N2.NP<T>
+     */
+    @Test
+    void shouldCreateParameterizedTypeWithOwnerForMultipleNestedNonStaticClasses() throws NoSuchFieldException {
+        // given
+        Class<?> clazz = ClassWithTypeParamEnclosingOthers.N.N2.NP.class;
+
+        // when
+        ParameterizedTypeImpl result = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz);
+
+        // then
+        Type type4 = clazz.getDeclaredField("selfTyped").getGenericType();
+
+        verifyOwnerTypeConsistsOfTypes(type4, result.getOwnerType(),
+            pt(ClassWithTypeParamEnclosingOthers.N.N2.class),
+            pt(ClassWithTypeParamEnclosingOthers.N.class),
+            pt(ClassWithTypeParamEnclosingOthers.class));
+
+        assertThat(result, equalTo(type4));
+    }
+
     private void assertEqualToCreationViaGenericInterface(ParameterizedTypeImpl typeToCheck,
                                                           Class<?> rawType, Class<?> extendingType) {
         ParameterizedType expectedType = Arrays.stream(extendingType.getGenericInterfaces())
@@ -247,13 +311,18 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
     }
 
     private void verifyOwnerTypeConsistsOfTypes(Type actualType, Type ownerType, OwnerTypeToken... expectedTypes) {
-        String errorOnActualType = verifyOwnerTypesAndReturnErrorIfApplicable(((ParameterizedType) actualType).getOwnerType(), expectedTypes);
-        if (errorOnActualType != null) {
-            throw new IllegalStateException("Error on actual type. Are the expectations wrong? --> \n" + errorOnActualType);
+        Type expectedOwnerType = ((ParameterizedType) actualType).getOwnerType();
+        String errorOnExpectedType = verifyOwnerTypesAndReturnErrorIfApplicable(expectedOwnerType, expectedTypes);
+        if (errorOnExpectedType != null) {
+            System.out.println("Actual expected owner type:");
+            printOwnerTypes(expectedOwnerType);
+            throw new IllegalStateException("Error of verifications on expected type. Are the expectations wrong?\n -->" + errorOnExpectedType);
         }
 
         String error = verifyOwnerTypesAndReturnErrorIfApplicable(ownerType, expectedTypes);
         if (error != null) {
+            System.out.println("Expected owner types:");
+            printOwnerTypes(expectedOwnerType);
             System.out.println("Actual owner types:");
             printOwnerTypes(ownerType);
             fail(error);

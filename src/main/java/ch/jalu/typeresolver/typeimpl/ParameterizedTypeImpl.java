@@ -107,26 +107,34 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             return null;
         } else if (size == 1) {
             Class<?> owner = ownerTypes.get(0);
-            if (owner.getTypeParameters().length > 0 && !Modifier.isStatic(owner.getModifiers())) {
+            if (!Modifier.isStatic(owner.getModifiers()) && owner.getTypeParameters().length > 0) {
                 return new ParameterizedTypeImpl(owner, null, owner.getTypeParameters());
             }
             return owner;
         }
 
-        Collections.reverse(ownerTypes);
         Type lastOwner = null;
-        int index = 0;
-        if (Modifier.isStatic(ownerTypes.get(0).getModifiers()) || ownerTypes.get(0).getTypeParameters().length == 0) {
-            lastOwner = ownerTypes.get(0);
-            index = 1;
-        }
+        for (int i = ownerTypes.size() - 1; i >= 0; --i) {
+            Class<?> ownerType = ownerTypes.get(i);
+            if (lastOwner == null && firstOwnerTypeShouldBeClass(ownerType, ownerTypes)) {
+                lastOwner = ownerType;
+            } else {
+                lastOwner = new ParameterizedTypeImpl(ownerType, lastOwner, ownerType.getTypeParameters());
+            }
 
-        while (index < ownerTypes.size()) {
-            Class<?> ownerType = ownerTypes.get(index);
-            lastOwner = new ParameterizedTypeImpl(ownerType, lastOwner, ownerType.getTypeParameters());
-            ++index;
         }
         return lastOwner;
+    }
+
+    private static boolean firstOwnerTypeShouldBeClass(Class<?> firstOwnerType, List<Class<?>> allOwnerTypes) {
+        if (Modifier.isStatic(firstOwnerType.getModifiers()) || firstOwnerType.getTypeParameters().length == 0) {
+            return true;
+        }
+        if (allOwnerTypes.size() > 1) {
+            Class<?> nextClass = allOwnerTypes.get(allOwnerTypes.size() - 2);
+            return Modifier.isStatic(nextClass.getModifiers());
+        }
+        return false;
     }
 
     private static List<Class<?>> collectOwnerTypeHierarchy(Class<?> rawType) {
@@ -143,31 +151,46 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             currentClass = currentClass.getDeclaringClass();
         }
 
+        // Find lowest static class in the hierarchy (under JDK 8 there can only be one layer. I'm assuming for
+        // newer JDKs that allow static classes inside non-static nested classes, this logic adds up.) TODO check
+        int lastStaticClassIndex = declaringClasses.size();
+        for (int i = 0; i < declaringClasses.size(); ++i) {
+            if (Modifier.isStatic(declaringClasses.get(i).getModifiers())) {
+                lastStaticClassIndex = i;
+                break;
+            }
+        }
+
         // Iterate from the back and find first non-static class with params
-        int lastNonStaticClassWithParams = -1;
-        for (int i = declaringClasses.size() - 1; i >= 0; --i) {
+        int lastNonStaticClass = -1;
+        for (int i = lastStaticClassIndex - 1; i >= 0; --i) {
             Class<?> owner = declaringClasses.get(i);
-            if (!Modifier.isStatic(owner.getModifiers()) && owner.getTypeParameters().length > 0) {
-                lastNonStaticClassWithParams = i;
+            if (!Modifier.isStatic(owner.getModifiers())) {
+                lastNonStaticClass = i;
                 break;
             }
         }
 
         // No non-static class with params means we only need the direct declaring class
-        if (lastNonStaticClassWithParams < 0) {
+        if (lastNonStaticClass < 0) {
             return Collections.singletonList(directClass);
         }
         // Last non-static class with params is at the top of the hierarchy -> return full list
-        if (lastNonStaticClassWithParams + 1 >= declaringClasses.size()) {
+        if (lastNonStaticClass + 1 >= declaringClasses.size()) {
             return declaringClasses;
         }
+        // If the last non-static class has no params, don't return anything further above in the hierarchy
+        Class<?> previousClass = declaringClasses.get(lastNonStaticClass + 1);
+        boolean previousClassHasTypeParams = previousClass.getTypeParameters().length > 0;
+        if (declaringClasses.get(lastNonStaticClass).getTypeParameters().length == 0 && !previousClassHasTypeParams) {
+           return declaringClasses.subList(0, lastNonStaticClass + 1);
+        }
 
-        // The class before the last non-static class with params is included; if it's static and has type parameters,
-        // the class before that one (if exists) is also included.
-        // (I don't understand the semantics of this, but this is what the JDK does.)
-        Class<?> previousClass = declaringClasses.get(lastNonStaticClassWithParams + 1);
-        int endIndexInclusive = lastNonStaticClassWithParams + 1;
-        if (Modifier.isStatic(previousClass.getModifiers()) && previousClass.getTypeParameters().length > 0) {
+        // If the last non-static class has params, the class before it is included; if it's static and has type
+        // parameters, then the class before that one (if exists) is also included. (I don't understand the semantics
+        // behind this, but this is what the JRE does.)
+        int endIndexInclusive = lastNonStaticClass + 1;
+        if (Modifier.isStatic(previousClass.getModifiers()) && previousClassHasTypeParams) {
             ++endIndexInclusive; // Potentially out of bounds -- handled below
         }
 
