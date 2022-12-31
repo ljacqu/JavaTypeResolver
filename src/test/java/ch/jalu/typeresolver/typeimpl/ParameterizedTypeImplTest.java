@@ -6,7 +6,6 @@ import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesConta
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -94,17 +93,17 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
 
         // then
         // The owner type is just the Class because all enclosing classes are static -> the type params do not matter
-        assertThat(result.getOwnerType(), equalTo(SP1.SP2.class));
+        Type type = clazz.getDeclaredField("selfTyped").getGenericType();
 
-        Field field = clazz.getDeclaredField("selfTyped");
-        Type type = field.getGenericType();
+        verifyOwnerTypeConsistsOfTypes(type, result.getOwnerType(),
+            cls(SP1.SP2.class));
         assertThat(result, equalTo(type));
     }
 
     @Test
     void shouldCreateParameterizedTypeForNestedClass() throws NoSuchFieldException {
         // given
-        Class<?> clazz = SP1.NP1.NP2.NP3.class;
+        Class<?> clazz = SP1.NP2.NP3.NP4.class;
 
         // when
         ParameterizedTypeImpl result = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz);
@@ -112,8 +111,8 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         // then
         Type type = clazz.getDeclaredField("selfTyped").getGenericType();
         verifyOwnerTypeConsistsOfTypes(type, result.getOwnerType(),
-            pt(SP1.NP1.NP2.class),
-            pt(SP1.NP1.class),
+            pt(SP1.NP2.NP3.class),
+            pt(SP1.NP2.class),
             pt(SP1.class),
             cls(getClass()));
 
@@ -123,8 +122,8 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
     @Test
     void shouldCreateParameterizedTypeForNestedClass2() throws NoSuchFieldException {
         // given
-        Class<?> clazz1 = SP.N.NP1.NP2.class;
-        Class<?> clazz2 = SP.SP2.NP1.NP2.class;
+        Class<?> clazz1 = SP1.S2.NP3.NP4.class;
+        Class<?> clazz2 = SP1.SP2.NP3.NP4.class;
 
         // when
         ParameterizedTypeImpl result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz1);
@@ -135,12 +134,12 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         Type type2 = clazz2.getDeclaredField("selfTyped").getGenericType();
 
         verifyOwnerTypeConsistsOfTypes(type1, result1.getOwnerType(),
-            pt(SP.N.NP1.class),
-            cls(SP.N.class));
+            pt(SP1.S2.NP3.class),
+            cls(SP1.S2.class));
         verifyOwnerTypeConsistsOfTypes(type2, result2.getOwnerType(),
-            pt(SP.SP2.NP1.class),
-            pt(SP.SP2.class),
-            cls(SP.class));
+            pt(SP1.SP2.NP3.class),
+            pt(SP1.SP2.class),
+            cls(SP1.class));
 
         assertThat(result1, equalTo(type1));
         assertThat(result2, equalTo(type2));
@@ -149,8 +148,8 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
     @Test
     void shouldCreateParameterizedTypeForNestedClass3() throws NoSuchFieldException {
         // given
-        Class<?> clazz1 = SP.NP1.N.NLP1.class;
-        Class<?> clazz2 = SP.NP1.N.NLP1.NLP2.class;
+        Class<?> clazz1 = SP1.NP2.N3.NP4.class;
+        Class<?> clazz2 = SP1.NP2.N3.NP4.NP5.class;
 
         // when
         ParameterizedTypeImpl result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz1);
@@ -159,17 +158,17 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         // then
         Type type1 = clazz1.getDeclaredField("selfTyped").getGenericType();
         verifyOwnerTypeConsistsOfTypes(type1, result1.getOwnerType(),
-            pt(SP.NP1.N.class),
-            pt(SP.NP1.class),
-            pt(SP.class),
+            pt(SP1.NP2.N3.class),
+            pt(SP1.NP2.class),
+            pt(SP1.class),
             cls(getClass()));
 
         Type type2 = clazz2.getDeclaredField("selfTyped").getGenericType();
         verifyOwnerTypeConsistsOfTypes(type2, result2.getOwnerType(),
-            pt(SP.NP1.N.NLP1.class),
-            pt(SP.NP1.N.class),
-            pt(SP.NP1.class),
-            pt(SP.class),
+            pt(SP1.NP2.N3.NP4.class),
+            pt(SP1.NP2.N3.class),
+            pt(SP1.NP2.class),
+            pt(SP1.class),
             cls(getClass()));
 
         assertThat(result1, equalTo(type1));
@@ -179,8 +178,8 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
     @Test
     void shouldCreateParameterizedTypeForNestedClass4() throws NoSuchFieldException {
         // given
-        Class<?> clazz1 = SP.SP2.NP4.N.NLP5.class;
-        Class<?> clazz2 = SP.SP2.NP4.N.NLP5.NLP6.class;
+        Class<?> clazz1 = SP1.SP2.NP3.N4.NP5.class;
+        Class<?> clazz2 = SP1.SP2.NP3.N4.NP5.NP6.class;
 
         // when
         ParameterizedTypeImpl result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz1);
@@ -191,37 +190,50 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         Type type2 = clazz2.getDeclaredField("selfTyped").getGenericType();
 
         verifyOwnerTypeConsistsOfTypes(type1, result1.getOwnerType(),
-            pt(SP.SP2.NP4.N.class),
-            pt(SP.SP2.NP4.class),
-            pt(SP.SP2.class),
-            cls(SP.class));
+            pt(SP1.SP2.NP3.N4.class),
+            pt(SP1.SP2.NP3.class),
+            pt(SP1.SP2.class),
+            cls(SP1.class));
         verifyOwnerTypeConsistsOfTypes(type2, result2.getOwnerType(),
-            pt(SP.SP2.NP4.N.NLP5.class),
-            pt(SP.SP2.NP4.N.class),
-            pt(SP.SP2.NP4.class),
-            pt(SP.SP2.class),
-            cls(SP.class));
+            pt(SP1.SP2.NP3.N4.NP5.class),
+            pt(SP1.SP2.NP3.N4.class),
+            pt(SP1.SP2.NP3.class),
+            pt(SP1.SP2.class),
+            cls(SP1.class));
 
         assertThat(result1, equalTo(type1));
         assertThat(result2, equalTo(type2));
     }
 
-    /*
-     * TopClass<A>
-     *  - static SP1<B>
-     *    - static SP2<C>
-     *    - N
-     *      - NP<X>
-     *  - static S
-     *    - N
-     *      - NP<P>
-     */
+    @Test
+    void shouldCreateParameterizedTypeWithClassIfTypeParamsAreNotRelevant() throws NoSuchFieldException {
+        // given
+        Class<?> clazz1 = ClassWithTypeParamEnclosingOthers.SP1.class;
+        Class<?> clazz2 = ClassWithTypeParamEnclosingOthers.NP1.class;
+
+        // when
+        ParameterizedTypeImpl result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz1);
+        ParameterizedTypeImpl result2 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz2);
+
+        // then
+        Type type1 = clazz1.getDeclaredField("selfTyped").getGenericType();
+        verifyOwnerTypeConsistsOfTypes(type1, result1.getOwnerType(),
+            cls(ClassWithTypeParamEnclosingOthers.class));
+
+        Type type2 = clazz2.getDeclaredField("selfTyped").getGenericType();
+        verifyOwnerTypeConsistsOfTypes(type2, result2.getOwnerType(),
+            pt(ClassWithTypeParamEnclosingOthers.class));
+
+        assertThat(result1, equalTo(type1));
+        assertThat(result2, equalTo(type2));
+    }
+
     @Test
     void shouldCreateParameterizedTypesForClassesNestedInClassWithTypeParam() throws NoSuchFieldException {
         // given
         Class<?> clazz1 = ClassWithTypeParamEnclosingOthers.SP1.SP2.class;
-        Class<?> clazz2 = ClassWithTypeParamEnclosingOthers.SP1.N.NP.class;
-        Class<?> clazz3 = ClassWithTypeParamEnclosingOthers.S.N.NP.class;
+        Class<?> clazz2 = ClassWithTypeParamEnclosingOthers.SP1.N2.NP3.class;
+        Class<?> clazz3 = ClassWithTypeParamEnclosingOthers.S1.N2.NP3.class;
 
         // when
         ParameterizedTypeImpl result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz1);
@@ -236,11 +248,11 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         verifyOwnerTypeConsistsOfTypes(type1, result1.getOwnerType(),
             cls(ClassWithTypeParamEnclosingOthers.SP1.class));
         verifyOwnerTypeConsistsOfTypes(type2, result2.getOwnerType(),
-            pt(ClassWithTypeParamEnclosingOthers.SP1.N.class),
+            pt(ClassWithTypeParamEnclosingOthers.SP1.N2.class),
             pt(ClassWithTypeParamEnclosingOthers.SP1.class),
             cls(ClassWithTypeParamEnclosingOthers.class));
         verifyOwnerTypeConsistsOfTypes(type3, result3.getOwnerType(),
-            cls(ClassWithTypeParamEnclosingOthers.S.N.class));
+            cls(ClassWithTypeParamEnclosingOthers.S1.N2.class));
 
         assertThat(result1, equalTo(type1));
         assertThat(result2, equalTo(type2));
@@ -248,26 +260,24 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
     }
 
     /*
-     * Checks the creation of a ParameterizedType for a class that is nested in multiple non-static classes:
-     *   TopClass<A>.N.N2.NP<T>
+     * Checks the creation of a ParameterizedType for a class that is nested in multiple non-static classes.
      */
     @Test
     void shouldCreateParameterizedTypeWithOwnerForMultipleNestedNonStaticClasses() throws NoSuchFieldException {
         // given
-        Class<?> clazz = ClassWithTypeParamEnclosingOthers.N.N2.NP.class;
+        Class<?> clazz = ClassWithTypeParamEnclosingOthers.N1.N2.NP3.class;
 
         // when
         ParameterizedTypeImpl result = ParameterizedTypeImpl.newTypeWithTypeParameters(clazz);
 
         // then
-        Type type4 = clazz.getDeclaredField("selfTyped").getGenericType();
+        Type type = clazz.getDeclaredField("selfTyped").getGenericType();
 
-        verifyOwnerTypeConsistsOfTypes(type4, result.getOwnerType(),
-            pt(ClassWithTypeParamEnclosingOthers.N.N2.class),
-            pt(ClassWithTypeParamEnclosingOthers.N.class),
+        verifyOwnerTypeConsistsOfTypes(type, result.getOwnerType(),
+            pt(ClassWithTypeParamEnclosingOthers.N1.N2.class),
+            pt(ClassWithTypeParamEnclosingOthers.N1.class),
             pt(ClassWithTypeParamEnclosingOthers.class));
-
-        assertThat(result, equalTo(type4));
+        assertThat(result, equalTo(type));
     }
 
     private void assertEqualToCreationViaGenericInterface(ParameterizedTypeImpl typeToCheck,
@@ -382,87 +392,68 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
     }
 
     /*
-     * Leaf classes:
-     *   - SP1<A>.SP2<B>.SP3<C>
-     *   - SP1<A>.NP1<N>.NP2<O>.NP3<P>
-     * where s = static and n = not static (-> nested)
+     * Class naming scheme:
+     *   S = static, N = non-static (or nested)
+     *   P = with type params
+     *   Every class ends with a number indicating its level of nesting
      */
     private static final class SP1<A> {
 
         private static final class SP2<B> {
 
             private static class SP3<C> {
-                private SP3<C> selfTyped;
+                public SP3<C> selfTyped;
             }
-        }
 
-        private class NP1<N> {
+            private class NP3<N> {
 
-            private class NP2<O> {
-
-                private class NP3<P> {
-                    private NP3<P> selfTyped;
+                private class NP4<O> {
+                    public NP4<O> selfTyped;
 
                 }
-            }
-        }
-    }
 
-    /*
-     * Leaf classes:
-     *   - SP<A, B>.N     .NP1<N>.NP2<O>
-     *   - SP<A, B>.SP2<F>.NP1<N>.NP2<O>
-     *   - SP<A, B>.SP2<F>.NP4<C>.N.NLP5<K>.NLP6<L>
-     *   - SP<A, B>.NP1<C>.N.NLP1<K>.NLP2<L>
-     */
-    private static final class SP<A, B> {
+                private class N4 {
 
-        private static class N {
+                    private class NP5<K> {
+                        public NP5<K> selfTyped;
 
-            private class NP1<N> {
-
-                private class NP2<O> {
-                    private NP2<O> selfTyped;
-
-                }
-            }
-        }
-
-        private static final class SP2<F> {
-
-            private class NP1<N> {
-
-                private class NP2<O> {
-                    private NP2<O> selfTyped;
-
-                }
-            }
-
-            private class NP4<C> {
-
-                private class N {
-
-                    private class NLP5<K> {
-                        private NLP5<K> selfTyped;
-
-                        private class NLP6<L> {
-                            private NLP6<L> selfTyped;
+                        private class NP6<L> {
+                            public NP6<L> selfTyped;
                         }
                     }
                 }
             }
         }
 
-        private class NP1<C> {
+        private class NP2<N> {
 
-            private class N {
+            private class NP3<O> {
 
-                private class NLP1<K> {
-                    private NLP1<K> selfTyped;
+                private class NP4<P> {
+                    public NP4<P> selfTyped;
 
-                    private class NLP2<L> {
-                        private NLP2<L> selfTyped;
+                }
+            }
+
+            private class N3 {
+
+                private class NP4<K> {
+                    public NP4<K> selfTyped;
+
+                    private class NP5<L> {
+                        public NP5<L> selfTyped;
                     }
+                }
+            }
+        }
+
+        private static class S2 {
+
+            private class NP3<N> {
+
+                private class NP4<O> {
+                    public NP4<O> selfTyped;
+
                 }
             }
         }
