@@ -180,6 +180,44 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         return arguments;
     }
 
+    @Test
+    void shouldHandleLocalClassesProperly() throws NoSuchFieldException {
+        // given
+        class AnonClass<T> {
+            public AnonClass<T> selfTyped;
+
+            class AnonClass2<U, V> {
+                public AnonClass2<U, V> selfTyped;
+            }
+        }
+
+        // when
+        ParameterizedType result1 = ParameterizedTypeImpl.newTypeWithTypeParameters(AnonClass.class);
+        ParameterizedType result2 = ParameterizedTypeImpl.newTypeWithTypeParameters(AnonClass.AnonClass2.class);
+
+        // then
+        Type type1 = AnonClass.class.getDeclaredField("selfTyped").getGenericType();
+        Type type2 = AnonClass.AnonClass2.class.getDeclaredField("selfTyped").getGenericType();
+        assertThat(result1, equalTo(type1));
+        assertThat(result2, equalTo(type2));
+    }
+
+    @Test
+    void shouldHandleAnonymousClassOfInnerClassesProperly() throws NoSuchFieldException {
+        // given
+        class LocalNp2Ext<V> extends SP1.SP2<String> {
+            public LocalNp2Ext<V> selfTyped;
+        }
+
+        // when
+        ParameterizedType result = ParameterizedTypeImpl.newTypeWithTypeParameters(LocalNp2Ext.class);
+
+        // then
+        assertThat(result.getOwnerType(), nullValue());
+        Type type = LocalNp2Ext.class.getDeclaredField("selfTyped").getGenericType();
+        assertThat(result, equalTo(type));
+    }
+
     private static Arguments newArgs(Class<?> clazz, Field field, OwnerTypeToken... ownerTypeExpectations) {
         return Arguments.of(clazz, field, ownerTypeExpectations);
     }
@@ -303,9 +341,9 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
      *   P = with type params
      *   Every class ends with a number indicating its level of nesting
      */
-    private static final class SP1<A> {
+    private static class SP1<A> {
 
-        private static final class SP2<B> {
+        private static class SP2<B> {
 
             private static class SP3<C> {
                 public SP3<C> selfTyped;
