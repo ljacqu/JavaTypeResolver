@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             throw new IllegalArgumentException("Class '" + rawType + "' has no type arguments");
         }
 
-        return new ParameterizedTypeImpl(rawType, generateOwnerType(rawType), rawType.getTypeParameters());
+        return new ParameterizedTypeImpl(rawType, createOwnerType(rawType), rawType.getTypeParameters());
     }
 
     @Override
@@ -108,96 +109,43 @@ public class ParameterizedTypeImpl implements ParameterizedType {
      * @return owner type to use for the raw type
      */
     @Nullable
-    private static Type generateOwnerType(Class<?> rawType) {
+    private static Type createOwnerType(Class<?> rawType) {
         Class<?> directEnclosingClass = rawType.getEnclosingClass();
         if (directEnclosingClass == null || Modifier.isStatic(rawType.getModifiers())) {
             return directEnclosingClass;
         }
-
-        List<Class<?>> ownerTypes = collectOwnerTypeHierarchyForEnclosedNonStaticClass(rawType);
-        if (ownerTypes == null) {
-            return directEnclosingClass;
-        }
-
-        Type lastOwner = null;
-        for (int i = ownerTypes.size() - 1; i >= 0; --i) {
-            Class<?> ownerType = ownerTypes.get(i);
-            if (lastOwner == null && firstOwnerTypeShouldBeClass(ownerType, ownerTypes)) {
-                lastOwner = ownerType;
-            } else {
-                lastOwner = new ParameterizedTypeImpl(ownerType, lastOwner, ownerType.getTypeParameters());
-            }
-
-        }
-        return lastOwner;
+        return createOwnerTypeHierarchyForEnclosedNonStaticClass(rawType);
     }
 
     /**
-     * Returns whether the top-most owner type in the hierarchy should be represented as {@link Class}. Semantically,
-     * the top-most owner is only represented as a ParameterizedType if it has type parameters which are accessible
-     * in the scope of the parameterized type's raw type. This is only the case if it is not static and if the class
-     * one level lower in the hierarchy is also not static.
-     * The provided list of {@code allOwnerTypes} is sorted from lowest to highest in the type hierarchy and already
-     * includes the enclosing class of the last class with relevant type arguments (if available).
-     *
-     * @param firstOwnerType the top-most owner type in the hierarchy to inspect
-     * @param allOwnerTypes all owner types in the hierarchy, from lowest to highest
-     * @return true if the first owner type should be represented as Class, false for ParameterizedType
-     */
-    private static boolean firstOwnerTypeShouldBeClass(Class<?> firstOwnerType, List<Class<?>> allOwnerTypes) {
-        if (Modifier.isStatic(firstOwnerType.getModifiers()) || firstOwnerType.getTypeParameters().length == 0) {
-            return true;
-        }
-        if (allOwnerTypes.size() > 1) {
-            Class<?> nextClass = allOwnerTypes.get(allOwnerTypes.size() - 2);
-            return Modifier.isStatic(nextClass.getModifiers());
-        }
-        return false;
-    }
-
-    /**
-     * Returns the classes which will make up the hierarchy of owner types for the given raw type, which may not be
-     * static or and which must have an enclosing class.
-     * The list goes from lowest enclosing class to highest, i.e. the first entry is the rawType's direct enclosing
-     * class and the last entry is the class with the least nesting that is relevant. In some circumstances, the last
-     * entry in the returned list should be a Class and not a ParameterizedType (handled by {@link #generateOwnerType}).
+     * Creates the appropriate owner type with relevant generic info for use in a ParameterizedType
+     * with the given raw type, which may not be static and which must have an enclosing class.
      * <p>
-     * This method returns null if the owner type is just the rawType's enclosing class as Class object (allows the
-     * caller of this method to fast-track this case, avoiding the need to perform the same checks again).
+     * The returned type is either the class's enclosing class as Class object if there are no type parameters in
+     * the enclosing classes that are available in the class's scope. Otherwise, a hierarchy of ParameterizedType
+     * is returned up to the last class with type parameters available in the class's scope.
      *
      * @param rawType the non-static enclosed class to inspect
-     * @return list of classes that will make up the owner type hierarchy; null if it should just be the enclosing class
-     *         as Class object
+     * @return the appropriate owner type for a parameterized type with the given raw type
      */
-    @Nullable
-    private static List<Class<?>> collectOwnerTypeHierarchyForEnclosedNonStaticClass(Class<?> rawType) {
-        List<Class<?>> declaringClasses = collectRelevantEnclosingClasses(rawType);
+    private static Type createOwnerTypeHierarchyForEnclosedNonStaticClass(Class<?> rawType) {
+        List<Class<?>> enclosingClasses = collectRelevantEnclosingClasses(rawType);
 
-        // Iterate backwards and find the highest class in the hierarchy that has type parameters
-        Class<?> lastClassWithTypeParams = null;
-        int lastClassWithTypeParamsIndex = -1;
-        for (int i = declaringClasses.size() - 1; i >= 0; --i) {
-            Class<?> declaringClass = declaringClasses.get(i);
-            if (declaringClass.getTypeParameters().length > 0) {
-                lastClassWithTypeParams = declaringClass;
-                lastClassWithTypeParamsIndex = i;
-                break;
+        Type lastOwnerType = null;
+        for (int i = enclosingClasses.size() - 1; i >= 0; --i) {
+            Class<?> ownerType = enclosingClasses.get(i);
+            if (lastOwnerType == null) {
+                TypeVariable<?>[] typeParams = ownerType.getTypeParameters();
+                if (typeParams.length > 0) {
+                    lastOwnerType = new ParameterizedTypeImpl(ownerType, ownerType.getEnclosingClass(), typeParams);
+                }
+            } else {
+                lastOwnerType = new ParameterizedTypeImpl(ownerType, lastOwnerType, ownerType.getTypeParameters());
             }
         }
-
-        if (lastClassWithTypeParams == null) {
-            // No type parameters anywhere -> owner type will be a simple Class. Represented by returning null.
-            return null;
-        }
-        if (lastClassWithTypeParams.getDeclaringClass() == null) {
-            return declaringClasses.subList(0, lastClassWithTypeParamsIndex + 1);
-        }
-
-        if (declaringClasses.size() >= lastClassWithTypeParamsIndex + 2) {
-            return declaringClasses.subList(0, lastClassWithTypeParamsIndex + 2);
-        }
-        declaringClasses.add(lastClassWithTypeParams.getDeclaringClass());
-        return declaringClasses;
+        return lastOwnerType == null
+            ? rawType.getEnclosingClass()
+            : lastOwnerType;
     }
 
     /**
@@ -206,11 +154,10 @@ public class ParameterizedTypeImpl implements ParameterizedType {
      * the set of classes that might have type parameters which are still accessible in the {@code rawType}.
      * <p>
      * The list is inspected afterwards and the last element in the returned list that has type parameters will be
-     * the last class to be a ParameterizedType in the owner type hierarchy.
+     * the top-most class to be a ParameterizedType in the owner type hierarchy.
      *
      * @implNote
-     *     Specifically defined to return {@link ArrayList} to guarantee that access by index is efficient
-     *     and that the list can be modified further.
+     *     Specifically defined to return {@link ArrayList} to guarantee that access by index is efficient.
      *
      * @param rawType the raw type whose enclosing classes should be gathered
      * @return list of relevant enclosing classes that need to be processed
@@ -224,7 +171,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             if (Modifier.isStatic(currentClass.getModifiers())) {
                 break;
             }
-            currentClass = currentClass.getDeclaringClass();
+            currentClass = currentClass.getEnclosingClass();
         }
         return declaringClasses;
     }
