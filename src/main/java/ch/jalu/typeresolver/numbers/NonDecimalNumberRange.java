@@ -13,7 +13,7 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
     BYTE(Byte.MIN_VALUE, Byte.MAX_VALUE),
 
     /** [0, 65535]. */
-    CHARACTER(Character.MIN_VALUE, Character.MAX_VALUE), // todo character unused
+    CHARACTER_AS_INT(Character.MIN_VALUE, Character.MAX_VALUE), // todo character unused
 
     /** [-32767, 32768]. */
     SHORT(Short.MIN_VALUE, Short.MAX_VALUE),
@@ -22,7 +22,17 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
     INTEGER(Integer.MIN_VALUE, Integer.MAX_VALUE),
 
     /** [-9223372036854775808, 9223372036854775807]. */
-    LONG(-1, -1);
+    LONG(-1, -1) {
+        @Override
+        public BigDecimal getMinValue() {
+            return LongValueRange.LONG_MIN_BD;
+        }
+
+        @Override
+        public BigDecimal getMaxValue() {
+            return LongValueRange.LONG_MAX_BD;
+        }
+    };
 
     private final int minVal;
     private final int maxVal;
@@ -52,11 +62,10 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
             case LONG:
                 return number.longValue();
             case INTEGER:
+            case CHARACTER_AS_INT:
                 return number.intValue();
             case SHORT:
                 return number.shortValue();
-            case CHARACTER:
-                throw new UnsupportedOperationException("Should not be called with " + this.name());
             case BYTE:
                 return number.byteValue();
             default:
@@ -72,8 +81,8 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
                 return otherRange != LONG;
             case SHORT:
                 return otherRange == SHORT || otherRange == BYTE;
-            case CHARACTER:
-                return otherRange == CHARACTER;
+            case CHARACTER_AS_INT:
+                return otherRange == CHARACTER_AS_INT;
             case BYTE:
                 return otherRange == BYTE;
             default:
@@ -89,7 +98,12 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
             return Optional.ofNullable(simpleConvertedNumber);
         }
 
-        if (number instanceof BigInteger) {
+        if (number instanceof Double || number instanceof Float) {
+            double dbl = number.doubleValue();
+            if (LongValueRange.isInRange(dbl)) {
+                return Optional.ofNullable(convertFromNumberInNonDecimalNumberRange(dbl, NonDecimalNumberRange.LONG));
+            }
+        } else if (number instanceof BigInteger) {
             BigInteger bi = (BigInteger) number;
             if (LongValueRange.isInRange(bi)) {
                 return Optional.ofNullable(convertFromNumberInNonDecimalNumberRange(bi, NonDecimalNumberRange.LONG));
@@ -99,6 +113,8 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
             if (LongValueRange.isInRange(bd)) {
                 return Optional.ofNullable(convertFromNumberInNonDecimalNumberRange(bd, NonDecimalNumberRange.LONG));
             }
+        } else {
+            throw new IllegalStateException("Unsupported number type: " + number.getClass());
         }
         return Optional.empty();
     }
@@ -110,14 +126,14 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
         }
         if (otherRange == LONG) {
             long value = number.longValue();
-            return minVal <= value && value <= maxVal ? value : null;
+            return minVal <= value && value <= maxVal ? convertToBasicTypeUnsafe(value) : null;
         } else {
             int value = number.intValue();
             return minVal <= value && value <= maxVal ? convertToBasicTypeUnsafe(value) : null;
         }
     }
 
-    private NonDecimalNumberRange toNonDecimalNumberRange(Number number) {
+    static NonDecimalNumberRange toNonDecimalNumberRange(Number number) {
         if (number instanceof Integer || number instanceof AtomicInteger) {
             return INTEGER;
         } else if (number instanceof Long || number instanceof AtomicLong) {
@@ -130,25 +146,20 @@ public enum NonDecimalNumberRange implements ConvertingValueRange {
         return null;
     }
 
-    @Override
-    public boolean isEqualOrSupersetOf2(ConvertingValueRange other) {
-        if (other instanceof InfiniteNumberRange || other instanceof DecimalNumberRange) {
-            return false;
-        }
-        if (other instanceof NonDecimalNumberRange) {
-            return isSupersetOrEqualTo((NonDecimalNumberRange) other);
-        }
-        throw new IllegalStateException("No other range type supported");
-    }
-
     private static final class LongValueRange {
 
+        private static final double LONG_MIN_DOUBLE = (double) Long.MIN_VALUE;
+        private static final double LONG_MAX_DOUBLE = (double) Long.MAX_VALUE;
         private static final BigInteger LONG_MIN_BI = BigInteger.valueOf(Long.MIN_VALUE);
         private static final BigInteger LONG_MAX_BI = BigInteger.valueOf(Long.MAX_VALUE);
         private static final BigDecimal LONG_MIN_BD = new BigDecimal(LONG_MIN_BI);
         private static final BigDecimal LONG_MAX_BD = new BigDecimal(LONG_MAX_BI);
 
         private LongValueRange() {
+        }
+
+        static boolean isInRange(double value) {
+            return LONG_MIN_DOUBLE <= value && value <= LONG_MAX_DOUBLE;
         }
 
         static boolean isInRange(BigInteger bigInteger) {

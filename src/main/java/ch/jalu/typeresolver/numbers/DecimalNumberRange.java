@@ -3,14 +3,12 @@ package ch.jalu.typeresolver.numbers;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public enum DecimalNumberRange implements ConvertingValueRange {
 
-    FLOAT(Float.MIN_VALUE, Float.MAX_VALUE),
+    FLOAT(-Float.MAX_VALUE, Float.MAX_VALUE),
 
-    DOUBLE(Double.MIN_VALUE, Double.MAX_VALUE);
+    DOUBLE(-Double.MAX_VALUE, Double.MAX_VALUE);
 
     private final BigDecimal minValue;
     private final BigDecimal maxValue;
@@ -37,43 +35,29 @@ public enum DecimalNumberRange implements ConvertingValueRange {
 
     @Override
     public Optional<Number> convertToTypeIfNoLossOfMagnitude(Number number) {
-        if (number instanceof Integer || number instanceof Long || number instanceof Float
-            || number instanceof AtomicInteger || number instanceof AtomicLong || number instanceof Short
-            || number instanceof Byte) {
+        if (NonDecimalNumberRange.toNonDecimalNumberRange(number) != null || number instanceof Float) {
             return Optional.of(toNumberTypeUnsafe(number));
         }
         if (number instanceof Double) {
             double value = (double) number;
-            if (this == DOUBLE || Float.MIN_VALUE <= value && value <= Float.MAX_VALUE) {
-                return Optional.of(value);
+            if (this == DOUBLE || Float.MIN_VALUE <= value && value <= Float.MAX_VALUE || !Double.isFinite(value)) {
+                return Optional.of(toNumberTypeUnsafe(value));
             }
             return Optional.empty();
         }
         if (number instanceof BigInteger) {
             BigDecimal bd = new BigDecimal((BigInteger) number);
             return minValue.compareTo(bd) <= 0 && maxValue.compareTo(bd) >= 0
-                ? Optional.of(number.doubleValue())
+                ? Optional.of(toNumberTypeUnsafe(bd))
                 : Optional.empty();
         }
         if (number instanceof BigDecimal) {
             BigDecimal bd = (BigDecimal) number;
             return minValue.compareTo(bd) <= 0 && maxValue.compareTo(bd) >= 0
-                ? Optional.of(number.doubleValue())
+                ? Optional.of(toNumberTypeUnsafe(bd))
                 : Optional.empty();
         }
-        return Optional.empty(); // todo throw on unknown?
-    }
-
-    @Override
-    public boolean isEqualOrSupersetOf2(ConvertingValueRange other) {
-        if (other instanceof NonDecimalNumberRange) {
-            return true;
-        } else if (other instanceof InfiniteNumberRange) {
-            return false;
-        } else if (other instanceof DecimalNumberRange) {
-            return this != FLOAT || other != DOUBLE;
-        }
-        throw new IllegalStateException("No other range types expected");
+        throw new IllegalStateException("Unsupported number type: " + number.getClass());
     }
 
     private Number toNumberTypeUnsafe(Number number) {

@@ -43,18 +43,17 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
 
     /** Big integer: integer with a theoretically infinite range of supported values. */
     public static final StandardNumberType<BigInteger> BIG_INTEGER = new StandardNumberType<>(BigInteger.class,
-        InfiniteNumberRange.BIG_INTEGER, InfiniteNumberRange::toBigInteger);
+        InfiniteNumberRange.BIG_INTEGER, num -> InfiniteNumberRange.toBigInteger(num, true));
 
     /** Big decimal: supports decimals and has a theoretically infinite range of supported values. */
-    public static final StandardNumberType<BigDecimal> BIG_DECIMAL =
-        new StandardNumberType<>(BigDecimal.class, InfiniteNumberRange.BIG_DECIMAL, InfiniteNumberRange::toBigDecimal);
+    public static final StandardNumberType<BigDecimal> BIG_DECIMAL = new StandardNumberType<>(BigDecimal.class,
+        InfiniteNumberRange.BIG_DECIMAL, num -> InfiniteNumberRange.toBigDecimal(num, true));
 
-    public static final StandardNumberType<AtomicInteger> ATOMIC_INTEGER = new StandardNumberType<>(
-        AtomicInteger.class, NonDecimalNumberRange.INTEGER, num -> new AtomicInteger(num.intValue()), true);
+    public static final StandardNumberType<AtomicInteger> ATOMIC_INTEGER = new StandardNumberType<>(AtomicInteger.class,
+        NonDecimalNumberRange.INTEGER, num -> new AtomicInteger(num.intValue()), true);
 
-    public static final StandardNumberType<AtomicLong> ATOMIC_LONG =
-        new StandardNumberType<>(AtomicLong.class, NonDecimalNumberRange.LONG,
-            num -> new AtomicLong(num.longValue()), true);
+    public static final StandardNumberType<AtomicLong> ATOMIC_LONG = new StandardNumberType<>(AtomicLong.class,
+        NonDecimalNumberRange.LONG, num -> new AtomicLong(num.longValue()), true);
 
 
     private static final Map<Class<?>, StandardNumberType<?>> REFERENCE_TYPE_TO_NUMBER_TYPE =
@@ -101,11 +100,8 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
     }
 
     @Override
-    public boolean valueRangeIsEqualOrSupersetOf(NumberType<?> otherType) {
-        if (otherType instanceof StandardNumberType) {
-            return this.valueRange.isEqualOrSupersetOf(((StandardNumberType<?>) otherType).valueRange);
-        }
-        return NumberType.super.valueRangeIsEqualOrSupersetOf(otherType);
+    public String toString() {
+        return "NumberType[" + type.getSimpleName() + "]";
     }
 
     @Nullable
@@ -114,18 +110,23 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
     }
 
     @Nullable
-    public static StandardNumberType<?> fromClass(Class<?> clazz) {
+    public static StandardNumberType<?> fromClass(@Nullable Class<?> clazz) {
         Class<?> referenceType = Primitives.toReferenceType(clazz);
         return REFERENCE_TYPE_TO_NUMBER_TYPE.get(referenceType);
     }
 
     @Nullable
-    public static <T extends Number> StandardNumberType<T> fromNumberClass(Class<T> clazz) {
+    public static <T extends Number> StandardNumberType<T> fromNumberClass(@Nullable Class<T> clazz) {
         return (StandardNumberType) fromClass(clazz);
     }
 
     public static Stream<StandardNumberType<?>> streamThroughPrimitiveTypes() {
         return Stream.of(BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE);
+    }
+
+    public static Stream<StandardNumberType<?>> streamThroughAll() {
+        return Stream.of(BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL,
+            ATOMIC_INTEGER, ATOMIC_LONG);
     }
 
     private static Map<Class<?>, StandardNumberType<?>> initReferenceTypeToStandardNumberTypeMap() {

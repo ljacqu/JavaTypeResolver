@@ -27,7 +27,7 @@ public enum InfiniteNumberRange implements ConvertingValueRange {
         return this == BIG_DECIMAL;
     }
 
-    public static BigDecimal toBigDecimal(Number number) {
+    public static BigDecimal toBigDecimal(Number number, boolean handleNonFiniteAsZero) {
         if (number instanceof BigInteger) {
             return new BigDecimal((BigInteger) number);
         }
@@ -42,17 +42,20 @@ public enum InfiniteNumberRange implements ConvertingValueRange {
         }
         if (number instanceof Double || number instanceof Float) {
             double value = number.doubleValue();
-            return BigDecimal.valueOf(value);
+            if (Double.isFinite(value)) {
+                return BigDecimal.valueOf(value);
+            }
+            return handleNonFiniteAsZero ? BigDecimal.ZERO : null;
         }
         return null; // todo
     }
 
-    public static BigInteger toBigInteger(Number number) {
+    public static BigInteger toBigInteger(Number number, boolean handleNonFiniteAsZero) {
         if (number instanceof BigInteger) {
             return (BigInteger) number;
         }
         if (number instanceof BigDecimal) {
-            return ((BigDecimal) number).unscaledValue();
+            return ((BigDecimal) number).toBigInteger();
         }
         // todo extract type checks?
         if (number instanceof Integer || number instanceof Long
@@ -63,7 +66,10 @@ public enum InfiniteNumberRange implements ConvertingValueRange {
         }
         if (number instanceof Double || number instanceof Float) {
             double value = number.doubleValue();
-            return new BigInteger(Double.toString(value));
+            if (Double.isFinite(value)) {
+                return BigDecimal.valueOf(value).toBigInteger();
+            }
+            return handleNonFiniteAsZero ? BigInteger.ZERO : null;
         }
         return null; // todo
     }
@@ -72,16 +78,11 @@ public enum InfiniteNumberRange implements ConvertingValueRange {
     public Optional<Number> convertToTypeIfNoLossOfMagnitude(Number number) {
         switch (this) {
             case BIG_DECIMAL:
-                return Optional.of(toBigDecimal(number));
+                return Optional.ofNullable(toBigDecimal(number, false));
             case BIG_INTEGER:
-                return Optional.of(toBigInteger(number));
+                return Optional.ofNullable(toBigInteger(number, false));
             default:
                 throw new IllegalStateException("Unsupported range type: " + this.name());
         }
-    }
-
-    @Override
-    public boolean isEqualOrSupersetOf2(ConvertingValueRange other) {
-        return true;
     }
 }

@@ -6,5 +6,4 @@ public interface ConvertingValueRange extends ValueRange { // should be a sealed
 
     Optional<Number> convertToTypeIfNoLossOfMagnitude(Number number);
 
-    boolean isEqualOrSupersetOf2(ConvertingValueRange other);
 }
