@@ -3,8 +3,9 @@ package ch.jalu.typeresolver.numbers;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.IntFunction;
 
-public enum DecimalNumberRange implements ConvertingValueRange {
+enum DecimalNumberRange implements ConvertingValueRange {
 
     FLOAT(-Float.MAX_VALUE, Float.MAX_VALUE),
 
@@ -34,33 +35,67 @@ public enum DecimalNumberRange implements ConvertingValueRange {
     }
 
     @Override
-    public Optional<Number> convertToTypeIfNoLossOfMagnitude(Number number) {
+    public Optional<Number> convertIfNoLossOfMagnitude(Number number) {
+         return Optional.ofNullable(convertRangeAware(number, i -> null));
+    }
+
+    @Override
+    public Number convertToBounds(Number number) {
+        IntFunction<Number> clampToRangeFn;
+        if (this == DOUBLE) {
+            clampToRangeFn = i -> i == 1 ? Double.MAX_VALUE : -Double.MAX_VALUE;
+        } else { // this == FLOAT
+            clampToRangeFn = i -> i == 1 ? Float.MAX_VALUE : -Float.MAX_VALUE;
+        }
+        return convertRangeAware(number, clampToRangeFn);
+    }
+
+    private Number convertRangeAware(Number number, IntFunction<Number> fnIfOutsideRange) {
         if (NonDecimalNumberRange.toNonDecimalNumberRange(number) != null || number instanceof Float) {
-            return Optional.of(toNumberTypeUnsafe(number));
+            return convertUnsafe(number);
         }
         if (number instanceof Double) {
             double value = (double) number;
-            if (this == DOUBLE || Float.MIN_VALUE <= value && value <= Float.MAX_VALUE || !Double.isFinite(value)) {
-                return Optional.of(toNumberTypeUnsafe(value));
+            if (this == DOUBLE || !Double.isFinite(value)) {
+                return convertUnsafe(value);
             }
-            return Optional.empty();
+            int rangeComparison = compareToRange(value, -Float.MAX_VALUE, Float.MAX_VALUE);
+            return rangeComparison == 0 ? convertUnsafe(value) : fnIfOutsideRange.apply(rangeComparison);
         }
+
+        BigDecimal value;
         if (number instanceof BigInteger) {
-            BigDecimal bd = new BigDecimal((BigInteger) number);
-            return minValue.compareTo(bd) <= 0 && maxValue.compareTo(bd) >= 0
-                ? Optional.of(toNumberTypeUnsafe(bd))
-                : Optional.empty();
+            value = new BigDecimal((BigInteger) number);
+        } else if (number instanceof BigDecimal) {
+            value = (BigDecimal) number;
+        } else {
+            throw new IllegalStateException("Unsupported number type: " + number.getClass());
         }
-        if (number instanceof BigDecimal) {
-            BigDecimal bd = (BigDecimal) number;
-            return minValue.compareTo(bd) <= 0 && maxValue.compareTo(bd) >= 0
-                ? Optional.of(toNumberTypeUnsafe(bd))
-                : Optional.empty();
-        }
-        throw new IllegalStateException("Unsupported number type: " + number.getClass());
+
+        int compareToRange = compareToRange(value);
+        return compareToRange == 0 ? convertUnsafe(number) : fnIfOutsideRange.apply(compareToRange);
     }
 
-    private Number toNumberTypeUnsafe(Number number) {
+    private int compareToRange(BigDecimal value) {
+        if (value.compareTo(minValue) < 0) {
+            return -1;
+        } else if (value.compareTo(maxValue) > 0) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private static int compareToRange(double value, double min, double max) {
+        if (value < min) {
+            return -1;
+        } else if (value > max) {
+            return 1;
+        }
+        return 0;
+    }
+
+    @Override
+    public Number convertUnsafe(Number number) {
         switch (this) {
             case FLOAT:
                 return number.floatValue();

@@ -1,6 +1,4 @@
-package ch.jalu.typeresolver;
-
-import ch.jalu.typeresolver.numbers.ValueRange;
+package ch.jalu.typeresolver.numbers;
 
 import java.util.Optional;
 
@@ -9,6 +7,8 @@ public interface NumberType<N> {
     Class<N> getType();
 
     N convertUnsafe(Number number);
+
+    N convertToBounds(Number number);
 
     Optional<N> convertIfNoLossOfMagnitude(Number number);
 

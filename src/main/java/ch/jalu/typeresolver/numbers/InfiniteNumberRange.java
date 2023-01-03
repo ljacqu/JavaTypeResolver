@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public enum InfiniteNumberRange implements ConvertingValueRange {
+enum InfiniteNumberRange implements ConvertingValueRange {
 
     BIG_DECIMAL,
 
@@ -75,7 +75,19 @@ public enum InfiniteNumberRange implements ConvertingValueRange {
     }
 
     @Override
-    public Optional<Number> convertToTypeIfNoLossOfMagnitude(Number number) {
+    public Number convertUnsafe(Number number) {
+        switch (this) {
+            case BIG_DECIMAL:
+                return toBigDecimal(number, true);
+            case BIG_INTEGER:
+                return toBigInteger(number, true);
+            default:
+                throw new IllegalStateException("Unsupported range type: " + this.name());
+        }
+    }
+
+    @Override
+    public Optional<Number> convertIfNoLossOfMagnitude(Number number) {
         switch (this) {
             case BIG_DECIMAL:
                 return Optional.ofNullable(toBigDecimal(number, false));
@@ -84,5 +96,10 @@ public enum InfiniteNumberRange implements ConvertingValueRange {
             default:
                 throw new IllegalStateException("Unsupported range type: " + this.name());
         }
+    }
+
+    @Override
+    public Number convertToBounds(Number number) {
+        return convertUnsafe(number);
     }
 }

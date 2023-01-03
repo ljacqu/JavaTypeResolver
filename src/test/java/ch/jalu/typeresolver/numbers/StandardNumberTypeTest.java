@@ -259,15 +259,6 @@ class StandardNumberTypeTest {
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_INTEGER, dNaN, BigInteger.ZERO, Optional.empty());
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_DECIMAL, fNaN, BigDecimal.ZERO, Optional.empty());
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_DECIMAL, dNaN, BigDecimal.ZERO, Optional.empty());
-
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertUnsafe(fNaN).get(), equalTo(0));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertIfNoLossOfMagnitude(fNaN), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertUnsafe(dNaN).get(), equalTo(0));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertIfNoLossOfMagnitude(dNaN), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertUnsafe(fNaN).get(), equalTo(0L));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertIfNoLossOfMagnitude(fNaN), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertUnsafe(dNaN).get(), equalTo(0L));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertIfNoLossOfMagnitude(dNaN), equalTo(Optional.empty()));
     }
 
     @Test
@@ -309,25 +300,9 @@ class StandardNumberTypeTest {
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_INTEGER, fNegInf, BigInteger.ZERO, Optional.empty());
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_DECIMAL, fPosInf, BigDecimal.ZERO, Optional.empty());
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_DECIMAL, fNegInf, BigDecimal.ZERO, Optional.empty());
-
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertUnsafe(fPosInf).get(), equalTo(Integer.MAX_VALUE));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertIfNoLossOfMagnitude(fPosInf), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertUnsafe(fNegInf).get(), equalTo(Integer.MIN_VALUE));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertIfNoLossOfMagnitude(fNegInf), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertUnsafe(dPosInf).get(), equalTo(Integer.MAX_VALUE));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertIfNoLossOfMagnitude(dPosInf), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertUnsafe(dNegInf).get(), equalTo(Integer.MIN_VALUE));
-        assertThat(StandardNumberType.ATOMIC_INTEGER.convertIfNoLossOfMagnitude(dNegInf), equalTo(Optional.empty()));
-
-        assertThat(StandardNumberType.ATOMIC_LONG.convertUnsafe(fPosInf).get(), equalTo(Long.MAX_VALUE));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertIfNoLossOfMagnitude(fPosInf), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertUnsafe(fNegInf).get(), equalTo(Long.MIN_VALUE));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertIfNoLossOfMagnitude(fNegInf), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertUnsafe(dPosInf).get(), equalTo(Long.MAX_VALUE));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertIfNoLossOfMagnitude(dPosInf), equalTo(Optional.empty()));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertUnsafe(dNegInf).get(), equalTo(Long.MIN_VALUE));
-        assertThat(StandardNumberType.ATOMIC_LONG.convertIfNoLossOfMagnitude(dNegInf), equalTo(Optional.empty()));
     }
+
+    // todo: test that BigInteger and BigDecimal _extensions_ are also supported as expected
 
     @Test
     void shouldStreamThroughAllNumberTypes() throws IllegalAccessException {
@@ -337,7 +312,7 @@ class StandardNumberTypeTest {
         // then
         Set<StandardNumberType<?>> allActualTypes = new HashSet<>();
         for (Field field : StandardNumberType.class.getFields()) {
-            if (Modifier.isStatic(field.getModifiers())) {
+            if (Modifier.isStatic(field.getModifiers()) && !field.isSynthetic()) {
                 allActualTypes.add((StandardNumberType<?>) field.get(null));
             }
         }
@@ -411,13 +386,11 @@ class StandardNumberTypeTest {
         expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.SHORT,
             Arrays.asList(StandardNumberType.BYTE, StandardNumberType.SHORT));
 
-        List<StandardNumberType<?>> rangesGteInteger = Arrays.asList(StandardNumberType.BYTE, StandardNumberType.SHORT, StandardNumberType.INTEGER, StandardNumberType.ATOMIC_INTEGER);
+        List<StandardNumberType<?>> rangesGteInteger = Arrays.asList(StandardNumberType.BYTE, StandardNumberType.SHORT, StandardNumberType.INTEGER);
         expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.INTEGER, rangesGteInteger);
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.ATOMIC_INTEGER, rangesGteInteger);
 
-        Set<StandardNumberType<?>> rangesGteLong = setOf(rangesGteInteger, StandardNumberType.LONG, StandardNumberType.ATOMIC_LONG);
+        Set<StandardNumberType<?>> rangesGteLong = setOf(rangesGteInteger, StandardNumberType.LONG);
         expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.LONG, rangesGteLong);
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.ATOMIC_LONG, rangesGteLong);
         expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.FLOAT, setOf(rangesGteLong, StandardNumberType.FLOAT));
         expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.DOUBLE, setOf(rangesGteLong, StandardNumberType.FLOAT, StandardNumberType.DOUBLE));
         expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.BIG_INTEGER, rangeByNumberType.keySet());
@@ -442,25 +415,31 @@ class StandardNumberTypeTest {
             N expectation = expectations.get(number);
 
             N unsafeConvertResult = numberType.convertUnsafe(number);
+            N toBoundsResult = numberType.convertToBounds(number);
             Optional<N> safeConvertResult = numberType.convertIfNoLossOfMagnitude(number);
 
             boolean unsafeMatches;
+            boolean boundMatches;
             boolean safeMatches;
             if (expectation != null) {
                 unsafeMatches = expectation.equals(unsafeConvertResult);
+                boundMatches = expectation.equals(toBoundsResult);
                 safeMatches = Optional.of(expectation).equals(safeConvertResult);
             } else {
                 unsafeMatches = numberType.getType().isInstance(unsafeConvertResult);
+                BigDecimal toBoundsAsBigDecimal = StandardNumberType.BIG_DECIMAL.convertUnsafe(toBoundsResult);
+                boundMatches = toBoundsAsBigDecimal.compareTo(numberType.getValueRange().getMinValue()) == 0
+                    || toBoundsAsBigDecimal.compareTo(numberType.getValueRange().getMaxValue()) == 0;
                 safeMatches = !safeConvertResult.isPresent();
             }
 
-            if (!unsafeMatches || !safeMatches) {
+            if (!unsafeMatches || !boundMatches || !safeMatches) {
                 String safeResultString = safeConvertResult
                     .map(n -> "Optional[" + n.toString() + " (class=" + n.getClass().getSimpleName() + ")]")
                     .orElse("Optional.empty");
                 fail("For number '" + number + "' (type " + number.getClass().getSimpleName()
                     + "), expected safe conversion = " + expectation + ", but got " + safeResultString
-                    + ". Unsafe result match=" + unsafeMatches + ", safe result match = " + safeMatches);
+                    + ". Unsafe result match=" + unsafeMatches + ", within bounds match = " + toBoundsResult + ", safe result match = " + safeMatches);
             }
         }
     }
