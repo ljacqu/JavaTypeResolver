@@ -11,61 +11,106 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
-public enum StandardNumberTypeEnum implements ValueRange {
+import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.compareToRange;
+import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.returnCompareToCodeForNonFiniteValues;
 
-    BYTE(Byte.class) {
+/**
+ * Represents the standard implementations of {@link Number} and allows to convert from one type to another,
+ * among other utilities. See also {@link StandardNumberType}, which is more appropriate if you want to work
+ * with a specific type and need type safety.
+ *
+ * @see StandardNumberTypeEnum#asNumberType()
+ * @see StandardNumberTypeEnum#fromClass(Class)
+ */
+public enum StandardNumberTypeEnum {
+
+    /**
+     * Byte type.
+     */
+    BYTE(Byte.class, ExtendedValueRange.forLongOrSubset(Byte.MIN_VALUE, Byte.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.byteValue();
         }
     },
 
-    SHORT(Short.class) {
+    /**
+     * Short type.
+     */
+    SHORT(Short.class, ExtendedValueRange.forLongOrSubset(Short.MIN_VALUE, Short.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.shortValue();
         }
     },
 
-    INTEGER(Integer.class) {
+    /**
+     * Integer type.
+     */
+    INTEGER(Integer.class, ExtendedValueRange.forLongOrSubset(Integer.MIN_VALUE, Integer.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.intValue();
         }
     },
 
-    LONG(Long.class) {
+    /**
+     * Long type.
+     */
+    LONG(Long.class, ExtendedValueRange.forLongOrSubset(Long.MIN_VALUE, Long.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.longValue();
         }
     },
 
-    FLOAT(Float.class) {
+    /**
+     * Float type.
+     */
+    FLOAT(Float.class, ExtendedValueRange.forDoubleOrFloat(-Float.MAX_VALUE, Float.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.floatValue();
         }
     },
 
-    DOUBLE(Double.class) {
+    /**
+     * Double type.
+     */
+    DOUBLE(Double.class, ExtendedValueRange.forDoubleOrFloat(-Double.MAX_VALUE, Double.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.doubleValue();
         }
     },
 
-    BIG_INTEGER(BigInteger.class) {
+    /**
+     * Big integer type.
+     */
+    BIG_INTEGER(BigInteger.class, ExtendedValueRange.infinite(false)) {
         @Override
         public Number convertUnsafe(Number number) {
-            return convertToBigInteger(number, getEnumForObjectTypeOrThrow(number), this::getNumberForCompareToResult);
+            return convertToBigInteger(number, getEnumForObjectTypeOrThrow(number), i -> BigInteger.ZERO);
+        }
+
+        @Override
+        protected Number convertBoundAware(Number number, IntFunction<Number> numberOutOfBoundsFunction) {
+            return convertToBigInteger(number, getEnumForObjectTypeOrThrow(number), numberOutOfBoundsFunction);
         }
     },
 
-    BIG_DECIMAL(BigDecimal.class) {
+    /**
+     * Big decimal type.
+     */
+    BIG_DECIMAL(BigDecimal.class, ExtendedValueRange.infinite(true)) {
         @Override
         public Number convertUnsafe(Number number) {
-            return convertToBigDecimal(number, getEnumForObjectTypeOrThrow(number), this::getNumberForCompareToResult);
+            return convertToBigDecimal(number, getEnumForObjectTypeOrThrow(number), i -> BigDecimal.ZERO);
+        }
+
+        @Override
+        protected Number convertBoundAware(Number number, IntFunction<Number> numberOutOfBoundsFunction) {
+            return convertToBigDecimal(number, getEnumForObjectTypeOrThrow(number), numberOutOfBoundsFunction);
         }
     };
 
@@ -73,42 +118,55 @@ public enum StandardNumberTypeEnum implements ValueRange {
         initReferenceTypeToStandardNumberTypeMap();
 
     private final Class<? extends Number> type;
+    private final ExtendedValueRange<? extends Number> range;
 
-    StandardNumberTypeEnum(Class<? extends Number> type) {
+    /**
+     * Constructor.
+     *
+     * @param type the number type this entry is for
+     * @param range range describing the universe of values supported by this type
+     * @param <T> the number type
+     */
+    <T extends Number> StandardNumberTypeEnum(Class<T> type, ExtendedValueRange<T> range) {
         this.type = type;
+        this.range = range;
     }
 
     public StandardNumberType<?> asNumberType() {
         return StandardNumberType.fromClass(type);
     }
 
-    public Class<? extends Number> getType() {
-        return type;
+    public ExtendedValueRange<?> getValueRange() {
+        return range;
     }
 
-    @Override
-    public boolean supportsDecimals() {
-        switch (this) {
-            case FLOAT:
-            case DOUBLE:
-            case BIG_DECIMAL:
-                return true;
-            default:
-                return false;
-        }
+    public Class<? extends Number> getType() {
+        return type;
     }
 
     public abstract Number convertUnsafe(Number number);
 
     public Optional<Number> convertIfNoLossOfMagnitude(Number number) {
-        return Optional.ofNullable(convertInternal(number, cr -> null));
+        return Optional.ofNullable(convertBoundAware(number, cr -> null));
     }
 
     public Number convertToBounds(Number number) {
-        return convertInternal(number, this::getNumberForCompareToResult);
+        return convertBoundAware(number, this::getResultForNonZeroCompareToResult);
     }
 
-    private Number convertInternal(Number number, IntFunction<Number> fnIfOutsideRange) {
+    /**
+     * Converts a number to {@code this} type safely, invoking the Function argument with the type of overflow
+     * if the number's value cannot be represented by {@code this} type.
+     * This method returns null only if the {@link IntFunction} returns null, and only returns numbers that are
+     * of {@code this} type.
+     *
+     * @param number the number to convert
+     * @param numberOutOfBoundsFunction function that takes an int (1, -1 or 2) and returns a Number of {@code this}
+     *                                  type that should be used as result. The argument is explained in
+     *                                  {@link #getResultForNonZeroCompareToResult(int)}.
+     * @return the converted numbers, some default or null
+     */
+    protected Number convertBoundAware(Number number, IntFunction<Number> numberOutOfBoundsFunction) {
         StandardNumberTypeEnum type = getEnumForObjectTypeOrThrow(number);
         if (this.supportsAllValuesOf(type)) {
             return convertUnsafe(number);
@@ -118,59 +176,97 @@ public enum StandardNumberTypeEnum implements ValueRange {
             case BYTE:
             case SHORT:
             case INTEGER:
-                return convertToIntOrSmaller(number, type, fnIfOutsideRange);
+                return convertToIntOrSmaller(number, type, numberOutOfBoundsFunction);
             case LONG:
-                return convertToLong(number, type, fnIfOutsideRange);
+                return convertToLong(number, type, numberOutOfBoundsFunction);
             case FLOAT:
             case DOUBLE:
-                return convertToFloatOrDouble(number, type, fnIfOutsideRange);
-            case BIG_DECIMAL:
-                return convertToBigDecimal(number, type, fnIfOutsideRange);
-            case BIG_INTEGER:
-                return convertToBigInteger(number, type, fnIfOutsideRange);
+                return convertToFloatOrDouble(number, type, numberOutOfBoundsFunction);
             default:
+                // BIG_INTEGER and BIG_DECIMAL override this method, so 'this' cannot be either type here.
                 throw new IllegalStateException("Unexpected value: " + this);
         }
     }
 
-    Number getNumberForCompareToResult(int compareToResult) {
+    /**
+     * Returns a number of {@code this} type that is at the appropriate end of this type's value range
+     * as determined by the argument: <ul>
+     *   <li>1 to signify that the value was too large for this type</li>
+     *   <li>-1 to signify that the value was too small for this type</li>
+     *   <li>2 when NaN was encountered but this type does not support it</li>
+     * </ul>
+     *
+     * @param compareToResult the result from the compareTo-like check against this range, based on which an
+     *                        appropriate return value should be returned
+     * @return number appropriate for the comparison result
+     */
+    private Number getResultForNonZeroCompareToResult(int compareToResult) {
+        if (this == BIG_DECIMAL) {
+            return BigDecimal.ZERO;
+        } else if (this == BIG_INTEGER) {
+            return BigInteger.ZERO;
+        }
+
         switch (compareToResult) {
             case 1: // Too large
-                return isBigNumberType() ? convertUnsafe(0) : getMaxInOwnType();
+                return range.getMaxInOwnType();
             case 2: // NaN
                 return convertUnsafe(0);
             case -1: // Too small
-                return isBigNumberType() ? convertUnsafe(0) : getMinInOwnType();
+                return range.getMinInOwnType();
             default:
                 throw new IllegalStateException("Unexpected value: " + compareToResult);
         }
     }
 
-    private static Number convertToBigDecimal(Number number, StandardNumberTypeEnum numberType,
-                                              IntFunction<Number> fnIfOutsideRange) {
+    /**
+     * Conversion <b>to</b> BigDecimal for any of the conversion flavors: {@link #convertUnsafe},
+     * {@link #convertToBounds} or {@link #convertIfNoLossOfMagnitude}.
+     * <p>
+     * All values of the supported Number implementations can be converted to BigDecimal, except for
+     * infinity and NaN (float or double). If such a value is encountered, the "outside range" function
+     * is called (returns null or BigDecimal zero, depending on conversion flavor).
+     *
+     * @param number the number to convert
+     * @param numberType the type the number to convert has
+     * @param fnIfOutsideRange function providing the value to return if the number to convert was out of range
+     * @return the converted number (potentially null in some contexts)
+     */
+    private static BigDecimal convertToBigDecimal(Number number, StandardNumberTypeEnum numberType,
+                                                  IntFunction<Number> fnIfOutsideRange) {
         switch (numberType) {
             case BYTE:
             case SHORT:
             case INTEGER:
             case LONG:
-                long lngValue = number.longValue();
-                return BigDecimal.valueOf(lngValue);
+                long longValue = number.longValue();
+                return BigDecimal.valueOf(longValue);
             case FLOAT:
             case DOUBLE:
-                double dblValue = number.doubleValue();
-                int compareToForFiniteness = returnCompareToCodeForNonFiniteValues(dblValue);
+                double doubleValue = number.doubleValue();
+                int compareToForFiniteness = returnCompareToCodeForNonFiniteValues(doubleValue);
                 return compareToForFiniteness == 0
-                    ? BigDecimal.valueOf(dblValue)
-                    : fnIfOutsideRange.apply(compareToForFiniteness);
+                    ? BigDecimal.valueOf(doubleValue)
+                    : (BigDecimal) fnIfOutsideRange.apply(compareToForFiniteness);
             case BIG_INTEGER:
                 return new BigDecimal((BigInteger) number);
             case BIG_DECIMAL:
-                return number;
+                return (BigDecimal) number;
             default:
                 throw new IllegalStateException("Unexpected value: " + numberType);
         }
     }
 
+    /**
+     * Conversion <b>to</b> BigDecimal for any of the conversion flavors: {@link #convertUnsafe},
+     * {@link #convertToBounds} or {@link #convertIfNoLossOfMagnitude}. Behaves similar to the
+     * conversion method that converts to BigDecimal.
+     *
+     * @param number the number to convert
+     * @param numberType the type the number to convert has
+     * @param fnIfOutsideRange function providing the value to return if the number to convert was out of range
+     * @return the converted number (potentially null in some contexts)
+     */
     private static Number convertToBigInteger(Number number, StandardNumberTypeEnum numberType,
                                               IntFunction<Number> fnIfOutsideRange) {
         switch (numberType) {
@@ -196,18 +292,25 @@ public enum StandardNumberTypeEnum implements ValueRange {
         }
     }
 
+    /*
+     * Conversion method called when the type to convert *to* is BYTE, SHORT, or INTEGER.
+     */
     private Number convertToIntOrSmaller(Number number, StandardNumberTypeEnum numberType,
                                          IntFunction<Number> fnIfOutsideRange) {
-        StandardNumberTypeEnum knownRange = numberType;
+        StandardNumberTypeEnum trustedRange = numberType;
         int rangeComparison = 0;
+        // Step 1: If number belongs to something with greater range than LONG, check first that it can be represented
+        // as a Long so that we can then check if the long value is within bounds.
         if (!LONG.supportsAllValuesOf(numberType)) {
             rangeComparison = compareToLongRange(number, numberType);
-            knownRange = LONG;
+            trustedRange = LONG;
         }
 
+        // Step 2: If within LONG bounds, compare the long or int value with this entry's range.
         if (rangeComparison == 0) {
-            switch (knownRange) {
-                case BYTE:
+            switch (trustedRange) {
+                // case BYTE: not needed, since all other types' range is a superset of Byte's, meaning that bytes are
+                // always converted without any range checks
                 case SHORT:
                 case INTEGER:
                     rangeComparison = compareToRange(number.intValue(), getMinAsIntOrThrow(), getMaxAsIntOrThrow());
@@ -228,20 +331,32 @@ public enum StandardNumberTypeEnum implements ValueRange {
         return comparisonToLongRange == 0 ? convertUnsafe(number) : fnIfOutsideRange.apply(comparisonToLongRange);
     }
 
+    /**
+     * Returns the {@code compareTo}-like result of this number's value with the value range of the Long type.
+     * Only supports number whose value range is larger than Long.
+     *
+     * @param number the number to process
+     * @param numberType the number's type
+     * @return compareTo int result indicating the relation of the number and the Long value range
+     *         (cf. {@link #getResultForNonZeroCompareToResult})
+     */
     private static int compareToLongRange(Number number, StandardNumberTypeEnum numberType) {
         switch (numberType) {
             case FLOAT:
             case DOUBLE:
-                return LongValueRange.compareToRange(number.doubleValue());
+                return RangeComparisonHelper.compareToLongRange(number.doubleValue());
             case BIG_INTEGER:
             case BIG_DECIMAL:
-                BigDecimal bigDecimal = convertBigNumberToBigDecimal(number);
-                return LongValueRange.compareToRange(bigDecimal);
+                BigDecimal value = convertToBigDecimal(number, numberType, null);
+                return RangeComparisonHelper.compareToRange(value, LONG.range.getMinValue(), LONG.range.getMaxValue());
             default:
                 throw new IllegalStateException("Unexpected value: " + numberType);
         }
     }
 
+    /*
+     * Conversion method called when the type to convert *to* is FLOAT or DOUBLE.
+     */
     private Number convertToFloatOrDouble(Number number, StandardNumberTypeEnum numberType,
                                           IntFunction<Number> fnIfOutsideRange) {
         int rangeComparison;
@@ -254,8 +369,8 @@ public enum StandardNumberTypeEnum implements ValueRange {
             switch (numberType) {
                 case BIG_INTEGER:
                 case BIG_DECIMAL:
-                    BigDecimal bigDecimal = convertBigNumberToBigDecimal(number);
-                    rangeComparison = compareToRange(bigDecimal, getMinValue(), getMaxValue());
+                    BigDecimal bigDecimal = convertToBigDecimal(number, numberType, null);
+                    rangeComparison = compareToRange(bigDecimal, range.getMinValue(), range.getMaxValue());
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + numberType);
@@ -265,106 +380,6 @@ public enum StandardNumberTypeEnum implements ValueRange {
         return rangeComparison == 0
             ? convertUnsafe(number)
             : fnIfOutsideRange.apply(rangeComparison);
-    }
-
-    private static BigDecimal convertBigNumberToBigDecimal(Number number) {
-        if (number instanceof BigDecimal) {
-            return (BigDecimal) number;
-        } else if (number instanceof BigInteger) {
-            return new BigDecimal((BigInteger) number);
-        } else {
-            throw new IllegalArgumentException("Unexpected argument of type " + number.getClass());
-        }
-    }
-
-    private static int returnCompareToCodeForNonFiniteValues(double d) {
-        if (Double.isFinite(d)) {
-            return 0;
-        } else if (d == Double.POSITIVE_INFINITY) {
-            return 1;
-        } else if (d == Double.NEGATIVE_INFINITY) {
-            return -1;
-        } else { // Double.isNaN(d)
-            return 2;
-        }
-    }
-
-    private static Optional<Integer> compareToCodeIfDoubleNotFinite(double d) {
-        if (Double.isFinite(d)) {
-            return Optional.empty();
-        } else if (d == Double.POSITIVE_INFINITY) {
-            return Optional.of(1);
-        } else if (d == Double.NEGATIVE_INFINITY) {
-            return Optional.of(-1);
-        } else { // Double.isNaN(d)
-            return Optional.of(2);
-        }
-    }
-
-    private static int compareToRange(int value, int min, int max) {
-        if (value < min) {
-            return -1;
-        } else if (value > max) {
-            return 1;
-        }
-        return 0;
-    }
-
-    private static int compareToRange(long value, int min, int max) {
-        if (value < min) {
-            return -1;
-        } else if (value > max) {
-            return 1;
-        }
-        return 0;
-    }
-
-    private static int compareToRange(double value, double min, double max) {
-        if (value < min) {
-            return -1;
-        } else if (value > max) {
-            return 1;
-        }
-        return 0;
-    }
-
-    private static int compareToRange(BigDecimal value, BigDecimal min, BigDecimal max) {
-        if (value.compareTo(min) < 0) {
-            return -1;
-        } else if (value.compareTo(max) > 0) {
-            return 1;
-        }
-        return 0;
-    }
-
-    private boolean isBigNumberType() {
-        return this == BIG_DECIMAL || this == BIG_INTEGER;
-    }
-
-    private boolean hasNanAndInfinity() {
-        return this == FLOAT || this == DOUBLE;
-    }
-
-    public BigDecimal getMinValue() {
-        switch (this) {
-            case BYTE:
-                return BigDecimal.valueOf(Byte.MIN_VALUE);
-            case SHORT:
-                return BigDecimal.valueOf(Short.MIN_VALUE);
-            case INTEGER:
-                return BigDecimal.valueOf(Integer.MIN_VALUE);
-            case LONG:
-                return LongValueRange.LONG_MIN_BD;
-            case FLOAT:
-                return BigDecimal.valueOf(-Float.MAX_VALUE);
-            case DOUBLE:
-                return BigDecimal.valueOf(-Double.MAX_VALUE);
-            case BIG_INTEGER:
-            case BIG_DECIMAL:
-                return null;
-            default:
-                throw new IllegalStateException("Unexpected value: " + this);
-        }
     }
 
     private int getMinAsIntOrThrow() {
@@ -380,50 +395,6 @@ public enum StandardNumberTypeEnum implements ValueRange {
         }
     }
 
-    public Number getMinInOwnType() {
-        switch (this) {
-            case BYTE:
-                return Byte.MIN_VALUE;
-            case SHORT:
-                return Short.MIN_VALUE;
-            case INTEGER:
-                return Integer.MIN_VALUE;
-            case LONG:
-                return Long.MIN_VALUE;
-            case FLOAT:
-                return BigDecimal.valueOf(-Float.MAX_VALUE);
-            case DOUBLE:
-                return BigDecimal.valueOf(-Double.MAX_VALUE);
-            case BIG_INTEGER:
-            case BIG_DECIMAL:
-                return null;
-            default:
-                throw new IllegalStateException("Unexpected value: " + this);
-        }
-    }
-
-    public BigDecimal getMaxValue() {
-        switch (this) {
-            case BYTE:
-                return BigDecimal.valueOf(Byte.MAX_VALUE);
-            case SHORT:
-                return BigDecimal.valueOf(Short.MAX_VALUE);
-            case INTEGER:
-                return BigDecimal.valueOf(Integer.MAX_VALUE);
-            case LONG:
-                return LongValueRange.LONG_MAX_BD;
-            case FLOAT:
-                return BigDecimal.valueOf(Float.MAX_VALUE);
-            case DOUBLE:
-                return BigDecimal.valueOf(Double.MAX_VALUE);
-            case BIG_INTEGER:
-            case BIG_DECIMAL:
-                return null;
-            default:
-                throw new IllegalStateException("Unexpected value: " + this);
-        }
-    }
-
     private int getMaxAsIntOrThrow() {
         switch (this) {
             case BYTE:
@@ -432,28 +403,6 @@ public enum StandardNumberTypeEnum implements ValueRange {
                 return Short.MAX_VALUE;
             case INTEGER:
                 return Integer.MAX_VALUE;
-            default:
-                throw new IllegalStateException("Unexpected value: " + this);
-        }
-    }
-
-    public Number getMaxInOwnType() {
-        switch (this) {
-            case BYTE:
-                return Byte.MAX_VALUE;
-            case SHORT:
-                return Short.MAX_VALUE;
-            case INTEGER:
-                return Integer.MAX_VALUE;
-            case LONG:
-                return Long.MAX_VALUE;
-            case FLOAT:
-                return BigDecimal.valueOf(Float.MAX_VALUE);
-            case DOUBLE:
-                return BigDecimal.valueOf(Double.MAX_VALUE);
-            case BIG_INTEGER:
-            case BIG_DECIMAL:
-                return null;
             default:
                 throw new IllegalStateException("Unexpected value: " + this);
         }
@@ -480,36 +429,20 @@ public enum StandardNumberTypeEnum implements ValueRange {
         if (this == other) {
             return true;
         }
-        return this.isSupersetOrEqualTo(other) && (this.hasNanAndInfinity() || !other.hasNanAndInfinity());
+        return this.isSupersetOrEqualTo(other) && (this.range.hasInfinityAndNaN() || !other.range.hasInfinityAndNaN());
     }
 
+    @Nullable
     public static StandardNumberTypeEnum fromClass(Class<?> clazz) {
         return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
     }
 
-    @Nullable
-    public static StandardNumberTypeEnum getEnumForObjectType(Number number) {
-        StandardNumberTypeEnum enumFromClass = fromClass(number.getClass());
-        if (enumFromClass != null) {
-            return enumFromClass;
-        } else if (number instanceof BigInteger) {
-            return BIG_INTEGER;
-        } else if (number instanceof BigDecimal) {
-            return BIG_DECIMAL;
-        }
-        return null;
-    }
-
     public static StandardNumberTypeEnum getEnumForObjectTypeOrThrow(Number number) {
         StandardNumberTypeEnum enumFromClass = fromClass(number.getClass());
-        if (enumFromClass != null) {
-            return enumFromClass;
-        } else if (number instanceof BigInteger) {
-            return BIG_INTEGER;
-        } else if (number instanceof BigDecimal) {
-            return BIG_DECIMAL;
+        if (enumFromClass == null) {
+            throw new IllegalArgumentException("Unsupported number argument: " + number.getClass());
         }
-        throw new IllegalArgumentException("Unsupported number argument: " + number.getClass());
+        return enumFromClass;
     }
 
     private static Map<Class<?>, StandardNumberTypeEnum> initReferenceTypeToStandardNumberTypeMap() {
@@ -523,25 +456,5 @@ public enum StandardNumberTypeEnum implements ValueRange {
         referenceTypeToNumberType.put(BigInteger.class, BIG_INTEGER);
         referenceTypeToNumberType.put(BigDecimal.class, BIG_DECIMAL);
         return Collections.unmodifiableMap(referenceTypeToNumberType);
-    }
-
-    private static final class LongValueRange {
-
-        private static final double LONG_MIN_DOUBLE = (double) Long.MIN_VALUE;
-        private static final double LONG_MAX_DOUBLE = (double) Long.MAX_VALUE;
-        private static final BigDecimal LONG_MIN_BD = BigDecimal.valueOf(Long.MIN_VALUE);
-        private static final BigDecimal LONG_MAX_BD = BigDecimal.valueOf(Long.MAX_VALUE);
-
-        private LongValueRange() {
-        }
-
-        static int compareToRange(double value) {
-            return compareToCodeIfDoubleNotFinite(value)
-                .orElseGet(() -> StandardNumberTypeEnum.compareToRange(value, LONG_MIN_DOUBLE, LONG_MAX_DOUBLE));
-        }
-
-        static int compareToRange(BigDecimal value) {
-            return StandardNumberTypeEnum.compareToRange(value, LONG_MIN_BD, LONG_MAX_BD);
-        }
     }
 }

@@ -14,7 +14,8 @@ import java.util.stream.Stream;
 public final class StandardNumberType<N extends Number> implements NumberType<N> {
 
     /** Byte: [-128, 127]. */
-    public static final StandardNumberType<Byte> BYTE = new StandardNumberType<>(Byte.class, StandardNumberTypeEnum.BYTE);
+    public static final StandardNumberType<Byte> BYTE = new StandardNumberType<>(Byte.class,
+        StandardNumberTypeEnum.BYTE);
 
     /** Short: [-32768, 32767]. */
     public static final StandardNumberType<Short> SHORT = new StandardNumberType<>(Short.class,
@@ -49,11 +50,11 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
         initReferenceTypeToStandardNumberTypeMap();
 
     private final Class<N> type;
-    private final StandardNumberTypeEnum valueRange;
+    private final StandardNumberTypeEnum enumEntry;
 
-    public StandardNumberType(Class<N> type, StandardNumberTypeEnum valueRange) {
+    public StandardNumberType(Class<N> type, StandardNumberTypeEnum enumEntry) {
         this.type = type;
-        this.valueRange = valueRange;
+        this.enumEntry = enumEntry;
     }
 
     @Override
@@ -63,22 +64,22 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
 
     @Override
     public N convertUnsafe(Number number) {
-        return (N) valueRange.convertUnsafe(number);
+        return (N) enumEntry.convertUnsafe(number);
     }
 
     @Override
     public Optional<N> convertIfNoLossOfMagnitude(Number number) {
-        return (Optional) valueRange.convertIfNoLossOfMagnitude(number);
+        return (Optional<N>) enumEntry.convertIfNoLossOfMagnitude(number);
     }
 
     @Override
     public N convertToBounds(Number number) {
-        return (N) valueRange.convertToBounds(number);
+        return (N) enumEntry.convertToBounds(number);
     }
 
     @Override
-    public ValueRange getValueRange() {
-        return valueRange;
+    public ExtendedValueRange<N> getValueRange() {
+        return (ExtendedValueRange<N>) enumEntry.getValueRange();
     }
 
     @Override
@@ -103,7 +104,7 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
     }
 
     public StandardNumberTypeEnum asEnum() {
-        return valueRange;
+        return enumEntry;
     }
 
     @Nullable
@@ -114,7 +115,7 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
 
     @Nullable
     public static <T extends Number> StandardNumberType<T> fromNumberClass(@Nullable Class<T> clazz) {
-        return (StandardNumberType) fromClass(clazz);
+        return (StandardNumberType<T>) fromClass(clazz);
     }
 
     public static Stream<StandardNumberType<?>> streamThroughPrimitiveTypes() {
