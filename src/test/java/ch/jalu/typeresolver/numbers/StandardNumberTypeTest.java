@@ -8,7 +8,6 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +17,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BIG_DECIMAL;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BIG_INTEGER;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BYTE;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.DOUBLE;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.FLOAT;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.INTEGER;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.LONG;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.SHORT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -380,34 +387,69 @@ class StandardNumberTypeTest {
         Map<StandardNumberType<?>, ValueRange> rangeByNumberType = StandardNumberType.streamThroughAll()
             .collect(Collectors.toMap(Function.identity(), StandardNumberType::getValueRange));
 
-        Map<StandardNumberType<?>, Collection<StandardNumberType<?>>> expectedTypesRangeIsEqualOrSupersetOf = new HashMap<>();
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.BYTE,
-            Arrays.asList(StandardNumberType.BYTE));
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.SHORT,
-            Arrays.asList(StandardNumberType.BYTE, StandardNumberType.SHORT));
-
-        List<StandardNumberType<?>> rangesGteInteger = Arrays.asList(StandardNumberType.BYTE, StandardNumberType.SHORT, StandardNumberType.INTEGER);
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.INTEGER, rangesGteInteger);
-
-        Set<StandardNumberType<?>> rangesGteLong = setOf(rangesGteInteger, StandardNumberType.LONG);
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.LONG, rangesGteLong);
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.FLOAT, setOf(rangesGteLong, StandardNumberType.FLOAT));
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.DOUBLE, setOf(rangesGteLong, StandardNumberType.FLOAT, StandardNumberType.DOUBLE));
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.BIG_INTEGER, rangeByNumberType.keySet());
-        expectedTypesRangeIsEqualOrSupersetOf.put(StandardNumberType.BIG_DECIMAL, rangeByNumberType.keySet());
-
         // when
         StandardNumberType.streamThroughAll().forEach(numberType -> {
             ValueRange testedRange = numberType.getValueRange();
 
-            Set<StandardNumberType<?>> rangesNumberTypeIsGreaterOrEqualTo = rangeByNumberType.entrySet().stream()
+            Set<StandardNumberTypeEnum> rangesNumberTypeIsGreaterOrEqualTo = rangeByNumberType.entrySet().stream()
                 .filter(range -> testedRange.isEqualOrSupersetOf(range.getValue()))
                 .map(Map.Entry::getKey)
+                .map(StandardNumberType::asEnum)
+                .collect(Collectors.toSet());
+            Set<StandardNumberTypeEnum> rangesNumberTypeFullySupports = StandardNumberType.streamThroughAll()
+                .filter(numberType::supportsAllValuesOf)
+                .map(StandardNumberType::asEnum)
                 .collect(Collectors.toSet());
 
             assertThat(numberType.toString(),
-                rangesNumberTypeIsGreaterOrEqualTo, containsInAnyOrder(expectedTypesRangeIsEqualOrSupersetOf.get(numberType).toArray(new StandardNumberType[0])));
+                rangesNumberTypeIsGreaterOrEqualTo, containsInAnyOrder(getExpectedTypesIsSupersetOf(numberType)));
+            assertThat(numberType.toString(),
+                rangesNumberTypeFullySupports, containsInAnyOrder(getExpectedTypesItCanFullyHandle(numberType)));
         });
+    }
+
+    private static StandardNumberTypeEnum[] getExpectedTypesIsSupersetOf(StandardNumberType<?> numberType) {
+        switch (numberType.asEnum()) {
+            case BYTE:
+                return new StandardNumberTypeEnum[]{ BYTE };
+            case SHORT:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT };
+            case INTEGER:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER };
+            case LONG:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG };
+            case FLOAT:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT };
+            case DOUBLE:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
+            case BIG_INTEGER:
+            case BIG_DECIMAL:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL };
+            default:
+                throw new IllegalStateException("Unhandled value: " + numberType);
+        }
+    }
+
+    private static StandardNumberTypeEnum[] getExpectedTypesItCanFullyHandle(StandardNumberType<?> numberType) {
+        switch (numberType.asEnum()) {
+            case BYTE:
+                return new StandardNumberTypeEnum[]{ BYTE };
+            case SHORT:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT };
+            case INTEGER:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER };
+            case LONG:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG };
+            case FLOAT:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT };
+            case DOUBLE:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
+            case BIG_INTEGER:
+            case BIG_DECIMAL:
+                return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, BIG_DECIMAL };
+            default:
+                throw new IllegalStateException("Unhandled value: " + numberType);
+        }
     }
 
     private <N extends Number> void verifyConversions(StandardNumberType<N> numberType, Map<Number, N> expectations) {
@@ -450,13 +492,6 @@ class StandardNumberTypeTest {
                                                 Optional<Number> expectedSafeConversion) {
         assertThat(numberType.convertUnsafe(numberToConvert), equalTo(expectedUnsafeConversion));
         assertThat(numberType.convertIfNoLossOfMagnitude(numberToConvert), equalTo(expectedSafeConversion));
-    }
-
-    private static Set<StandardNumberType<?>> setOf(Collection<StandardNumberType<?>> collToCopy,
-                                                    StandardNumberType<?>... additionalItems) {
-        Set<StandardNumberType<?>> set = new HashSet<>(collToCopy);
-        set.addAll(Arrays.asList(additionalItems));
-        return set;
     }
 
     private static List<Number> getNumbersToConvertFrom() {

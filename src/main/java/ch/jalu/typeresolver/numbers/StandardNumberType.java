@@ -14,45 +14,44 @@ import java.util.stream.Stream;
 public final class StandardNumberType<N extends Number> implements NumberType<N> {
 
     /** Byte: [-128, 127]. */
-    public static final StandardNumberType<Byte> BYTE = new StandardNumberType<>(Byte.class,
-        NonDecimalNumberRange.BYTE);
+    public static final StandardNumberType<Byte> BYTE = new StandardNumberType<>(Byte.class, StandardNumberTypeEnum.BYTE);
 
     /** Short: [-32768, 32767]. */
     public static final StandardNumberType<Short> SHORT = new StandardNumberType<>(Short.class,
-        NonDecimalNumberRange.SHORT);
+        StandardNumberTypeEnum.SHORT);
 
     /** Integer: [-2147483648, 2147483647]. */
     public static final StandardNumberType<Integer> INTEGER = new StandardNumberType<>(Integer.class,
-        NonDecimalNumberRange.INTEGER);
+        StandardNumberTypeEnum.INTEGER);
 
     /** Long: [-9223372036854775808, 9223372036854775807]. */
     public static final StandardNumberType<Long> LONG = new StandardNumberType<>(Long.class,
-        NonDecimalNumberRange.LONG);
+        StandardNumberTypeEnum.LONG);
 
     /** Float. */
     public static final StandardNumberType<Float> FLOAT = new StandardNumberType<>(Float.class,
-        DecimalNumberRange.FLOAT);
+        StandardNumberTypeEnum.FLOAT);
 
     /** Double. */
     public static final StandardNumberType<Double> DOUBLE = new StandardNumberType<>(Double.class,
-        DecimalNumberRange.DOUBLE);
+        StandardNumberTypeEnum.DOUBLE);
 
     /** Big integer: integer with a theoretically infinite range of supported values. */
     public static final StandardNumberType<BigInteger> BIG_INTEGER = new StandardNumberType<>(BigInteger.class,
-        InfiniteNumberRange.BIG_INTEGER);
+        StandardNumberTypeEnum.BIG_INTEGER);
 
     /** Big decimal: supports decimals and has a theoretically infinite range of supported values. */
     public static final StandardNumberType<BigDecimal> BIG_DECIMAL = new StandardNumberType<>(BigDecimal.class,
-        InfiniteNumberRange.BIG_DECIMAL);
+        StandardNumberTypeEnum.BIG_DECIMAL);
 
 
     private static final Map<Class<?>, StandardNumberType<?>> REFERENCE_TYPE_TO_NUMBER_TYPE =
         initReferenceTypeToStandardNumberTypeMap();
 
     private final Class<N> type;
-    private final ConvertingValueRange valueRange;
+    private final StandardNumberTypeEnum valueRange;
 
-    public StandardNumberType(Class<N> type, ConvertingValueRange valueRange) {
+    public StandardNumberType(Class<N> type, StandardNumberTypeEnum valueRange) {
         this.type = type;
         this.valueRange = valueRange;
     }
@@ -83,6 +82,17 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
     }
 
     @Override
+    public boolean supportsAllValuesOf(NumberType<?> other) {
+        if (NumberType.super.supportsAllValuesOf(other)) {
+            if (other == DOUBLE || other == FLOAT) {
+                return this == DOUBLE || this == FLOAT;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "NumberType[" + type.getSimpleName() + "]";
     }
@@ -90,6 +100,10 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
     @Nullable
     public Primitives asPrimitiveType() {
         return Primitives.from(type);
+    }
+
+    public StandardNumberTypeEnum asEnum() {
+        return valueRange;
     }
 
     @Nullable

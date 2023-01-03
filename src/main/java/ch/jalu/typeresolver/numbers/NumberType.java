@@ -14,7 +14,10 @@ public interface NumberType<N> {
 
     ValueRange getValueRange();
 
-    default boolean valueRangeIsEqualOrSupersetOf(NumberType<?> otherType) {
-        return this.getValueRange().isEqualOrSupersetOf(otherType.getValueRange());
+    default boolean supportsAllValuesOf(NumberType<?> other) {
+        if (other == this) {
+            return true;
+        }
+        return this.getValueRange().isEqualOrSupersetOf(other.getValueRange());
     }
 }

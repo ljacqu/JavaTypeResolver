@@ -13,7 +13,7 @@ public interface ValueRange {
 
     boolean supportsDecimals();
 
-    default boolean isEqualOrSupersetOf(ValueRange other) { // todo remove?
+    default boolean isEqualOrSupersetOf(ValueRange other) {
         if (this.getMinValue() != null) {
             if (other.getMinValue() == null || this.getMinValue().compareTo(other.getMinValue()) > 0) {
                 return false;

@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver.numbers;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -61,6 +62,9 @@ public final class OtherNumberTypes {
 
     private static final class CharacterNumberType implements NumberType<Character> {
 
+        private final int maxValue = Character.MAX_VALUE;
+        private final int minValue = Character.MIN_VALUE;
+
         @Override
         public Class<Character> getType() {
             return Character.class;
@@ -73,19 +77,43 @@ public final class OtherNumberTypes {
 
         @Override
         public Character convertToBounds(Number number) {
-            int result = (int) NonDecimalNumberRange.CHARACTER_AS_INT.convertToBounds(number);
+            int result = StandardNumberType.INTEGER.convertToBounds(number);
+            if (result > maxValue) {
+                return maxValue;
+            } else if (result < minValue) {
+                return minValue;
+            }
             return (char) result;
         }
 
         @Override
         public Optional<Character> convertIfNoLossOfMagnitude(Number number) {
-            return NonDecimalNumberRange.CHARACTER_AS_INT.convertIfNoLossOfMagnitude(number)
-                .map(value -> (char) (int) value);
+            Optional<Integer> intValue = StandardNumberType.INTEGER.convertIfNoLossOfMagnitude(number);
+            if (intValue.isPresent() && minValue <= intValue.get() && intValue.get() <= maxValue) {
+                return intValue.map(value -> (char) (int) value);
+            }
+            return Optional.empty();
         }
 
         @Override
         public ValueRange getValueRange() {
-            return NonDecimalNumberRange.CHARACTER_AS_INT;
+            return new ValueRange() {
+
+                @Override
+                public BigDecimal getMinValue() {
+                    return BigDecimal.valueOf(Character.MIN_VALUE);
+                }
+
+                @Override
+                public BigDecimal getMaxValue() {
+                    return BigDecimal.valueOf(Character.MAX_VALUE);
+                }
+
+                @Override
+                public boolean supportsDecimals() {
+                    return false;
+                }
+            };
         }
     }
 }
