@@ -48,6 +48,26 @@ public interface ValueRange<T> {
     boolean hasInfinityAndNaN();
 
     /**
+     * Specifies whether {@code this} range can represent <b>all</b> values of the given value range without loss of
+     * magnitude. {@link ValueRange#supportsDecimals() Support for decimals} is ignored by this method as this does not
+     * constitute a loss of magnitude; as such, {@code BIG_INTEGER.supportsAllValuesOf(BIG_DECIMAL)} returns true.
+     * <p>
+     * In contrast to {@link #isEqualOrSupersetOf}, this method aims to specify whether <b>every</b> possible value of
+     * the {@code other} range can be represented by {@code this} type, including infinity and NaN. Because of this,
+     * {@code BIG_INTEGER.getValueRange().supportsAllValuesOf(DOUBLE.getValueRange()} evaluates to false, while
+     * comparing the same ranges with {@link #isEqualOrSupersetOf} evaluates to true.
+     * <p>
+     * Developers comparing two number types can use {@link NumberType#supportsAllValuesOf(NumberType)} as a shortcut
+     * to this method.
+     *
+     * @param other the number type to check
+     * @return true if all values of the given number type can be represented by this type, false otherwise
+     */
+    default boolean supportsAllValuesOf(ValueRange<?> other) {
+        return this.isEqualOrSupersetOf(other) && (this.hasInfinityAndNaN() || !other.hasInfinityAndNaN());
+    }
+
+    /**
      * Returns whether this value range is equal or larger to the given value range. In other words, it returns
      * true only if all values in the {@code other} range fit into {@code this} range.
      * <p>
@@ -58,8 +78,8 @@ public interface ValueRange<T> {
      * As such, the value range of BigInteger is considered to be a superset of {@link Double} despite not having
      * decimals and not being able to represent infinity or NaN.
      * <p>
-     * Use {@link NumberType#supportsAllValuesOf(NumberType)} if you want to specifically check that <b>every</b> value
-     * (such as NaN) of a type can be represented.
+     * Use {@link #supportsAllValuesOf} if you want to specifically check that <b>every</b> value (such as NaN) of a
+     * type can be represented.
      *
      * @param other the other range to compare with
      * @return true if this.minValue &lt;= other.minValue and this.maxValue &gt;= other.maxValue

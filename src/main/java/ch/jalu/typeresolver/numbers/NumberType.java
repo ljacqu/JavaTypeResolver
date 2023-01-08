@@ -25,15 +25,29 @@ public interface NumberType<N> {
      * exceeds the value range of {@code this} type, the minimum or maximum value is returned, for example:
      * {@code BYTE.convertToBounds(200)} returns 127.
      * <p>
-     * Exception: a value of 0 is returned for BigDecimal and BigInteger types if {@code NaN} or infinity is encountered
-     * because no minimum or maximum value exists for these types.
+     * Exception: a value of 0 is returned for BigDecimal and BigInteger types if infinity is encountered,
+     * because no minimum or maximum value exists for these types. {@code NaN} is converted as 0.
      *
      * @param number the number to convert
      * @return value of this type that is closest to the given number, never null
      */
     N convertToBounds(Number number);
 
-    Optional<N> convertIfNoLossOfMagnitude(Number number);
+    /**
+     * Converts the number to {@code this} type only if no loss of magnitude and meaning occurs, otherwise returns
+     * an empty optional. For example, {@code BYTE.convertIfNoLossOfMagnitude(200)} returns an empty Optional (as 200
+     * exceeds the max value of the Byte type, 127), while {@code BYTE.convertIfNoLossOfMagnitude(12)} would return
+     * an Optional with {@code (byte) 12} as value.
+     * 
+     * @param number the number to potentially convert
+     * @return optional with the value converted to this type, or empty if it cannot be represented in this type
+     */
+    default Optional<N> convertIfNoLossOfMagnitude(Number number) {
+        if (compareToValueRange(number) == ValueRangeComparison.WITHIN_RANGE) {
+            return Optional.of(convertUnsafe(number));
+        }
+        return Optional.empty();
+    }
 
     /**
      * Converts the given number to this type without considering underflow or overflow. Among primitive types,
@@ -53,14 +67,40 @@ public interface NumberType<N> {
      */
     N convertUnsafe(Number number);
 
+    /**
+     * Returns information about the available set of values this type has.
+     * 
+     * @return this type's range of possible values
+     */
     ValueRange<N> getValueRange();
 
+    /**
+     * Compares the given value to this type's value range, indicating whether it can be represented by this type
+     * without loss of magnitude, or why it cannot. Use {@link #convertToBounds} if you want to convert the number
+     * to this type and use the closest possible value.
+     *
+     * @param number the number to process
+     * @return comparison result of the number and this type's set of possible values
+     */
+    ValueRangeComparison compareToValueRange(Number number);
+
+    /**
+     * Convenience method for {@link ValueRange#supportsAllValuesOf}. This method returns true if {@code this} type
+     * can represent <b>all</b> values of the {@code other} type without loss of magnitude or meaning. Support for
+     * decimals are not considered. See {@link ValueRange#supportsAllValuesOf} for a more detailed description.
+     * <p>
+     * If this method returns {@code true}, then calling {@link NumberType#compareToValueRange} on {@code this} type
+     * with any number of the given {@code other} type will always return {@link ValueRangeComparison#WITHIN_RANGE}.
+     * This also means that {@link #convertIfNoLossOfMagnitude} will always return a non-empty Optional.
+     * 
+     * @param other the number type to check
+     * @return true if all values of the given number type can be represented by this type, false otherwise
+     * @see ValueRange#supportsAllValuesOf 
+     */
     default boolean supportsAllValuesOf(NumberType<?> other) {
         if (other == this) {
             return true;
         }
-        return this.getValueRange().isEqualOrSupersetOf(other.getValueRange());
+        return this.getValueRange().supportsAllValuesOf(other.getValueRange());
     }
-
-    // todo method that tells whether the number fits into this type?
 }

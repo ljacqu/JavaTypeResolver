@@ -1,7 +1,6 @@
 package ch.jalu.typeresolver.numbers;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -50,9 +49,8 @@ public final class MoreNumberTypes {
         }
 
         @Override
-        public Optional<A> convertIfNoLossOfMagnitude(Number number) {
-            return baseType.convertIfNoLossOfMagnitude(number)
-                .map(toAtomicFn);
+        public ValueRangeComparison compareToValueRange(Number number) {
+            return baseType.compareToValueRange(number);
         }
 
         @Override
@@ -83,6 +81,20 @@ public final class MoreNumberTypes {
         }
 
         @Override
+        public ValueRangeComparison compareToValueRange(Number number) {
+            ValueRangeComparison rangeComparison = StandardNumberType.INTEGER.compareToValueRange(number);
+            if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
+                int intValue = StandardNumberType.INTEGER.convertUnsafe(number);
+                if (intValue > maxValue) {
+                    return ValueRangeComparison.ABOVE_MAXIMUM;
+                } else if (intValue < minValue) {
+                    return ValueRangeComparison.BELOW_MINIMUM;
+                }
+            }
+            return rangeComparison;
+        }
+
+        @Override
         public Character convertToBounds(Number number) {
             int result = StandardNumberType.INTEGER.convertToBounds(number);
             if (result > maxValue) {
@@ -91,15 +103,6 @@ public final class MoreNumberTypes {
                 return minValue;
             }
             return (char) result;
-        }
-
-        @Override
-        public Optional<Character> convertIfNoLossOfMagnitude(Number number) {
-            Optional<Integer> intValue = StandardNumberType.INTEGER.convertIfNoLossOfMagnitude(number);
-            if (intValue.isPresent() && minValue <= intValue.get() && intValue.get() <= maxValue) {
-                return intValue.map(value -> (char) (int) value);
-            }
-            return Optional.empty();
         }
 
         @Override

@@ -10,56 +10,44 @@ final class RangeComparisonHelper {
     private RangeComparisonHelper() {
     }
 
-    static int returnCompareToCodeForNonFiniteValues(double d) {
-        if (Double.isFinite(d)) {
-            return 0;
-        } else if (d == Double.POSITIVE_INFINITY) {
-            return 1;
-        } else if (d == Double.NEGATIVE_INFINITY) {
-            return -1;
-        } else { // Double.isNaN(d)
-            return 2;
-        }
-    }
-
-    static int compareToRange(int value, int min, int max) {
+    static ValueRangeComparison compareToRange(int value, int min, int max) {
         if (value < min) {
-            return -1;
+            return ValueRangeComparison.BELOW_MINIMUM;
         } else if (value > max) {
-            return 1;
+            return ValueRangeComparison.ABOVE_MAXIMUM;
         }
-        return 0;
+        return ValueRangeComparison.WITHIN_RANGE;
     }
 
-    static int compareToRange(long value, long min, long max) {
+    static ValueRangeComparison compareToRange(long value, long min, long max) {
         if (value < min) {
-            return -1;
+            return ValueRangeComparison.BELOW_MINIMUM;
         } else if (value > max) {
-            return 1;
+            return ValueRangeComparison.ABOVE_MAXIMUM;
         }
-        return 0;
+        return ValueRangeComparison.WITHIN_RANGE;
     }
 
-    static int compareToRange(double value, double min, double max) {
+    static ValueRangeComparison compareToRange(double value, double min, double max) {
         if (value < min) {
-            return -1;
+            return ValueRangeComparison.BELOW_MINIMUM;
         } else if (value > max) {
-            return 1;
+            return ValueRangeComparison.ABOVE_MAXIMUM;
         }
-        return 0;
+        return ValueRangeComparison.WITHIN_RANGE;
     }
 
-    static int compareToRange(BigDecimal value, BigDecimal min, BigDecimal max) {
+    static ValueRangeComparison compareToRange(BigDecimal value, BigDecimal min, BigDecimal max) {
         if (value.compareTo(min) < 0) {
-            return -1;
+            return ValueRangeComparison.BELOW_MINIMUM;
         } else if (value.compareTo(max) > 0) {
-            return 1;
+            return ValueRangeComparison.ABOVE_MAXIMUM;
         }
-        return 0;
+        return ValueRangeComparison.WITHIN_RANGE;
     }
 
-    static int compareToLongRange(double value) {
-        int compareToResult = returnCompareToCodeForNonFiniteValues(value);
-        return compareToResult == 0 ? compareToRange(value, LONG_MIN_DOUBLE, LONG_MAX_DOUBLE) : compareToResult;
+    static ValueRangeComparison compareToLongRange(double value) {
+        return ValueRangeComparison.getErrorForNonFiniteValue(value)
+            .orElseGet(() -> compareToRange(value, LONG_MIN_DOUBLE, LONG_MAX_DOUBLE));
     }
 }

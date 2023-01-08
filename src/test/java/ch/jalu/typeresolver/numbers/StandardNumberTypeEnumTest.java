@@ -22,7 +22,7 @@ import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.FLOAT;
 import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.INTEGER;
 import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.LONG;
 import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.SHORT;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.getEnumToReadValueOrThrow;
+import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.findEntryForReadingValueOrThrow;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -38,26 +38,26 @@ class StandardNumberTypeEnumTest {
     @Test
     void shouldReturnAppropriateEnumEntry() {
         // given / when / then
-        assertThat(StandardNumberTypeEnum.getEnumToReadValueOrThrow((short) 2), equalTo(StandardNumberTypeEnum.SHORT));
-        assertThat(StandardNumberTypeEnum.getEnumToReadValueOrThrow(30), equalTo(StandardNumberTypeEnum.INTEGER));
-        assertThat(StandardNumberTypeEnum.getEnumToReadValueOrThrow(45f), equalTo(StandardNumberTypeEnum.FLOAT));
-        assertThat(StandardNumberTypeEnum.getEnumToReadValueOrThrow(BigDecimal.TEN), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
+        assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow((short) 2), equalTo(StandardNumberTypeEnum.SHORT));
+        assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(30), equalTo(StandardNumberTypeEnum.INTEGER));
+        assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(45f), equalTo(StandardNumberTypeEnum.FLOAT));
+        assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(BigDecimal.TEN), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
 
         BigInteger bigInteger = new BigInteger(new byte[]{ 20 }) { };
-        assertThat(StandardNumberTypeEnum.getEnumToReadValueOrThrow(bigInteger), equalTo(StandardNumberTypeEnum.BIG_INTEGER));
+        assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigInteger), equalTo(StandardNumberTypeEnum.BIG_INTEGER));
 
         BigDecimal bigDecimalExt = new BigDecimal("20") { };
-        assertThat(StandardNumberTypeEnum.getEnumToReadValueOrThrow(bigDecimalExt), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
+        assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigDecimalExt), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
     }
 
     @Test
     void shouldThrowForUnknownType() {
         // given / when
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-            () -> getEnumToReadValueOrThrow(new AtomicLong(32)));
+            () -> findEntryForReadingValueOrThrow(new AtomicLong(32)));
 
         // then
-        assertThat(ex.getMessage(), equalTo("Unsupported number argument: class java.util.concurrent.atomic.AtomicLong"));
+        assertThat(ex.getMessage(), equalTo("Unsupported number type: class java.util.concurrent.atomic.AtomicLong"));
     }
 
     @Test
@@ -90,6 +90,51 @@ class StandardNumberTypeEnumTest {
 
         // then
         assertThat(fullySupportedTypes, equalTo(getExpectedFullySupportedTypes(type)));
+    }
+
+    /**
+     * Tests the code sample in the JavaDoc of {@link StandardNumberTypeEnum#findEntryForReadingValueOrThrow}. This test
+     * attempts to ensure that the code in the Javadoc is correct and runnable.
+     */
+    @Test
+    void shouldHaveRunnableExampleCodeInJavadoc() {
+        BigDecimal bigDecimalExtension = new BigDecimal("20") { }; // anonymous extension
+        StandardNumberTypeEnum entry = StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigDecimalExtension);
+        // System.out.println(entry.convertUnsafe(0).getClass().equals(bigDecimalExtension.getClass())); // false
+
+        boolean output = entry.convertUnsafe(0).getClass().equals(bigDecimalExtension.getClass());
+        assertThat(output, equalTo(false));
+    }
+
+    // More tests are done in depth for StandardNumberType; this is just to cover the duplicated method on the enum.
+    @Test
+    void shouldConvertIfNoLossOfMagnitude() {
+        // given
+        byte b = (byte) 38;
+        long l = 1_234_567_890;
+        double d = 9777777777777778000000000000000000000000d;
+        BigDecimal bd = new BigDecimal("-32768.5");
+
+        // when / then
+        assertThat(SHORT.convertIfNoLossOfMagnitude(b).get(), equalTo((short) 38));
+        assertThat(SHORT.convertIfNoLossOfMagnitude(l).isPresent(), equalTo(false));
+        assertThat(SHORT.convertIfNoLossOfMagnitude(d).isPresent(), equalTo(false));
+        assertThat(SHORT.convertIfNoLossOfMagnitude(bd).get(), equalTo((short) -32768));
+
+        assertThat(INTEGER.convertIfNoLossOfMagnitude(b).get(), equalTo(38));
+        assertThat(INTEGER.convertIfNoLossOfMagnitude(l).get(), equalTo(1_234_567_890));
+        assertThat(INTEGER.convertIfNoLossOfMagnitude(d).isPresent(), equalTo(false));
+        assertThat(INTEGER.convertIfNoLossOfMagnitude(bd).get(), equalTo(-32768));
+
+        assertThat(FLOAT.convertIfNoLossOfMagnitude(b).get(), equalTo(38f));
+        assertThat(FLOAT.convertIfNoLossOfMagnitude(l).get(), equalTo(1_234_567_890f));
+        assertThat(FLOAT.convertIfNoLossOfMagnitude(d).isPresent(), equalTo(false));
+        assertThat(FLOAT.convertIfNoLossOfMagnitude(bd).get(), equalTo(-32768.5f));
+
+        assertThat(BIG_INTEGER.convertIfNoLossOfMagnitude(b).get(), equalTo(BigInteger.valueOf(38)));
+        assertThat(BIG_INTEGER.convertIfNoLossOfMagnitude(l).get(), equalTo(BigInteger.valueOf(1_234_567_890)));
+        assertThat(BIG_INTEGER.convertIfNoLossOfMagnitude(d).get(), equalTo(new BigInteger("9777777777777778000000000000000000000000")));
+        assertThat(BIG_INTEGER.convertIfNoLossOfMagnitude(bd).get(), equalTo(BigInteger.valueOf(-32768)));
     }
 
     private static EnumSet<StandardNumberTypeEnum> getExpectedFullySupportedTypes(StandardNumberTypeEnum type) {

@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.DoubleAccumulator;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,6 +39,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -49,6 +55,7 @@ class StandardNumberTypeTest {
         assertThat(StandardNumberType.fromNumberClass(BigDecimal.class), equalTo(StandardNumberType.BIG_DECIMAL));
 
         assertThat(StandardNumberType.fromNumberClass(Number.class), nullValue());
+        assertThat(StandardNumberType.fromNumberClass(NumberTestImpl.class), nullValue());
         assertThat(StandardNumberType.fromNumberClass(null), nullValue());
     }
 
@@ -60,6 +67,7 @@ class StandardNumberTypeTest {
         assertThat(StandardNumberType.from(BigDecimal.class), equalTo(StandardNumberType.BIG_DECIMAL));
 
         assertThat(StandardNumberType.from(String.class), nullValue());
+        assertThat(StandardNumberType.from(NumberTestImpl.class), nullValue());
         assertThat(StandardNumberType.from(null), nullValue());
 
         StandardNumberType.streamThroughAll().forEach(numberType -> {
@@ -316,8 +324,6 @@ class StandardNumberTypeTest {
         assertSafeAndUnsafeConversions(StandardNumberType.BIG_DECIMAL, fNegInf, BigDecimal.ZERO, Optional.empty());
     }
 
-    // todo: test that BigInteger and BigDecimal _extensions_ are also supported as expected
-
     @Test
     void shouldStreamThroughAllNumberTypes() throws IllegalAccessException {
         // given / when
@@ -452,6 +458,166 @@ class StandardNumberTypeTest {
                 assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(true));
                 assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(true));
             });
+    }
+
+    @Test
+    void shouldCompareValuesToShortRange() {
+        // given / when / then
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_NEGATIVE_INFINITY));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(-4400000L), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Short.MIN_VALUE - 1), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Short.MIN_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.SHORT.compareToValueRange((short) -31894), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(0L), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(new BigDecimal("12223.45")), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Short.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Short.MAX_VALUE + 1), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(33333.0d), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY));
+
+        assertThat(StandardNumberType.SHORT.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
+    }
+
+    @Test
+    void shouldCompareValuesToFloatRange() {
+        // given / when / then
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(Double.POSITIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.WITHIN_RANGE));
+
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(new BigInteger("-999999999999999999999999999999999999999999")), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(-Double.MAX_VALUE), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(-3.4028237E38), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+
+        assertThat(StandardNumberType.FLOAT.compareToValueRange((double) Float.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(444_666_888), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(new BigDecimal("444298347982347.0123456789")), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(Float.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(3.4028237E38), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+        assertThat(StandardNumberType.FLOAT.compareToValueRange(new BigDecimal("999999999999999999999999999999999999999999.243240")), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+    }
+
+    @Test
+    void shouldCompareValuesToBigIntegerRange() {
+        // given / when / then
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(new BigDecimal("-99999999999999999999999999999999999E1000")), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(-4400000L), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange((byte) -27), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(0L), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(Double.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(new BigDecimal("9999999999999999999999999999999999999999999E234").toBigInteger()), equalTo(ValueRangeComparison.WITHIN_RANGE));
+
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_NEGATIVE_INFINITY));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(Float.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
+        assertThat(StandardNumberType.BIG_INTEGER.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
+    }
+
+    @Test
+    void shouldConvertFromOtherNumberTypes() {
+        // given
+        BigDecimal bdExt = new BigDecimal("32789.890") { };
+        BigInteger biExt = new BigInteger("9223372036854775807") { };
+
+        DoubleAdder dblAdder = new DoubleAdder();
+        dblAdder.add(-200.45);
+
+        LongAdder longAdder = new LongAdder() { };
+        longAdder.add(32500);
+
+        AtomicInteger atomicInt = new AtomicInteger(40) { };
+        AtomicLong atomicLong = new AtomicLong(-239485723);
+
+        // when / then
+        assertThat(BYTE.convertIfNoLossOfMagnitude(bdExt), equalTo(Optional.empty()));
+        assertThat(BYTE.convertToBounds(biExt), equalTo(Byte.MAX_VALUE));
+        assertThat(BYTE.convertToBounds(dblAdder), equalTo(Byte.MIN_VALUE));
+        assertThat(BYTE.convertUnsafe(longAdder), equalTo((byte) -12));
+        assertThat(BYTE.convertIfNoLossOfMagnitude(atomicInt).get(), equalTo((byte) 40));
+        assertThat(BYTE.convertIfNoLossOfMagnitude(atomicLong), equalTo(Optional.empty()));
+
+        assertThat(SHORT.convertIfNoLossOfMagnitude(bdExt), equalTo(Optional.empty()));
+        assertThat(SHORT.convertIfNoLossOfMagnitude(biExt), equalTo(Optional.empty()));
+        assertThat(SHORT.convertToBounds(dblAdder), equalTo((short) -200));
+        assertThat(SHORT.convertToBounds(longAdder), equalTo((short) 32500));
+        assertThat(SHORT.convertUnsafe(atomicInt), equalTo((short) 40));
+        assertThat(SHORT.convertUnsafe(atomicLong), equalTo((short) -17179));
+
+        assertThat(LONG.convertUnsafe(bdExt), equalTo(32789L));
+        assertThat(LONG.convertToBounds(biExt), equalTo(9223372036854775807L));
+        assertThat(LONG.convertIfNoLossOfMagnitude(dblAdder), equalTo(Optional.of(-200L)));
+        assertThat(LONG.convertUnsafe(longAdder), equalTo(32500L));
+        assertThat(LONG.convertToBounds(atomicInt), equalTo(40L));
+        assertThat(LONG.convertIfNoLossOfMagnitude(atomicLong), equalTo(Optional.of(-239485723L)));
+
+        assertThat(DOUBLE.convertToBounds(bdExt), equalTo(32789.890));
+        assertThat(DOUBLE.convertUnsafe(biExt), equalTo(9223372036854775807d));
+        assertThat(DOUBLE.convertIfNoLossOfMagnitude(dblAdder), equalTo(Optional.of(-200.45)));
+        assertThat(DOUBLE.convertIfNoLossOfMagnitude(longAdder), equalTo(Optional.of(32500d)));
+        assertThat(DOUBLE.convertUnsafe(atomicInt), equalTo(40d));
+        assertThat(DOUBLE.convertToBounds(atomicLong), equalTo(-239485723d));
+
+        assertThat(BIG_INTEGER.convertToBounds(bdExt), equalTo(new BigInteger("32789")));
+        assertThat(BIG_INTEGER.convertToBounds(biExt), equalTo(new BigInteger("9223372036854775807")));
+        assertThat(BIG_INTEGER.convertUnsafe(dblAdder), equalTo(new BigInteger("-200")));
+        assertThat(BIG_INTEGER.convertUnsafe(longAdder), equalTo(new BigInteger("32500")));
+        assertThat(BIG_INTEGER.convertIfNoLossOfMagnitude(atomicInt).get(), equalTo(new BigInteger("40")));
+        assertThat(BIG_INTEGER.convertIfNoLossOfMagnitude(atomicLong).get(), equalTo(new BigInteger("-239485723")));
+    }
+
+    @Test
+    void shouldHandleNonFiniteValuesFromOtherNumberTypes() {
+        // given
+        DoubleAdder dblAdderNan = new DoubleAdder();
+        dblAdderNan.add(Double.NaN);
+
+        DoubleAccumulator dblAccPosInf = new DoubleAccumulator((a, b) -> a * b, 1.0) { };
+        dblAccPosInf.accumulate(Double.POSITIVE_INFINITY);
+
+        DoubleAdder dblAdderNegInf = new DoubleAdder() { };
+        dblAdderNegInf.add(Double.NEGATIVE_INFINITY);
+
+        // when / then
+        assertThat(INTEGER.convertToBounds(dblAdderNan), equalTo(0));
+        assertThat(INTEGER.convertToBounds(dblAccPosInf), equalTo(Integer.MAX_VALUE));
+        assertThat(INTEGER.convertToBounds(dblAdderNegInf), equalTo(Integer.MIN_VALUE));
+
+        assertThat(LONG.convertIfNoLossOfMagnitude(dblAdderNan), equalTo(Optional.empty()));
+        assertThat(LONG.convertIfNoLossOfMagnitude(dblAccPosInf), equalTo(Optional.empty()));
+        assertThat(LONG.convertIfNoLossOfMagnitude(dblAdderNegInf), equalTo(Optional.empty()));
+
+        assertThat(LONG.convertUnsafe(dblAdderNan), equalTo(0L));
+        assertThat(LONG.convertUnsafe(dblAccPosInf), equalTo(Long.MAX_VALUE));
+        assertThat(LONG.convertUnsafe(dblAdderNegInf), equalTo(Long.MIN_VALUE));
+
+        assertThat(FLOAT.convertToBounds(dblAdderNan), equalTo(Float.NaN));
+        assertThat(FLOAT.convertToBounds(dblAccPosInf), equalTo(Float.POSITIVE_INFINITY));
+        assertThat(FLOAT.convertToBounds(dblAdderNegInf), equalTo(Float.NEGATIVE_INFINITY));
+
+        assertThat(BIG_DECIMAL.convertToBounds(dblAdderNan), equalTo(BigDecimal.ZERO));
+        assertThat(BIG_DECIMAL.convertToBounds(dblAccPosInf), equalTo(BigDecimal.ZERO));
+        assertThat(BIG_DECIMAL.convertToBounds(dblAdderNegInf), equalTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void shouldThrowForUnknownNumberType() {
+        // given
+        Number nbr = new NumberTestImpl();
+
+        // when
+        IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class, () -> BYTE.convertToBounds(nbr));
+        IllegalArgumentException ex2 = assertThrows(IllegalArgumentException.class, () -> FLOAT.convertIfNoLossOfMagnitude(nbr));
+        IllegalArgumentException ex3 = assertThrows(IllegalArgumentException.class, () -> BIG_INTEGER.compareToValueRange(nbr));
+        // Only BigDecimal and BigInteger throw an exception on #convertUnsafe
+        IllegalArgumentException ex4 = assertThrows(IllegalArgumentException.class, () -> BIG_DECIMAL.convertUnsafe(nbr));
+
+        // then
+        Set<String> messages = Stream.of(ex1, ex2, ex3, ex4).map(Exception::getMessage).collect(Collectors.toSet());
+        assertThat(messages, contains("Unsupported number type: class ch.jalu.typeresolver.numbers.NumberTestImpl"));
     }
 
     private static StandardNumberTypeEnum[] getExpectedTypesIsSupersetOf(StandardNumberType<?> numberType) {

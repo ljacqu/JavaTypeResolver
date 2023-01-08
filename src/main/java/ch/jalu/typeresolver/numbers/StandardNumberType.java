@@ -8,7 +8,6 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -79,29 +78,18 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
     }
 
     @Override
-    public Optional<N> convertIfNoLossOfMagnitude(Number number) {
-        return (Optional<N>) enumEntry.convertIfNoLossOfMagnitude(number);
-    }
-
-    @Override
     public N convertToBounds(Number number) {
         return (N) enumEntry.convertToBounds(number);
     }
 
     @Override
-    public ValueRange<N> getValueRange() {
-        return (ValueRange<N>) enumEntry.getValueRange();
+    public ValueRangeComparison compareToValueRange(Number number) {
+        return enumEntry.compareToValueRange(number);
     }
 
     @Override
-    public boolean supportsAllValuesOf(NumberType<?> other) {
-        if (NumberType.super.supportsAllValuesOf(other)) {
-            if (other == DOUBLE || other == FLOAT) {
-                return this == DOUBLE || this == FLOAT;
-            }
-            return true;
-        }
-        return false;
+    public ValueRange<N> getValueRange() {
+        return (ValueRange<N>) enumEntry.getValueRange();
     }
 
     @Override
@@ -145,6 +133,12 @@ public final class StandardNumberType<N extends Number> implements NumberType<N>
         return (StandardNumberType<T>) from(clazz);
     }
 
+    /**
+     * Creates a stream of all {@link StandardNumberType} constants in this class.
+     *
+     * @return stream of all standard number types
+     * @see StandardNumberTypeEnum#values()
+     */
     public static Stream<StandardNumberType<?>> streamThroughAll() {
         return Stream.of(BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL);
     }
