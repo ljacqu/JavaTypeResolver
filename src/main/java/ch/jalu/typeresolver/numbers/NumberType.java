@@ -11,7 +11,7 @@ import java.util.Optional;
  *
  * @param <N>
  * @see StandardNumberType
- * @see StandardNumberType#fromClass
+ * @see NumberTypes#from(Class)
  */
 public interface NumberType<N> {
 
@@ -21,12 +21,12 @@ public interface NumberType<N> {
     Class<N> getType();
 
     /**
-     * Returns a value of {@code this} type that is closest to the given number. In other words, if the given number
+     * Returns a value of {@code this} type that is the closest to the given number. In other words, if the given number
      * exceeds the value range of {@code this} type, the minimum or maximum value is returned, for example:
      * {@code BYTE.convertToBounds(200)} returns 127.
      * <p>
      * Exception: a value of 0 is returned for BigDecimal and BigInteger types if {@code NaN} or infinity is encountered
-     * (no minimum or maximum range value applies for them).
+     * because no minimum or maximum value exists for these types.
      *
      * @param number the number to convert
      * @return value of this type that is closest to the given number, never null
@@ -53,7 +53,7 @@ public interface NumberType<N> {
      */
     N convertUnsafe(Number number);
 
-    ValueRange getValueRange();
+    ValueRange<N> getValueRange();
 
     default boolean supportsAllValuesOf(NumberType<?> other) {
         if (other == this) {

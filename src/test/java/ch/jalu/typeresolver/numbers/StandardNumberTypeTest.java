@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BIG_DECIMAL;
 import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BIG_INTEGER;
@@ -29,6 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -53,15 +55,20 @@ class StandardNumberTypeTest {
     @Test
     void shouldReturnTypeForClass() {
         // given / when / then
-        assertThat(StandardNumberType.fromClass(int.class), equalTo(StandardNumberType.INTEGER));
-        assertThat(StandardNumberType.fromClass(Double.class), equalTo(StandardNumberType.DOUBLE));
-        assertThat(StandardNumberType.fromClass(BigDecimal.class), equalTo(StandardNumberType.BIG_DECIMAL));
+        assertThat(StandardNumberType.from(int.class), equalTo(StandardNumberType.INTEGER));
+        assertThat(StandardNumberType.from(Double.class), equalTo(StandardNumberType.DOUBLE));
+        assertThat(StandardNumberType.from(BigDecimal.class), equalTo(StandardNumberType.BIG_DECIMAL));
 
-        assertThat(StandardNumberType.fromClass(String.class), nullValue());
-        assertThat(StandardNumberType.fromClass(null), nullValue());
+        assertThat(StandardNumberType.from(String.class), nullValue());
+        assertThat(StandardNumberType.from(null), nullValue());
 
         StandardNumberType.streamThroughAll().forEach(numberType -> {
-            assertThat(StandardNumberType.fromClass(numberType.getType()), sameInstance(numberType));
+            assertThat(StandardNumberType.from(numberType.getType()), sameInstance(numberType));
+
+            Class<?> primitiveType = Primitives.toPrimitiveType(numberType.getType());
+            if (!primitiveType.equals(numberType.getType())) {
+                assertThat(StandardNumberType.from(primitiveType), sameInstance(numberType));
+            }
         });
     }
 
@@ -310,7 +317,6 @@ class StandardNumberTypeTest {
     }
 
     // todo: test that BigInteger and BigDecimal _extensions_ are also supported as expected
-    // todo: test value ranges
 
     @Test
     void shouldStreamThroughAllNumberTypes() throws IllegalAccessException {
@@ -369,7 +375,7 @@ class StandardNumberTypeTest {
 
         StandardNumberType.streamThroughAll().forEach(numberType -> {
             // when
-            ValueRange valueRange = numberType.getValueRange();
+            ValueRange<? extends Number> valueRange = numberType.getValueRange();
 
             // then
             assertThat(valueRange.supportsDecimals(), equalTo(typesWithDecimals.contains(numberType)));
@@ -378,6 +384,21 @@ class StandardNumberTypeTest {
                 assertThat(valueRange.getMaxValue(), nullValue());
             } else {
                 assertThat(valueRange.getMinValue(), lessThan(valueRange.getMaxValue()));
+            }
+
+            if (valueRange.getMinInOwnType() != null || valueRange.getMinValue() != null) {
+                assertThat(valueRange.getMinInOwnType(), instanceOf(numberType.getType()));
+                assertThat(BIG_DECIMAL.convertUnsafe(valueRange.getMinInOwnType()), equalTo(valueRange.getMinValue()));
+            }
+            if (valueRange.getMaxInOwnType() != null || valueRange.getMaxValue() != null) {
+                assertThat(valueRange.getMaxInOwnType(), instanceOf(numberType.getType()));
+                assertThat(BIG_DECIMAL.convertUnsafe(valueRange.getMaxInOwnType()), equalTo(valueRange.getMaxValue()));
+            }
+
+            if (numberType == StandardNumberType.FLOAT || numberType == StandardNumberType.DOUBLE) {
+                assertThat(valueRange.hasInfinityAndNaN(), equalTo(true));
+            } else {
+                assertThat(valueRange.hasInfinityAndNaN(), equalTo(false));
             }
         });
     }
@@ -407,6 +428,30 @@ class StandardNumberTypeTest {
             assertThat(numberType.toString(),
                 rangesNumberTypeFullySupports, containsInAnyOrder(getExpectedTypesItCanFullyHandle(numberType)));
         });
+    }
+
+    @Test
+    void shouldReturnWhetherTypeSupportsMoreNumberTypeValues() {
+        // given / when / then
+        assertThat(StandardNumberType.BYTE.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(false));
+        assertThat(StandardNumberType.BYTE.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(false));
+        assertThat(StandardNumberType.BYTE.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
+
+        assertThat(StandardNumberType.SHORT.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(false));
+        assertThat(StandardNumberType.SHORT.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(false));
+        assertThat(StandardNumberType.SHORT.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
+
+        assertThat(StandardNumberType.INTEGER.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(true));
+        assertThat(StandardNumberType.INTEGER.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(true));
+        assertThat(StandardNumberType.INTEGER.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
+
+        Stream.of(StandardNumberType.LONG, StandardNumberType.FLOAT, StandardNumberType.DOUBLE,
+                  StandardNumberType.BIG_INTEGER, StandardNumberType.BIG_DECIMAL)
+            .forEach(numberType -> {
+                assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(true));
+                assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(true));
+                assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(true));
+            });
     }
 
     private static StandardNumberTypeEnum[] getExpectedTypesIsSupersetOf(StandardNumberType<?> numberType) {

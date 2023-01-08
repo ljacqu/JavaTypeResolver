@@ -3,63 +3,23 @@ package ch.jalu.typeresolver.numbers;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.DoubleAccumulator;
-import java.util.concurrent.atomic.DoubleAdder;
-import java.util.concurrent.atomic.LongAccumulator;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test for {@link MoreNumberTypes}.
  */
 class MoreNumberTypesTest {
-
-    @Test
-    void shouldUnwrapNumberType() {
-        // given
-        DoubleAccumulator dblAcc = new DoubleAccumulator((a, b) -> a * b, 1.0);
-        dblAcc.accumulate(6);
-        dblAcc.accumulate(0.5); // 3
-
-        DoubleAdder dblAdd = new DoubleAdder();
-        dblAdd.add(3.14);
-        dblAdd.add(10); // 13.14
-
-        LongAccumulator longAcc = new LongAccumulator((a, b) -> a / b, 60L);
-        longAcc.accumulate(4L); // 15
-        longAcc.accumulate(3L); // 5
-
-        LongAdder longAdd = new LongAdder();
-        longAdd.add(20_000L);
-        longAdd.add(-7L); // 19_993
-
-        // when / then
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType('A'), equalTo(65));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(new AtomicInteger(33)), equalTo(33));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(new AtomicLong(-999L)), equalTo(-999L));
-
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(dblAcc), equalTo(3.0));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(dblAdd), equalTo(13.14));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(longAcc), equalTo(5L));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(longAdd), equalTo(19_993L));
-
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(19L), equalTo(19L));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType((byte) 5), equalTo((byte) 5));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(BigDecimal.TEN), equalTo(BigDecimal.TEN));
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(3.1415f), equalTo(3.1415f));
-
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(null), nullValue());
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType("14"), nullValue());
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(false), nullValue());
-        assertThat(MoreNumberTypes.unwrapToStandardNumberType(Collections.emptyList()), nullValue());
-    }
 
     @Test
     void shouldConvertToCharacter() {
@@ -76,6 +36,38 @@ class MoreNumberTypesTest {
             .verifyConversions(new BigDecimal("65"), 'A', 'A', 'A')
             .verifyConversions(new BigDecimal("127000"), '\uF018', null, Character.MAX_VALUE)
             .verifyConversions(new BigDecimal("-98734"), '\u7E52', null, Character.MIN_VALUE);
+    }
+
+    @Test
+    void shouldConvertToAtomicInteger() {
+        // given / when / then
+        int intMin = Integer.MIN_VALUE;
+        int intMax = Integer.MAX_VALUE;
+
+        new NumberTypeConversionTester<>(MoreNumberTypes.ATOMIC_INTEGER)
+            .verifyConversions((short) 1, atomic(1), atomic(1), atomic(1))
+            .verifyConversions(-450, atomic(-450), atomic(-450), atomic(-450))
+            .verifyConversions(intMin, atomic(intMin), atomic(intMin), atomic(intMin))
+            .verifyConversions((double) intMax, atomic(intMax), atomic(intMax), atomic(intMax))
+            .verifyConversions(new BigDecimal("1234567890"), atomic(1234567890), atomic(1234567890), atomic(1234567890))
+            .verifyConversions(2234567890L, atomic(-2060399406), null, atomic(intMax))
+            .verifyConversions(-3210987654f, atomic(intMin), null, atomic(intMin));
+    }
+
+    @Test
+    void shouldConvertToAtomicLong() {
+        // given / when / then
+        long longMin = Long.MIN_VALUE;
+        long longMax = Long.MAX_VALUE;
+
+        new NumberTypeConversionTester<>(MoreNumberTypes.ATOMIC_LONG)
+            .verifyConversions((byte) 8, atomic(8L), atomic(8L), atomic(8L))
+            .verifyConversions(-450, atomic(-450L), atomic(-450L), atomic(-450L))
+            .verifyConversions(longMin, atomic(longMin), atomic(longMin), atomic(longMin))
+            .verifyConversions((double) longMax, atomic(longMax), atomic(longMax), atomic(longMax))
+            .verifyConversions(new BigDecimal("123456789011"), atomic(123456789011L), atomic(123456789011L), atomic(123456789011L))
+            .verifyConversions(new BigDecimal("4442093872983572342311"), atomic(-3571448780429597145L), null, atomic(longMax))
+            .verifyConversions(-32109876566643045983f, atomic(-9223372036854775808L), null, atomic(longMin));
     }
 
     @Test
@@ -138,7 +130,104 @@ class MoreNumberTypesTest {
         assertThat(MoreNumberTypes.ATOMIC_LONG.convertIfNoLossOfMagnitude(dNegInf), equalTo(Optional.empty()));
     }
 
-    // todo: Test supportsValuesOf method also with the standard number type impls
+    @Test
+    void shouldReturnCharacterRange() {
+        // given / when
+        ValueRange<Character> charRange = MoreNumberTypes.CHARACTER.getValueRange();
+
+        // then
+        assertThat(charRange.getMinValue(), equalTo(BigDecimal.ZERO));
+        assertThat(charRange.getMinInOwnType(), equalTo(Character.MIN_VALUE));
+        assertThat(charRange.getMaxValue(), equalTo(new BigDecimal("65535")));
+        assertThat(charRange.getMaxInOwnType(), equalTo(Character.MAX_VALUE));
+
+        assertThat(charRange.supportsDecimals(), equalTo(false));
+        assertThat(charRange.hasInfinityAndNaN(), equalTo(false));
+    }
+
+    @Test
+    void shouldReturnRangesForAtomicIntegerAndAtomicLong() {
+        // given / when
+        ValueRange<AtomicInteger> atomicIntRange = MoreNumberTypes.ATOMIC_INTEGER.getValueRange();
+        ValueRange<AtomicLong> atomicLongRange = MoreNumberTypes.ATOMIC_LONG.getValueRange();
+
+        // then
+        assertThat(atomicIntRange.getMinValue(), equalTo(BigDecimal.valueOf(Integer.MIN_VALUE)));
+        AtomicInteger minAtomicInt = atomicIntRange.getMinInOwnType();
+        assertThat(minAtomicInt.get(), equalTo(Integer.MIN_VALUE));
+
+        assertThat(atomicIntRange.getMaxValue(), equalTo(BigDecimal.valueOf(Integer.MAX_VALUE)));
+        AtomicInteger maxAtomicInt = atomicIntRange.getMaxInOwnType();
+        assertThat(maxAtomicInt.get(), equalTo(Integer.MAX_VALUE));
+        assertThat(atomicIntRange.supportsDecimals(), equalTo(false));
+
+        assertThat(atomicLongRange.getMinValue(), equalTo(BigDecimal.valueOf(Long.MIN_VALUE)));
+        AtomicLong minAtomicLong = atomicLongRange.getMinInOwnType();
+        assertThat(minAtomicLong.get(), equalTo(Long.MIN_VALUE));
+
+        assertThat(atomicLongRange.getMaxValue(), equalTo(BigDecimal.valueOf(Long.MAX_VALUE)));
+        AtomicLong maxAtomicLong = atomicLongRange.getMaxInOwnType();
+        assertThat(maxAtomicLong.get(), equalTo(Long.MAX_VALUE));
+        assertThat(atomicLongRange.supportsDecimals(), equalTo(false));
+    }
+
+    @Test
+    void shouldReturnWhetherSupportsAllTypes() {
+        // given / when
+        Set<NumberType<?>> fullySupportedByCharacter = NumberTypes.streamThroughAll()
+            .filter(MoreNumberTypes.CHARACTER::supportsAllValuesOf)
+            .collect(Collectors.toSet());
+        Set<NumberType<?>> fullySupportedByAtomicInteger = NumberTypes.streamThroughAll()
+            .filter(MoreNumberTypes.ATOMIC_INTEGER::supportsAllValuesOf)
+            .collect(Collectors.toSet());
+        Set<NumberType<?>> fullySupportedByAtomicLong = NumberTypes.streamThroughAll()
+            .filter(MoreNumberTypes.ATOMIC_LONG::supportsAllValuesOf)
+            .collect(Collectors.toSet());
+
+        // then
+        assertThat(fullySupportedByCharacter, contains(MoreNumberTypes.CHARACTER));
+        assertThat(fullySupportedByAtomicInteger, equalTo(getExpectedFullySupportedNumberTypesByAtomicType(false)));
+        assertThat(fullySupportedByAtomicLong, equalTo(getExpectedFullySupportedNumberTypesByAtomicType(true)));
+    }
+
+    private static Set<NumberType<?>> getExpectedFullySupportedNumberTypesByAtomicType(boolean isLong) {
+        Set<NumberType<?>> expectedSupportedTypes = new HashSet<>();
+        expectedSupportedTypes.add(StandardNumberType.BYTE);
+        expectedSupportedTypes.add(StandardNumberType.SHORT);
+        expectedSupportedTypes.add(MoreNumberTypes.CHARACTER);
+        expectedSupportedTypes.add(StandardNumberType.INTEGER);
+        expectedSupportedTypes.add(MoreNumberTypes.ATOMIC_INTEGER);
+        if (isLong) {
+            expectedSupportedTypes.add(StandardNumberType.LONG);
+            expectedSupportedTypes.add(MoreNumberTypes.ATOMIC_LONG);
+        }
+        return expectedSupportedTypes;
+    }
+
+    private static AtomicInteger atomic(int i) {
+        return new AtomicInteger(i);
+    }
+
+    private static AtomicLong atomic(long l) {
+        return new AtomicLong(l);
+    }
+
+    private static boolean isEqual(NumberType<?> numberType, Object value, Object expected) {
+        if (numberType == MoreNumberTypes.CHARACTER) {
+            return Objects.equals(value, expected);
+        } else if (numberType == MoreNumberTypes.ATOMIC_INTEGER) {
+            if (expected != null) {
+                return value instanceof AtomicInteger && ((AtomicInteger) value).intValue() == ((AtomicInteger) expected).intValue();
+            }
+            return value == null;
+        } else if (numberType == MoreNumberTypes.ATOMIC_LONG) {
+            if (expected != null) {
+                return value instanceof AtomicLong && ((AtomicLong) value).longValue() == ((AtomicLong) expected).longValue();
+            }
+            return value == null;
+        }
+        throw new IllegalStateException("Unexpected number type '" + numberType + "'");
+    }
 
     private static final class NumberTypeConversionTester<N> {
 
@@ -150,10 +239,16 @@ class MoreNumberTypesTest {
 
         NumberTypeConversionTester<N> verifyConversions(Number input,
                                                         N expectedUnsafe, N expectedSafe, N expectedWithinBounds) {
-            assertThat(numberType.convertUnsafe(input), equalTo(expectedUnsafe));
-            assertThat(numberType.convertIfNoLossOfMagnitude(input), equalTo(Optional.ofNullable(expectedSafe)));
-            assertThat(numberType.convertToBounds(input), equalTo(expectedWithinBounds));
+            assertIsEqualOrThrow(numberType.convertUnsafe(input), expectedUnsafe);
+            assertIsEqualOrThrow(numberType.convertIfNoLossOfMagnitude(input).orElse(null), expectedSafe);
+            assertIsEqualOrThrow(numberType.convertToBounds(input), expectedWithinBounds);
             return this;
+        }
+
+        private void assertIsEqualOrThrow(Object actual, Object expected) {
+            if (!isEqual(numberType, actual, expected)) {
+                fail("Expected '" + expected + "' but got: " + actual);
+            }
         }
     }
 }

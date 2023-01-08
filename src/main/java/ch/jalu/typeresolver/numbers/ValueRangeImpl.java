@@ -4,11 +4,11 @@ import javax.annotation.Nullable;
 import java.math.BigDecimal;
 
 /**
- * Extension of {@link ValueRange} with more data.
+ * Simple implementation of {@link ValueRange}.
  *
  * @param <T> the number type this range describes
  */
-public class ExtendedValueRange<T> implements ValueRange {
+public class ValueRangeImpl<T> implements ValueRange<T> {
 
     private final T minOwnType;
     private final T maxOwnType;
@@ -17,8 +17,18 @@ public class ExtendedValueRange<T> implements ValueRange {
     private final boolean supportsDecimals;
     private final boolean hasInfinityAndNaN;
 
-    public ExtendedValueRange(T min, T max, BigDecimal minAsBigDecimal, BigDecimal maxAsBigDecimal,
-                              boolean supportsDecimals, boolean hasInfinityAndNaN) {
+    /**
+     * Constructor.
+     *
+     * @param min the minimum value the type can represent, in its own type
+     * @param max the maximum value the type can represent, in its own type
+     * @param minAsBigDecimal the minimum value the type can represent, as BigDecimal
+     * @param maxAsBigDecimal the maximum value the type can represent, as BigDecimal
+     * @param supportsDecimals whether this type can have decimals
+     * @param hasInfinityAndNaN whether this type has values for NaN and infinity
+     */
+    public ValueRangeImpl(T min, T max, BigDecimal minAsBigDecimal, BigDecimal maxAsBigDecimal,
+                          boolean supportsDecimals, boolean hasInfinityAndNaN) {
         this.minOwnType = min;
         this.maxOwnType = max;
         this.min = minAsBigDecimal;
@@ -33,23 +43,19 @@ public class ExtendedValueRange<T> implements ValueRange {
         return min;
     }
 
-    /**
-     * @return the smallest finite value the type can represent, in the type itself (null if the type has no limit)
-     */
-    @Nullable
-    public T getMinInOwnType() {
-        return minOwnType;
-    }
-
     @Override
     @Nullable
     public BigDecimal getMaxValue() {
         return max;
     }
 
-    /**
-     * @return the largest finite value the type can represent, in the type itself (null if the type has no limit)
-     */
+    @Override
+    @Nullable
+    public T getMinInOwnType() {
+        return minOwnType;
+    }
+
+    @Override
     @Nullable
     public T getMaxInOwnType() {
         return maxOwnType;
@@ -60,12 +66,7 @@ public class ExtendedValueRange<T> implements ValueRange {
         return supportsDecimals;
     }
 
-    /**
-     * Returns whether the type has values for {@code NaN} and infinity, such as Double
-     * with {@link Double#POSITIVE_INFINITY}.
-     *
-     * @return true if the type can represent infinity and NaN
-     */
+    @Override
     public boolean hasInfinityAndNaN() {
         return hasInfinityAndNaN;
     }
@@ -83,10 +84,10 @@ public class ExtendedValueRange<T> implements ValueRange {
      * @param <T> the number type (Long or subset)
      * @return range with the given min, max
      */
-    static <T extends Number> ExtendedValueRange<T> forLongOrSubset(T min, T max) {
+    static <T extends Number> ValueRangeImpl<T> forLongOrSubset(T min, T max) {
         BigDecimal minBd = BigDecimal.valueOf(min.longValue());
         BigDecimal maxBd = BigDecimal.valueOf(max.longValue());
-        return new ExtendedValueRange<>(min, max, minBd, maxBd, false, false);
+        return new ValueRangeImpl<>(min, max, minBd, maxBd, false, false);
     }
 
     /**
@@ -98,10 +99,10 @@ public class ExtendedValueRange<T> implements ValueRange {
      * @param <T> the number type (Float or Double)
      * @return range for float/double
      */
-    static <T extends Number> ExtendedValueRange<T> forDoubleOrFloat(T min, T max) {
+    static <T extends Number> ValueRangeImpl<T> forDoubleOrFloat(T min, T max) {
         BigDecimal minBd = BigDecimal.valueOf(min.doubleValue());
         BigDecimal maxBd = BigDecimal.valueOf(max.doubleValue());
-        return new ExtendedValueRange<>(min, max, minBd, maxBd, true, true);
+        return new ValueRangeImpl<>(min, max, minBd, maxBd, true, true);
     }
 
     /**
@@ -112,7 +113,7 @@ public class ExtendedValueRange<T> implements ValueRange {
      * @param <T> the number type
      * @return the range without any min/max bounds
      */
-    static <T> ExtendedValueRange<T> infinite(boolean supportsDecimals) {
-        return new ExtendedValueRange<>(null, null, null, null, supportsDecimals, false);
+    static <T> ValueRangeImpl<T> infinite(boolean supportsDecimals) {
+        return new ValueRangeImpl<>(null, null, null, null, supportsDecimals, false);
     }
 }

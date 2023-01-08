@@ -29,8 +29,9 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Byte type.
+     * @see StandardNumberType#BYTE
      */
-    BYTE(Byte.class, ExtendedValueRange.forLongOrSubset(Byte.MIN_VALUE, Byte.MAX_VALUE)) {
+    BYTE(Byte.class, ValueRangeImpl.forLongOrSubset(Byte.MIN_VALUE, Byte.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.byteValue();
@@ -39,8 +40,9 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Short type.
+     * @see StandardNumberType#SHORT
      */
-    SHORT(Short.class, ExtendedValueRange.forLongOrSubset(Short.MIN_VALUE, Short.MAX_VALUE)) {
+    SHORT(Short.class, ValueRangeImpl.forLongOrSubset(Short.MIN_VALUE, Short.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.shortValue();
@@ -49,8 +51,9 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Integer type.
+     * @see StandardNumberType#INTEGER
      */
-    INTEGER(Integer.class, ExtendedValueRange.forLongOrSubset(Integer.MIN_VALUE, Integer.MAX_VALUE)) {
+    INTEGER(Integer.class, ValueRangeImpl.forLongOrSubset(Integer.MIN_VALUE, Integer.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.intValue();
@@ -59,8 +62,9 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Long type.
+     * @see StandardNumberType#LONG
      */
-    LONG(Long.class, ExtendedValueRange.forLongOrSubset(Long.MIN_VALUE, Long.MAX_VALUE)) {
+    LONG(Long.class, ValueRangeImpl.forLongOrSubset(Long.MIN_VALUE, Long.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.longValue();
@@ -69,8 +73,9 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Float type.
+     * @see StandardNumberType#FLOAT
      */
-    FLOAT(Float.class, ExtendedValueRange.forDoubleOrFloat(-Float.MAX_VALUE, Float.MAX_VALUE)) {
+    FLOAT(Float.class, ValueRangeImpl.forDoubleOrFloat(-Float.MAX_VALUE, Float.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.floatValue();
@@ -79,8 +84,9 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Double type.
+     * @see StandardNumberType#DOUBLE
      */
-    DOUBLE(Double.class, ExtendedValueRange.forDoubleOrFloat(-Double.MAX_VALUE, Double.MAX_VALUE)) {
+    DOUBLE(Double.class, ValueRangeImpl.forDoubleOrFloat(-Double.MAX_VALUE, Double.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
             return number.doubleValue();
@@ -89,31 +95,33 @@ public enum StandardNumberTypeEnum {
 
     /**
      * Big integer type.
+     * @see StandardNumberType#BIG_INTEGER
      */
-    BIG_INTEGER(BigInteger.class, ExtendedValueRange.infinite(false)) {
+    BIG_INTEGER(BigInteger.class, ValueRangeImpl.infinite(false)) {
         @Override
         public Number convertUnsafe(Number number) {
-            return convertToBigInteger(number, getEnumForObjectTypeOrThrow(number), i -> BigInteger.ZERO);
+            return convertToBigInteger(number, getRangeOfValueOrThrow(number), i -> BigInteger.ZERO);
         }
 
         @Override
         protected Number convertBoundAware(Number number, IntFunction<Number> numberOutOfBoundsFunction) {
-            return convertToBigInteger(number, getEnumForObjectTypeOrThrow(number), numberOutOfBoundsFunction);
+            return convertToBigInteger(number, getRangeOfValueOrThrow(number), numberOutOfBoundsFunction);
         }
     },
 
     /**
      * Big decimal type.
+     * @see StandardNumberType#BIG_DECIMAL
      */
-    BIG_DECIMAL(BigDecimal.class, ExtendedValueRange.infinite(true)) {
+    BIG_DECIMAL(BigDecimal.class, ValueRangeImpl.infinite(true)) {
         @Override
         public Number convertUnsafe(Number number) {
-            return convertToBigDecimal(number, getEnumForObjectTypeOrThrow(number), i -> BigDecimal.ZERO);
+            return convertToBigDecimal(number, getRangeOfValueOrThrow(number), i -> BigDecimal.ZERO);
         }
 
         @Override
         protected Number convertBoundAware(Number number, IntFunction<Number> numberOutOfBoundsFunction) {
-            return convertToBigDecimal(number, getEnumForObjectTypeOrThrow(number), numberOutOfBoundsFunction);
+            return convertToBigDecimal(number, getRangeOfValueOrThrow(number), numberOutOfBoundsFunction);
         }
     };
 
@@ -121,7 +129,7 @@ public enum StandardNumberTypeEnum {
         initReferenceTypeToStandardNumberTypeMap();
 
     private final Class<? extends Number> type;
-    private final ExtendedValueRange<? extends Number> range;
+    private final ValueRange<? extends Number> range;
 
     /**
      * Constructor.
@@ -130,21 +138,21 @@ public enum StandardNumberTypeEnum {
      * @param range range describing the universe of values supported by this type
      * @param <T> the number type
      */
-    <T extends Number> StandardNumberTypeEnum(Class<T> type, ExtendedValueRange<T> range) {
+    <T extends Number> StandardNumberTypeEnum(Class<T> type, ValueRange<T> range) {
         this.type = type;
         this.range = range;
     }
 
-    public StandardNumberType<?> asNumberType() {
-        return StandardNumberType.fromClass(type);
+    public Class<? extends Number> getType() {
+        return type;
     }
 
-    public ExtendedValueRange<?> getValueRange() {
+    public ValueRange<?> getValueRange() {
         return range;
     }
 
-    public Class<? extends Number> getType() {
-        return type;
+    public StandardNumberType<?> asNumberType() {
+        return StandardNumberType.from(type);
     }
 
     /**
@@ -179,24 +187,13 @@ public enum StandardNumberTypeEnum {
      */
     public abstract Number convertUnsafe(Number number);
 
-    public boolean isEqualOrSupersetOf(StandardNumberTypeEnum other) {
-        switch (this) {
-            case BYTE:
-            case SHORT:
-            case INTEGER:
-            case LONG:
-            case FLOAT:
-            case DOUBLE:
-                return this.ordinal() >= other.ordinal();
-            case BIG_INTEGER:
-            case BIG_DECIMAL:
-                return true;
-            default:
-                throw new IllegalStateException("Unsupported enum type: " + this);
-        }
-    }
-
-    public boolean supportsAllValuesOf(StandardNumberTypeEnum other) { // todo: not present on StandardNumberType
+    /**
+     * Same as {@link NumberType#supportsAllValuesOf}.
+     *
+     * @param other the type to check whether this instance can represent all its values
+     * @return true if this type can represent all values of the given type without loss of magnitude; false otherwise
+     */
+    public boolean supportsAllValuesOf(StandardNumberTypeEnum other) {
         if (this == other) {
             return true;
         }
@@ -208,12 +205,16 @@ public enum StandardNumberTypeEnum {
         return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
     }
 
-    public static StandardNumberTypeEnum getEnumForObjectTypeOrThrow(Number number) {
+    public static StandardNumberTypeEnum getEnumToReadValueOrThrow(Number number) {
         StandardNumberTypeEnum enumFromClass = fromClass(number.getClass());
-        if (enumFromClass == null) {
-            throw new IllegalArgumentException("Unsupported number argument: " + number.getClass());
+        if (enumFromClass != null) {
+            return enumFromClass;
+        } else if (number instanceof BigInteger) {
+            return BIG_INTEGER;
+        } else if (number instanceof BigDecimal) {
+            return BIG_DECIMAL;
         }
-        return enumFromClass;
+        throw new IllegalArgumentException("Unsupported number argument: " + number.getClass());
     }
 
     /**
@@ -229,7 +230,7 @@ public enum StandardNumberTypeEnum {
      * @return the converted numbers, some default or null
      */
     protected Number convertBoundAware(Number number, IntFunction<Number> numberOutOfBoundsFunction) {
-        StandardNumberTypeEnum type = getEnumForObjectTypeOrThrow(number);
+        StandardNumberTypeEnum type = getRangeOfValueOrThrow(number);
         if (this.supportsAllValuesOf(type)) {
             return convertUnsafe(number);
         }
@@ -248,6 +249,10 @@ public enum StandardNumberTypeEnum {
                 // BIG_INTEGER and BIG_DECIMAL override this method, so 'this' cannot be either type here.
                 throw new IllegalStateException("Unexpected value: " + this);
         }
+    }
+
+    private static StandardNumberTypeEnum getRangeOfValueOrThrow(Number number) {
+        return getEnumToReadValueOrThrow(NumberTypes.unwrapToStandardNumberType(number));
     }
 
     /**
@@ -442,6 +447,23 @@ public enum StandardNumberTypeEnum {
         return rangeComparison == 0
             ? convertUnsafe(number)
             : fnIfOutsideRange.apply(rangeComparison);
+    }
+
+    private boolean isEqualOrSupersetOf(StandardNumberTypeEnum other) {
+        switch (this) {
+            case BYTE:
+            case SHORT:
+            case INTEGER:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+                return this.ordinal() >= other.ordinal();
+            case BIG_INTEGER:
+            case BIG_DECIMAL:
+                return true;
+            default:
+                throw new IllegalStateException("Unsupported enum type: " + this);
+        }
     }
 
     private int getMinAsIntOrThrow() {
