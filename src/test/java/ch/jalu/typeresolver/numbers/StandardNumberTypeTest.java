@@ -310,6 +310,7 @@ class StandardNumberTypeTest {
     }
 
     // todo: test that BigInteger and BigDecimal _extensions_ are also supported as expected
+    // todo: test value ranges
 
     @Test
     void shouldStreamThroughAllNumberTypes() throws IllegalAccessException {

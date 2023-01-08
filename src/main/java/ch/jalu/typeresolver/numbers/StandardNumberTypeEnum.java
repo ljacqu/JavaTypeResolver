@@ -16,11 +16,14 @@ import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.returnCompareTo
 
 /**
  * Represents the standard implementations of {@link Number} and allows to convert from one type to another,
- * among other utilities. See also {@link StandardNumberType}, which is more appropriate if you want to work
- * with a specific type and need type safety.
+ * among other utilities. These enum entries have the same methods to offer as {@link NumberType}.
+ * <p>
+ * See also {@link StandardNumberType}, which is more appropriate if you want to work with a specific type and need
+ * type safety. Conversions from this enum to {@link StandardNumberType} and vice versa can be achieved with
+ * {@link StandardNumberTypeEnum#asNumberType()} and {@link StandardNumberType#asEnum()}.
  *
- * @see StandardNumberTypeEnum#asNumberType()
  * @see StandardNumberTypeEnum#fromClass(Class)
+ * @see NumberType
  */
 public enum StandardNumberTypeEnum {
 
@@ -144,14 +147,73 @@ public enum StandardNumberTypeEnum {
         return type;
     }
 
-    public abstract Number convertUnsafe(Number number);
-
+    /**
+     * Same as {@link NumberType#convertIfNoLossOfMagnitude}. If a non-empty optional is returned, the contained value
+     * always corresponds to this entry's {@link #getType() type}. Prefer {@link StandardNumberType} if you can benefit
+     * from type safety.
+     *
+     * @param number the number to convert
+     * @return optional with the converted number if possible without loss of magnitude, otherwise empty
+     */
     public Optional<Number> convertIfNoLossOfMagnitude(Number number) {
         return Optional.ofNullable(convertBoundAware(number, cr -> null));
     }
 
+    /**
+     * Same as {@link NumberType#convertToBounds}. Always returns a number of this entry's {@link #getType() type},
+     * never null. Prefer {@link StandardNumberType} if you can benefit from type safety.
+     *
+     * @param number the number to convert
+     * @return converted number (adjusted to this type's bounds if necessary)
+     */
     public Number convertToBounds(Number number) {
         return convertBoundAware(number, this::getResultForNonZeroCompareToResult);
+    }
+
+    /**
+     * Same as {@link NumberType#convertUnsafe}. Always returns a number of this entry's {@link #getType() type},
+     * never null. Prefer {@link StandardNumberType} if you can benefit from type safety.
+     *
+     * @param number the number to convert
+     * @return converted number (maybe affected by overflow or underflow)
+     */
+    public abstract Number convertUnsafe(Number number);
+
+    public boolean isEqualOrSupersetOf(StandardNumberTypeEnum other) {
+        switch (this) {
+            case BYTE:
+            case SHORT:
+            case INTEGER:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+                return this.ordinal() >= other.ordinal();
+            case BIG_INTEGER:
+            case BIG_DECIMAL:
+                return true;
+            default:
+                throw new IllegalStateException("Unsupported enum type: " + this);
+        }
+    }
+
+    public boolean supportsAllValuesOf(StandardNumberTypeEnum other) { // todo: not present on StandardNumberType
+        if (this == other) {
+            return true;
+        }
+        return this.isEqualOrSupersetOf(other) && (this.range.hasInfinityAndNaN() || !other.range.hasInfinityAndNaN());
+    }
+
+    @Nullable
+    public static StandardNumberTypeEnum fromClass(Class<?> clazz) {
+        return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
+    }
+
+    public static StandardNumberTypeEnum getEnumForObjectTypeOrThrow(Number number) {
+        StandardNumberTypeEnum enumFromClass = fromClass(number.getClass());
+        if (enumFromClass == null) {
+            throw new IllegalArgumentException("Unsupported number argument: " + number.getClass());
+        }
+        return enumFromClass;
     }
 
     /**
@@ -406,43 +468,6 @@ public enum StandardNumberTypeEnum {
             default:
                 throw new IllegalStateException("Unexpected value: " + this);
         }
-    }
-
-    public boolean isSupersetOrEqualTo(StandardNumberTypeEnum other) {
-        switch (this) {
-            case BYTE:
-            case SHORT:
-            case INTEGER:
-            case LONG:
-            case FLOAT:
-            case DOUBLE:
-                return this.ordinal() >= other.ordinal();
-            case BIG_INTEGER:
-            case BIG_DECIMAL:
-                return true;
-            default:
-                throw new IllegalStateException("Unsupported enum type: " + this);
-        }
-    }
-
-    public boolean supportsAllValuesOf(StandardNumberTypeEnum other) {
-        if (this == other) {
-            return true;
-        }
-        return this.isSupersetOrEqualTo(other) && (this.range.hasInfinityAndNaN() || !other.range.hasInfinityAndNaN());
-    }
-
-    @Nullable
-    public static StandardNumberTypeEnum fromClass(Class<?> clazz) {
-        return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
-    }
-
-    public static StandardNumberTypeEnum getEnumForObjectTypeOrThrow(Number number) {
-        StandardNumberTypeEnum enumFromClass = fromClass(number.getClass());
-        if (enumFromClass == null) {
-            throw new IllegalArgumentException("Unsupported number argument: " + number.getClass());
-        }
-        return enumFromClass;
     }
 
     private static Map<Class<?>, StandardNumberTypeEnum> initReferenceTypeToStandardNumberTypeMap() {
