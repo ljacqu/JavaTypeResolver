@@ -167,7 +167,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         Class<?> currentClass = rawType.getDeclaringClass();
         while (currentClass != null) {
             declaringClasses.add(currentClass);
-            // All non-static classes and the first static declaring class is relevant, the rest is not
+            // All non-static classes and the first static declaring class are relevant, the rest is not
             if (Modifier.isStatic(currentClass.getModifiers())) {
                 break;
             }
