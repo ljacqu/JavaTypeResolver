@@ -1,13 +1,11 @@
 package ch.jalu.typeresolver.typeimpl;
 
+import ch.jalu.typeresolver.CommonTypeUtil;
+
 import javax.annotation.Nullable;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -20,31 +18,35 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     private final Type ownerType;
     private final Type[] actualTypeArguments;
 
-    public ParameterizedTypeImpl(Class<?> rawType, Type ownerType, Type... actualTypeArguments) {
+    /**
+     * Constructor. Performs no validation on the arguments whatsoever.
+     * <p>
+     * You can build parameterized types dynamically with {@link ParameterizedTypeBuilder}.
+     *
+     * @param rawType the raw type
+     * @param ownerType the owner type
+     * @param actualTypeArguments the type arguments
+     */
+    public ParameterizedTypeImpl(Class<?> rawType, @Nullable Type ownerType, Type... actualTypeArguments) {
         this.rawType = rawType;
         this.ownerType = ownerType;
         this.actualTypeArguments = actualTypeArguments;
     }
 
     /**
-     * Creates a new {@link ParameterizedTypeImpl} instance which represents the given class as a
-     * parameterized type with the original type arguments. Throws an exception if the given raw type
-     * has no type parameters.
+     * Copy constructor.
      *
-     * @param rawType the type to create a parameterized type object for
-     * @return parameterized type of the class and its type arguments
+     * @param parameterizedType the parameterized type to copy from
      */
-    public static ParameterizedTypeImpl newTypeWithTypeParameters(Class<?> rawType) {
-        if (rawType.getTypeParameters().length == 0) {
-            throw new IllegalArgumentException("Class '" + rawType + "' has no type arguments");
-        }
-
-        return new ParameterizedTypeImpl(rawType, createOwnerType(rawType), rawType.getTypeParameters());
+    public ParameterizedTypeImpl(ParameterizedType parameterizedType) {
+        this.rawType = CommonTypeUtil.getRawType(parameterizedType);
+        this.ownerType = parameterizedType.getOwnerType();
+        this.actualTypeArguments = parameterizedType.getActualTypeArguments();
     }
 
     @Override
     public Type[] getActualTypeArguments() {
-        return actualTypeArguments;
+        return actualTypeArguments.clone();
     }
 
     @Override
@@ -52,6 +54,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         return rawType;
     }
 
+    @Nullable
     @Override
     public Type getOwnerType() {
         return ownerType;
@@ -99,80 +102,5 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             sb.append(">");
         }
         return sb.toString();
-    }
-
-    /**
-     * Creates the appropriate Type with generic information (if needed) to be used as
-     * {@link ParameterizedType#getOwnerType() owner type} of a parameterized type impl with the given raw type.
-     *
-     * @param rawType the raw type whose owner type should be created with generic information
-     * @return owner type to use for the raw type
-     */
-    @Nullable
-    private static Type createOwnerType(Class<?> rawType) {
-        Class<?> directDeclaringClass = rawType.getDeclaringClass();
-        if (directDeclaringClass == null || Modifier.isStatic(rawType.getModifiers())) {
-            return directDeclaringClass;
-        }
-        return createOwnerTypeHierarchyForDeclaredNonStaticClass(rawType);
-    }
-
-    /**
-     * Creates the appropriate owner type with relevant generic info for use in a ParameterizedType
-     * with the given raw type, which may not be static and which must have a non-null declaring class.
-     * <p>
-     * The returned type is either the class's declaring class as Class object if there are no type parameters in
-     * the declaring classes that are available in the class's scope. Otherwise, a hierarchy of ParameterizedType
-     * is returned up to the last class with type parameters available in the class's scope.
-     *
-     * @param rawType the non-static declared class to inspect
-     * @return the appropriate owner type for a parameterized type with the given raw type
-     */
-    private static Type createOwnerTypeHierarchyForDeclaredNonStaticClass(Class<?> rawType) {
-        List<Class<?>> declaringClasses = collectRelevantDeclaringClasses(rawType);
-
-        Type lastOwnerType = null;
-        for (int i = declaringClasses.size() - 1; i >= 0; --i) {
-            Class<?> ownerType = declaringClasses.get(i);
-            if (lastOwnerType == null) {
-                TypeVariable<?>[] typeParams = ownerType.getTypeParameters();
-                if (typeParams.length > 0) {
-                    lastOwnerType = new ParameterizedTypeImpl(ownerType, ownerType.getDeclaringClass(), typeParams);
-                }
-            } else {
-                lastOwnerType = new ParameterizedTypeImpl(ownerType, lastOwnerType, ownerType.getTypeParameters());
-            }
-        }
-        return lastOwnerType == null
-            ? rawType.getDeclaringClass()
-            : lastOwnerType;
-    }
-
-    /**
-     * Collects all declaring classes iteratively that are relevant for the raw type's owner type hierarchy.
-     * All declaring classes are collected up to the first static class that is encountered. This represents
-     * the set of classes that might have type parameters which are still accessible in the {@code rawType}.
-     * <p>
-     * The list is inspected afterwards and the last element in the returned list that has type parameters will be
-     * the top-most class to be a ParameterizedType in the owner type hierarchy.
-     *
-     * @implNote
-     *     Specifically defined to return {@link ArrayList} to guarantee that access by index is efficient.
-     *
-     * @param rawType the raw type whose declaring classes should be gathered
-     * @return list of relevant declaring classes that need to be processed
-     */
-    private static ArrayList<Class<?>> collectRelevantDeclaringClasses(Class<?> rawType) {
-        ArrayList<Class<?>> declaringClasses = new ArrayList<>();
-        Class<?> currentClass = rawType.getDeclaringClass();
-        while (currentClass != null) {
-            declaringClasses.add(currentClass);
-            // All non-static classes and the first static declaring class are relevant, the rest is not
-            if (Modifier.isStatic(currentClass.getModifiers())) {
-                break;
-            }
-            currentClass = currentClass.getDeclaringClass();
-        }
-        return declaringClasses;
     }
 }
