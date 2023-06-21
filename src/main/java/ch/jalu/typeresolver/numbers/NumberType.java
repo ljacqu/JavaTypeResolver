@@ -7,10 +7,10 @@ import java.util.Optional;
  * data about the values the type can represent.
  * <p>
  * Standard implementations for basic Java number types are available at
- * {@link StandardNumberTypeEnum} and {@link MoreNumberTypes}.
+ * {@link StandardNumberType} and {@link MoreNumberTypes}.
  *
  * @param <N>
- * @see StandardNumberTypeEnum
+ * @see StandardNumberType
  * @see NumberTypes#from(Class)
  */
 public interface NumberType<N> {

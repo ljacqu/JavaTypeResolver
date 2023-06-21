@@ -192,13 +192,13 @@ class MoreNumberTypesTest {
 
     private static Set<NumberType<?>> getExpectedFullySupportedNumberTypesByAtomicType(boolean isLong) {
         Set<NumberType<?>> expectedSupportedTypes = new HashSet<>();
-        expectedSupportedTypes.add(StandardNumberTypeEnum.BYTE);
-        expectedSupportedTypes.add(StandardNumberTypeEnum.SHORT);
+        expectedSupportedTypes.add(StandardNumberType.BYTE);
+        expectedSupportedTypes.add(StandardNumberType.SHORT);
         expectedSupportedTypes.add(MoreNumberTypes.CHARACTER);
-        expectedSupportedTypes.add(StandardNumberTypeEnum.INTEGER);
+        expectedSupportedTypes.add(StandardNumberType.INTEGER);
         expectedSupportedTypes.add(MoreNumberTypes.ATOMIC_INTEGER);
         if (isLong) {
-            expectedSupportedTypes.add(StandardNumberTypeEnum.LONG);
+            expectedSupportedTypes.add(StandardNumberType.LONG);
             expectedSupportedTypes.add(MoreNumberTypes.ATOMIC_LONG);
         }
         return expectedSupportedTypes;

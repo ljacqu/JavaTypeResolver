@@ -23,10 +23,10 @@ import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.compareToRange;
  * <p>
  * To use a number type with type safety, please use the constants {@link #T_BYTE}, {@link #T_SHORT} etc.
  *
- * @see StandardNumberTypeEnum#fromClass(Class)
+ * @see StandardNumberType#fromClass(Class)
  * @see NumberType
  */
-public enum StandardNumberTypeEnum implements NumberType {
+public enum StandardNumberType implements NumberType {
 
     /** Byte: [-128, 127]. */
     BYTE(Byte.class, ValueRangeImpl.forLongOrSubset(Byte.MIN_VALUE, Byte.MAX_VALUE)) {
@@ -101,7 +101,7 @@ public enum StandardNumberTypeEnum implements NumberType {
     public static final NumberType<BigInteger> T_BIG_INTEGER = (NumberType<BigInteger>) BIG_INTEGER;
     public static final NumberType<BigDecimal> T_BIG_DECIMAL = (NumberType<BigDecimal>) BIG_DECIMAL;
 
-    private static final Map<Class<?>, StandardNumberTypeEnum> typeToEnumEntry =
+    private static final Map<Class<?>, StandardNumberType> typeToEnumEntry =
         initReferenceTypeToStandardNumberTypeMap();
 
     private final Class<? extends Number> type;
@@ -114,14 +114,11 @@ public enum StandardNumberTypeEnum implements NumberType {
      * @param range range describing the universe of values supported by this type
      * @param <T> the number type
      */
-    <T extends Number> StandardNumberTypeEnum(Class<T> type, ValueRange<T> range) {
+    <T extends Number> StandardNumberType(Class<T> type, ValueRange<T> range) {
         this.type = type;
         this.range = range;
     }
 
-    /**
-     * @return the type this instance describes and can convert to (corresponds to {@link NumberType#getType()}
-     */
     @Override
     public Class<? extends Number> getType() {
         return type;
@@ -178,7 +175,7 @@ public enum StandardNumberTypeEnum implements NumberType {
      * @param other the type to check whether this instance can represent all its values
      * @return true if this type can represent all values of the given type without loss of magnitude; false otherwise
      */
-    public boolean supportsAllValuesOf(StandardNumberTypeEnum other) {
+    public boolean supportsAllValuesOf(StandardNumberType other) {
         if (this == other) {
             return true;
         }
@@ -187,7 +184,7 @@ public enum StandardNumberTypeEnum implements NumberType {
 
     @Override
     public ValueRangeComparison compareToValueRange(Number number) {
-        StandardNumberTypeEnum type = getRangeOfValueOrThrow(number);
+        StandardNumberType type = getRangeOfValueOrThrow(number);
         if (this.supportsAllValuesOf(type)) {
             return ValueRangeComparison.WITHIN_RANGE;
         }
@@ -211,7 +208,7 @@ public enum StandardNumberTypeEnum implements NumberType {
     }
 
     @Nullable
-    public static StandardNumberTypeEnum fromClass(Class<?> clazz) {
+    public static StandardNumberType fromClass(Class<?> clazz) {
         return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
     }
 
@@ -250,7 +247,7 @@ public enum StandardNumberTypeEnum implements NumberType {
      * enum entry, which means that converting numbers with the enum entry returned by this method does not necessarily
      * create numbers of the same class as {@code number}:<code><pre>
      *   BigDecimal bigDecimalExtension = new BigDecimal("20") { }; // anonymous extension
-     *   StandardNumberTypeEnum entry = StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigDecimalExtension);
+     *   StandardNumberType entry = StandardNumberType.findEntryForReadingValueOrThrow(bigDecimalExtension);
      *   System.out.println(entry.convertUnsafe(0).getClass().equals(bigDecimalExtension.getClass())); // false
      * </pre></code>
      * <p>
@@ -266,8 +263,8 @@ public enum StandardNumberTypeEnum implements NumberType {
      * @param number the number to get the entry for
      * @return enum entry corresponding to the number
      */
-    public static StandardNumberTypeEnum findEntryForReadingValueOrThrow(Number number) {
-        StandardNumberTypeEnum enumFromClass = fromClass(number.getClass());
+    public static StandardNumberType findEntryForReadingValueOrThrow(Number number) {
+        StandardNumberType enumFromClass = fromClass(number.getClass());
         if (enumFromClass != null) {
             return enumFromClass;
         } else if (number instanceof BigInteger) {
@@ -280,10 +277,10 @@ public enum StandardNumberTypeEnum implements NumberType {
 
     @Override
     public String toString() {
-        return "StandardNumberTypeEnum[" + type.getSimpleName() + "]";
+        return "StandardNumberType[" + type.getSimpleName() + "]";
     }
 
-    private static StandardNumberTypeEnum getRangeOfValueOrThrow(Number number) {
+    private static StandardNumberType getRangeOfValueOrThrow(Number number) {
         return findEntryForReadingValueOrThrow(NumberTypes.unwrapToStandardNumberType(number));
     }
 
@@ -326,7 +323,7 @@ public enum StandardNumberTypeEnum implements NumberType {
      * @param numberType the type the number to convert has
      * @return the converted number
      */
-    private static BigDecimal convertToBigDecimal(Number number, StandardNumberTypeEnum numberType) {
+    private static BigDecimal convertToBigDecimal(Number number, StandardNumberType numberType) {
         switch (numberType) {
             case BYTE:
             case SHORT:
@@ -358,7 +355,7 @@ public enum StandardNumberTypeEnum implements NumberType {
      * @param numberType the type the number to convert has
      * @return the converted number
      */
-    private static BigInteger convertToBigInteger(Number number, StandardNumberTypeEnum numberType) {
+    private static BigInteger convertToBigInteger(Number number, StandardNumberType numberType) {
         switch (numberType) {
             case BYTE:
             case SHORT:
@@ -381,8 +378,8 @@ public enum StandardNumberTypeEnum implements NumberType {
         }
     }
 
-    private ValueRangeComparison compareToRangeOfIntOrSmaller(Number number, StandardNumberTypeEnum numberType) {
-        StandardNumberTypeEnum trustedRange = numberType;
+    private ValueRangeComparison compareToRangeOfIntOrSmaller(Number number, StandardNumberType numberType) {
+        StandardNumberType trustedRange = numberType;
         ValueRangeComparison rangeComparison = ValueRangeComparison.WITHIN_RANGE;
         // Step 1: If number belongs to something with greater range than LONG, check first that it can be represented
         // as a Long so that we can then check if the long value is within bounds.
@@ -418,7 +415,7 @@ public enum StandardNumberTypeEnum implements NumberType {
      * @param numberType the number's type
      * @return compareTo int result indicating the relation of the number and the Long value range
      */
-    private static ValueRangeComparison compareToLongRange(Number number, StandardNumberTypeEnum numberType) {
+    private static ValueRangeComparison compareToLongRange(Number number, StandardNumberType numberType) {
         switch (numberType) {
             case FLOAT:
             case DOUBLE:
@@ -435,7 +432,7 @@ public enum StandardNumberTypeEnum implements NumberType {
     /*
      * Conversion method called when the type to convert *to* is FLOAT or DOUBLE.
      */
-    private ValueRangeComparison compareToFloatOrDoubleRange(Number number, StandardNumberTypeEnum numberType) {
+    private ValueRangeComparison compareToFloatOrDoubleRange(Number number, StandardNumberType numberType) {
         ValueRangeComparison rangeComparison;
         if (this == FLOAT && numberType == DOUBLE) {
             double doubleValue = number.doubleValue();
@@ -483,8 +480,8 @@ public enum StandardNumberTypeEnum implements NumberType {
         }
     }
 
-    private static Map<Class<?>, StandardNumberTypeEnum> initReferenceTypeToStandardNumberTypeMap() {
-        Map<Class<?>, StandardNumberTypeEnum> referenceTypeToNumberType = new HashMap<>();
+    private static Map<Class<?>, StandardNumberType> initReferenceTypeToStandardNumberTypeMap() {
+        Map<Class<?>, StandardNumberType> referenceTypeToNumberType = new HashMap<>();
         referenceTypeToNumberType.put(Byte.class, BYTE);
         referenceTypeToNumberType.put(Short.class, SHORT);
         referenceTypeToNumberType.put(Integer.class, INTEGER);

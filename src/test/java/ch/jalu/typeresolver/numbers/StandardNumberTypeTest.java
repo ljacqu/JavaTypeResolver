@@ -25,15 +25,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BIG_DECIMAL;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BIG_INTEGER;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.BYTE;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.DOUBLE;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.FLOAT;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.INTEGER;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.LONG;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.SHORT;
-import static ch.jalu.typeresolver.numbers.StandardNumberTypeEnum.findEntryForReadingValueOrThrow;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.BIG_DECIMAL;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.BIG_INTEGER;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.BYTE;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.DOUBLE;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.FLOAT;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.INTEGER;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.LONG;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.SHORT;
+import static ch.jalu.typeresolver.numbers.StandardNumberType.findEntryForReadingValueOrThrow;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -46,18 +46,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Test for {@link StandardNumberTypeEnum}.
+ * Test for {@link StandardNumberType}.
  */
-class StandardNumberTypeEnumTest {
+class StandardNumberTypeTest {
 
     /**
-     * Tests the code sample in the JavaDoc of {@link StandardNumberTypeEnum#findEntryForReadingValueOrThrow}. This test
+     * Tests the code sample in the JavaDoc of {@link StandardNumberType#findEntryForReadingValueOrThrow}. This test
      * attempts to ensure that the code in the Javadoc is correct and runnable.
      */
     @Test
     void shouldHaveRunnableExampleCodeInJavadoc() {
+        // given
         BigDecimal bigDecimalExtension = new BigDecimal("20") { }; // anonymous extension
-        StandardNumberTypeEnum entry = StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigDecimalExtension);
+        StandardNumberType entry = StandardNumberType.findEntryForReadingValueOrThrow(bigDecimalExtension);
         // System.out.println(entry.convertUnsafe(0).getClass().equals(bigDecimalExtension.getClass())); // false
 
         boolean output = entry.convertUnsafe(0).getClass().equals(bigDecimalExtension.getClass());
@@ -65,9 +66,9 @@ class StandardNumberTypeEnumTest {
     }
 
     /**
-     * Tests {@link StandardNumberTypeEnum#fromNumberClass},
-     * {@link StandardNumberTypeEnum#fromClass},
-     * {@link StandardNumberTypeEnum#findEntryForReadingValueOrThrow},
+     * Tests {@link StandardNumberType#fromNumberClass},
+     * {@link StandardNumberType#fromClass},
+     * {@link StandardNumberType#findEntryForReadingValueOrThrow},
      * and various streaming methods.
      */
     @Nested
@@ -76,32 +77,32 @@ class StandardNumberTypeEnumTest {
         @Test
         void shouldReturnTypeForNumberClass() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.fromNumberClass(int.class), equalTo(StandardNumberTypeEnum.T_INTEGER));
-            assertThat(StandardNumberTypeEnum.fromNumberClass(Double.class), equalTo(StandardNumberTypeEnum.T_DOUBLE));
-            assertThat(StandardNumberTypeEnum.fromNumberClass(BigDecimal.class), equalTo(StandardNumberTypeEnum.T_BIG_DECIMAL));
+            assertThat(StandardNumberType.fromNumberClass(int.class), equalTo(StandardNumberType.T_INTEGER));
+            assertThat(StandardNumberType.fromNumberClass(Double.class), equalTo(StandardNumberType.T_DOUBLE));
+            assertThat(StandardNumberType.fromNumberClass(BigDecimal.class), equalTo(StandardNumberType.T_BIG_DECIMAL));
 
-            assertThat(StandardNumberTypeEnum.fromNumberClass(Number.class), nullValue());
-            assertThat(StandardNumberTypeEnum.fromNumberClass(NumberTestImpl.class), nullValue());
-            assertThat(StandardNumberTypeEnum.fromNumberClass(null), nullValue());
+            assertThat(StandardNumberType.fromNumberClass(Number.class), nullValue());
+            assertThat(StandardNumberType.fromNumberClass(NumberTestImpl.class), nullValue());
+            assertThat(StandardNumberType.fromNumberClass(null), nullValue());
         }
 
         @Test
         void shouldReturnTypeForClass() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.fromClass(int.class), equalTo(StandardNumberTypeEnum.INTEGER));
-            assertThat(StandardNumberTypeEnum.fromClass(Double.class), equalTo(StandardNumberTypeEnum.DOUBLE));
-            assertThat(StandardNumberTypeEnum.fromClass(BigDecimal.class), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
+            assertThat(StandardNumberType.fromClass(int.class), equalTo(StandardNumberType.INTEGER));
+            assertThat(StandardNumberType.fromClass(Double.class), equalTo(StandardNumberType.DOUBLE));
+            assertThat(StandardNumberType.fromClass(BigDecimal.class), equalTo(StandardNumberType.BIG_DECIMAL));
 
-            assertThat(StandardNumberTypeEnum.fromClass(String.class), nullValue());
-            assertThat(StandardNumberTypeEnum.fromClass(NumberTestImpl.class), nullValue());
-            assertThat(StandardNumberTypeEnum.fromClass(null), nullValue());
+            assertThat(StandardNumberType.fromClass(String.class), nullValue());
+            assertThat(StandardNumberType.fromClass(NumberTestImpl.class), nullValue());
+            assertThat(StandardNumberType.fromClass(null), nullValue());
 
-            StandardNumberTypeEnum.streamThroughAll().forEach(numberType -> {
-                assertThat(StandardNumberTypeEnum.fromClass(numberType.getType()), sameInstance(numberType));
+            StandardNumberType.streamThroughAll().forEach(numberType -> {
+                assertThat(StandardNumberType.fromClass(numberType.getType()), sameInstance(numberType));
 
                 Class<?> primitiveType = Primitives.toPrimitiveType(numberType.getType());
                 if (!primitiveType.equals(numberType.getType())) {
-                    assertThat(StandardNumberTypeEnum.fromClass(primitiveType), sameInstance(numberType));
+                    assertThat(StandardNumberType.fromClass(primitiveType), sameInstance(numberType));
                 }
             });
         }
@@ -109,16 +110,16 @@ class StandardNumberTypeEnumTest {
         @Test
         void shouldReturnAppropriateEnumEntry() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow((short) 2), equalTo(StandardNumberTypeEnum.SHORT));
-            assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(30), equalTo(StandardNumberTypeEnum.INTEGER));
-            assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(45f), equalTo(StandardNumberTypeEnum.FLOAT));
-            assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(BigDecimal.TEN), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
+            assertThat(StandardNumberType.findEntryForReadingValueOrThrow((short) 2), equalTo(StandardNumberType.SHORT));
+            assertThat(StandardNumberType.findEntryForReadingValueOrThrow(30), equalTo(StandardNumberType.INTEGER));
+            assertThat(StandardNumberType.findEntryForReadingValueOrThrow(45f), equalTo(StandardNumberType.FLOAT));
+            assertThat(StandardNumberType.findEntryForReadingValueOrThrow(BigDecimal.TEN), equalTo(StandardNumberType.BIG_DECIMAL));
 
             BigInteger bigInteger = new BigInteger(new byte[]{ 20 }) { };
-            assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigInteger), equalTo(StandardNumberTypeEnum.BIG_INTEGER));
+            assertThat(StandardNumberType.findEntryForReadingValueOrThrow(bigInteger), equalTo(StandardNumberType.BIG_INTEGER));
 
             BigDecimal bigDecimalExt = new BigDecimal("20") { };
-            assertThat(StandardNumberTypeEnum.findEntryForReadingValueOrThrow(bigDecimalExt), equalTo(StandardNumberTypeEnum.BIG_DECIMAL));
+            assertThat(StandardNumberType.findEntryForReadingValueOrThrow(bigDecimalExt), equalTo(StandardNumberType.BIG_DECIMAL));
         }
 
         @Test
@@ -134,25 +135,25 @@ class StandardNumberTypeEnumTest {
         @Test
         void shouldReturnAllNumberTypesAsNumberTypeInterfaces() {
             // given / when
-            List<NumberType<? extends Number>> allValues = StandardNumberTypeEnum.streamThroughAll()
+            List<NumberType<? extends Number>> allValues = StandardNumberType.streamThroughAll()
                 .collect(Collectors.toList());
 
             // then
-            assertThat(allValues, contains(StandardNumberTypeEnum.values()));
+            assertThat(allValues, contains(StandardNumberType.values()));
         }
 
         @Test
         void shouldReturnPrimitiveTypesAndBeInSyncWithPrimitiveTypes() {
             // given / when
-            List<NumberType<?>> primitiveNumberTypes = StandardNumberTypeEnum.streamThroughPrimitiveTypes()
+            List<NumberType<?>> primitiveNumberTypes = StandardNumberType.streamThroughPrimitiveTypes()
                 .collect(Collectors.toList());
 
             // then
-            assertThat(primitiveNumberTypes, contains(StandardNumberTypeEnum.BYTE, StandardNumberTypeEnum.SHORT,
-                StandardNumberTypeEnum.INTEGER, StandardNumberTypeEnum.LONG,
-                StandardNumberTypeEnum.FLOAT, StandardNumberTypeEnum.DOUBLE));
+            assertThat(primitiveNumberTypes, contains(StandardNumberType.BYTE, StandardNumberType.SHORT,
+                StandardNumberType.INTEGER, StandardNumberType.LONG,
+                StandardNumberType.FLOAT, StandardNumberType.DOUBLE));
 
-            Set<NumberType<?>> allTypesWithPrimitiveEquivalent = StandardNumberTypeEnum.streamThroughAll()
+            Set<NumberType<?>> allTypesWithPrimitiveEquivalent = StandardNumberType.streamThroughAll()
                 .filter(type -> Primitives.from(type.getType()) != null)
                 .collect(Collectors.toSet());
             assertThat(new HashSet<>(primitiveNumberTypes), equalTo(allTypesWithPrimitiveEquivalent));
@@ -160,18 +161,18 @@ class StandardNumberTypeEnumTest {
     }
 
     /**
-     * Tests {@link StandardNumberTypeEnum#supportsAllValuesOf},
-     * {@link StandardNumberTypeEnum#getValueRange},
-     * {@link StandardNumberTypeEnum#compareToValueRange}.
+     * Tests {@link StandardNumberType#supportsAllValuesOf},
+     * {@link StandardNumberType#getValueRange},
+     * {@link StandardNumberType#compareToValueRange}.
      */
     @Nested
     class RangeTests {
 
         @ParameterizedTest
-        @EnumSource(StandardNumberTypeEnum.class)
-        void shouldReturnWhetherItSupportsAllValuesOfOtherType(StandardNumberTypeEnum type) {
+        @EnumSource(StandardNumberType.class)
+        void shouldReturnWhetherItSupportsAllValuesOfOtherType(StandardNumberType type) {
             // given / when
-            Set<StandardNumberTypeEnum> fullySupportedTypes = Arrays.stream(StandardNumberTypeEnum.values())
+            Set<StandardNumberType> fullySupportedTypes = Arrays.stream(StandardNumberType.values())
                 .filter(type::supportsAllValuesOf)
                 .collect(Collectors.toSet());
 
@@ -182,20 +183,20 @@ class StandardNumberTypeEnumTest {
         @Test
         void shouldReturnWhetherTypeSupportsMoreNumberTypeValues() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.T_BYTE.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(false));
-            assertThat(StandardNumberTypeEnum.T_BYTE.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(false));
-            assertThat(StandardNumberTypeEnum.T_BYTE.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
+            assertThat(StandardNumberType.T_BYTE.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(false));
+            assertThat(StandardNumberType.T_BYTE.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(false));
+            assertThat(StandardNumberType.T_BYTE.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
 
-            assertThat(StandardNumberTypeEnum.T_SHORT.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(false));
-            assertThat(StandardNumberTypeEnum.T_SHORT.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(false));
-            assertThat(StandardNumberTypeEnum.T_SHORT.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
+            assertThat(StandardNumberType.T_SHORT.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(false));
+            assertThat(StandardNumberType.T_SHORT.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(false));
+            assertThat(StandardNumberType.T_SHORT.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
 
-            assertThat(StandardNumberTypeEnum.T_INTEGER.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(true));
-            assertThat(StandardNumberTypeEnum.T_INTEGER.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(true));
-            assertThat(StandardNumberTypeEnum.T_INTEGER.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
+            assertThat(StandardNumberType.T_INTEGER.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(true));
+            assertThat(StandardNumberType.T_INTEGER.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(true));
+            assertThat(StandardNumberType.T_INTEGER.supportsAllValuesOf(MoreNumberTypes.ATOMIC_LONG), equalTo(false));
 
-            Stream.of(StandardNumberTypeEnum.T_LONG, StandardNumberTypeEnum.T_FLOAT, StandardNumberTypeEnum.T_DOUBLE,
-                    StandardNumberTypeEnum.T_BIG_INTEGER, StandardNumberTypeEnum.T_BIG_DECIMAL)
+            Stream.of(StandardNumberType.T_LONG, StandardNumberType.T_FLOAT, StandardNumberType.T_DOUBLE,
+                    StandardNumberType.T_BIG_INTEGER, StandardNumberType.T_BIG_DECIMAL)
                 .forEach(numberType -> {
                     assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.CHARACTER), equalTo(true));
                     assertThat(numberType.supportsAllValuesOf(MoreNumberTypes.ATOMIC_INTEGER), equalTo(true));
@@ -207,17 +208,17 @@ class StandardNumberTypeEnumTest {
         void shouldReturnValueRanges() {
             // given
             Set<NumberType<?>> typesWithDecimals = new HashSet<>();
-            typesWithDecimals.add(StandardNumberTypeEnum.FLOAT);
-            typesWithDecimals.add(StandardNumberTypeEnum.DOUBLE);
-            typesWithDecimals.add(StandardNumberTypeEnum.BIG_DECIMAL);
+            typesWithDecimals.add(StandardNumberType.FLOAT);
+            typesWithDecimals.add(StandardNumberType.DOUBLE);
+            typesWithDecimals.add(StandardNumberType.BIG_DECIMAL);
 
-            StandardNumberTypeEnum.streamThroughAll().forEach(numberType -> {
+            StandardNumberType.streamThroughAll().forEach(numberType -> {
                 // when
                 ValueRange<? extends Number> valueRange = numberType.getValueRange();
 
                 // then
                 assertThat(valueRange.supportsDecimals(), equalTo(typesWithDecimals.contains(numberType)));
-                if (numberType == StandardNumberTypeEnum.BIG_INTEGER || numberType == StandardNumberTypeEnum.BIG_DECIMAL) {
+                if (numberType == StandardNumberType.BIG_INTEGER || numberType == StandardNumberType.BIG_DECIMAL) {
                     assertThat(valueRange.getMinValue(), nullValue());
                     assertThat(valueRange.getMaxValue(), nullValue());
                 } else {
@@ -233,7 +234,7 @@ class StandardNumberTypeEnumTest {
                     assertThat(BIG_DECIMAL.convertUnsafe(valueRange.getMaxInOwnType()), equalTo(valueRange.getMaxValue()));
                 }
 
-                if (numberType == StandardNumberTypeEnum.FLOAT || numberType == StandardNumberTypeEnum.DOUBLE) {
+                if (numberType == StandardNumberType.FLOAT || numberType == StandardNumberType.DOUBLE) {
                     assertThat(valueRange.hasInfinityAndNaN(), equalTo(true));
                 } else {
                     assertThat(valueRange.hasInfinityAndNaN(), equalTo(false));
@@ -244,18 +245,18 @@ class StandardNumberTypeEnumTest {
         @Test
         void shouldHaveExpectedValueRangeSupersetsOrEquivalencies() {
             // given
-            Map<StandardNumberTypeEnum, ValueRange> rangeByNumberType = Arrays.stream(StandardNumberTypeEnum.values())
+            Map<StandardNumberType, ValueRange> rangeByNumberType = Arrays.stream(StandardNumberType.values())
                 .collect(Collectors.toMap(Function.identity(), NumberType::getValueRange));
 
             // when
-            Arrays.stream(StandardNumberTypeEnum.values()).forEach(numberType -> {
+            Arrays.stream(StandardNumberType.values()).forEach(numberType -> {
                 ValueRange<?> testedRange = numberType.getValueRange();
 
-                Set<StandardNumberTypeEnum> rangesNumberTypeIsGreaterOrEqualTo = rangeByNumberType.entrySet().stream()
+                Set<StandardNumberType> rangesNumberTypeIsGreaterOrEqualTo = rangeByNumberType.entrySet().stream()
                     .filter(range -> testedRange.isEqualOrSupersetOf(range.getValue()))
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toSet());
-                Set<StandardNumberTypeEnum> rangesNumberTypeFullySupports = Arrays.stream(StandardNumberTypeEnum.values())
+                Set<StandardNumberType> rangesNumberTypeFullySupports = Arrays.stream(StandardNumberType.values())
                     .filter(numberType::supportsAllValuesOf)
                     .collect(Collectors.toSet());
 
@@ -270,61 +271,61 @@ class StandardNumberTypeEnumTest {
         @Test
         void shouldCompareValuesToShortRange() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_NEGATIVE_INFINITY));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(-4400000L), equalTo(ValueRangeComparison.BELOW_MINIMUM));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Short.MIN_VALUE - 1), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_NEGATIVE_INFINITY));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(-4400000L), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Short.MIN_VALUE - 1), equalTo(ValueRangeComparison.BELOW_MINIMUM));
 
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Short.MIN_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange((short) -31894), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(0L), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(new BigDecimal("12223.45")), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Short.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Short.MIN_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange((short) -31894), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(0L), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(new BigDecimal("12223.45")), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Short.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
 
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Short.MAX_VALUE + 1), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(33333.0d), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Short.MAX_VALUE + 1), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(33333.0d), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY));
 
-            assertThat(StandardNumberTypeEnum.T_SHORT.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
+            assertThat(StandardNumberType.T_SHORT.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
         }
 
         @Test
         void shouldCompareValuesToFloatRange() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(Double.POSITIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(Double.POSITIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.WITHIN_RANGE));
 
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(new BigInteger("-999999999999999999999999999999999999999999")), equalTo(ValueRangeComparison.BELOW_MINIMUM));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(-Double.MAX_VALUE), equalTo(ValueRangeComparison.BELOW_MINIMUM));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(-3.4028237E38), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(new BigInteger("-999999999999999999999999999999999999999999")), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(-Double.MAX_VALUE), equalTo(ValueRangeComparison.BELOW_MINIMUM));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(-3.4028237E38), equalTo(ValueRangeComparison.BELOW_MINIMUM));
 
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange((double) Float.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(444_666_888), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(new BigDecimal("444298347982347.0123456789")), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(Float.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange((double) Float.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(444_666_888), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(new BigDecimal("444298347982347.0123456789")), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(Float.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
 
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(3.4028237E38), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
-            assertThat(StandardNumberTypeEnum.T_FLOAT.compareToValueRange(new BigDecimal("999999999999999999999999999999999999999999.243240")), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(3.4028237E38), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
+            assertThat(StandardNumberType.T_FLOAT.compareToValueRange(new BigDecimal("999999999999999999999999999999999999999999.243240")), equalTo(ValueRangeComparison.ABOVE_MAXIMUM));
         }
 
         @Test
         void shouldCompareValuesToBigIntegerRange() {
             // given / when / then
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(new BigDecimal("-99999999999999999999999999999999999E1000")), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(-4400000L), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange((byte) -27), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(0L), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(Double.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(new BigDecimal("9999999999999999999999999999999999999999999E234").toBigInteger()), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(new BigDecimal("-99999999999999999999999999999999999E1000")), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(-4400000L), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange((byte) -27), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(0L), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(Double.MAX_VALUE), equalTo(ValueRangeComparison.WITHIN_RANGE));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(new BigDecimal("9999999999999999999999999999999999999999999E234").toBigInteger()), equalTo(ValueRangeComparison.WITHIN_RANGE));
 
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_NEGATIVE_INFINITY));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(Float.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
-            assertThat(StandardNumberTypeEnum.T_BIG_INTEGER.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(Double.NEGATIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_NEGATIVE_INFINITY));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(Float.POSITIVE_INFINITY), equalTo(ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(Float.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
+            assertThat(StandardNumberType.T_BIG_INTEGER.compareToValueRange(Double.NaN), equalTo(ValueRangeComparison.UNSUPPORTED_NAN));
         }
 
-        private EnumSet<StandardNumberTypeEnum> getExpectedFullySupportedTypes(StandardNumberTypeEnum type) {
+        private EnumSet<StandardNumberType> getExpectedFullySupportedTypes(StandardNumberType type) {
             switch (type) {
                 case BYTE:
                     return EnumSet.of(BYTE);
@@ -346,45 +347,45 @@ class StandardNumberTypeEnumTest {
             }
         }
 
-        private StandardNumberTypeEnum[] getExpectedTypesIsSupersetOf(StandardNumberTypeEnum numberType) {
+        private StandardNumberType[] getExpectedTypesIsSupersetOf(StandardNumberType numberType) {
             switch (numberType) {
                 case BYTE:
-                    return new StandardNumberTypeEnum[]{ BYTE };
+                    return new StandardNumberType[]{ BYTE };
                 case SHORT:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT };
+                    return new StandardNumberType[]{ BYTE, SHORT };
                 case INTEGER:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER };
                 case LONG:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG };
                 case FLOAT:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG, FLOAT };
                 case DOUBLE:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
                 case BIG_INTEGER:
                 case BIG_DECIMAL:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, BIG_INTEGER, BIG_DECIMAL };
                 default:
                     throw new IllegalStateException("Unhandled value: " + numberType);
             }
         }
 
-        private StandardNumberTypeEnum[] getExpectedTypesItCanFullyHandle(StandardNumberTypeEnum numberType) {
+        private StandardNumberType[] getExpectedTypesItCanFullyHandle(StandardNumberType numberType) {
             switch (numberType) {
                 case BYTE:
-                    return new StandardNumberTypeEnum[]{ BYTE };
+                    return new StandardNumberType[]{ BYTE };
                 case SHORT:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT };
+                    return new StandardNumberType[]{ BYTE, SHORT };
                 case INTEGER:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER };
                 case LONG:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG };
                 case FLOAT:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG, FLOAT };
                 case DOUBLE:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
                 case BIG_INTEGER:
                 case BIG_DECIMAL:
-                    return new StandardNumberTypeEnum[]{ BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, BIG_DECIMAL };
+                    return new StandardNumberType[]{ BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, BIG_DECIMAL };
                 default:
                     throw new IllegalStateException("Unhandled value: " + numberType);
             }
@@ -392,9 +393,9 @@ class StandardNumberTypeEnumTest {
     }
 
     /**
-     * Tests {@link StandardNumberTypeEnum#convertUnsafe},
-     * {@link StandardNumberTypeEnum#convertToBounds},
-     * {@link StandardNumberTypeEnum#convertIfNoLossOfMagnitude}.
+     * Tests {@link StandardNumberType#convertUnsafe},
+     * {@link StandardNumberType#convertToBounds},
+     * {@link StandardNumberType#convertIfNoLossOfMagnitude}.
      */
     @Nested
     class ConvertTests {
@@ -407,7 +408,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(Byte.MAX_VALUE, Byte.MAX_VALUE);
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_BYTE, expectations);
+            verifyConversions(StandardNumberType.T_BYTE, expectations);
         }
 
         @Test
@@ -424,7 +425,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("32767"), (short) 32767);
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_SHORT, expectations);
+            verifyConversions(StandardNumberType.T_SHORT, expectations);
         }
 
         @Test
@@ -445,7 +446,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("32767"), 32767);
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_INTEGER, expectations);
+            verifyConversions(StandardNumberType.T_INTEGER, expectations);
         }
 
         @Test
@@ -468,7 +469,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("32767"), 32767L);
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_LONG, expectations);
+            verifyConversions(StandardNumberType.T_LONG, expectations);
         }
 
         @Test
@@ -493,7 +494,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("32767"), 32767f);
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_FLOAT, expectations);
+            verifyConversions(StandardNumberType.T_FLOAT, expectations);
         }
 
         @Test
@@ -520,7 +521,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("32767"), 32767d);
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_DOUBLE, expectations);
+            verifyConversions(StandardNumberType.T_DOUBLE, expectations);
         }
 
         @Test
@@ -551,7 +552,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("9.414141414E308"), new BigDecimal("9.414141414E308").toBigInteger());
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_BIG_INTEGER, expectations);
+            verifyConversions(StandardNumberType.T_BIG_INTEGER, expectations);
         }
 
         @Test
@@ -582,7 +583,7 @@ class StandardNumberTypeEnumTest {
             expectations.put(new BigDecimal("9.414141414E308"), new BigDecimal("9.414141414E308"));
 
             // when / then
-            verifyConversions(StandardNumberTypeEnum.T_BIG_DECIMAL, expectations);
+            verifyConversions(StandardNumberType.T_BIG_DECIMAL, expectations);
         }
 
         @Test
@@ -592,22 +593,22 @@ class StandardNumberTypeEnumTest {
             double dNaN = Double.NaN;
 
             // when / then
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BYTE, fNaN, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BYTE, dNaN, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_SHORT, fNaN, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_SHORT, dNaN, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_INTEGER, fNaN, 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_INTEGER, dNaN, 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_LONG, fNaN, 0L, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_LONG, dNaN, 0L, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_FLOAT, fNaN, fNaN, Optional.of(fNaN));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_FLOAT, dNaN, fNaN, Optional.of(fNaN));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_DOUBLE, fNaN, dNaN, Optional.of(dNaN));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_DOUBLE, dNaN, dNaN, Optional.of(dNaN));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_INTEGER, fNaN, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_INTEGER, dNaN, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_DECIMAL, fNaN, BigDecimal.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_DECIMAL, dNaN, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fNaN, (byte) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dNaN, (byte) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fNaN, (short) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dNaN, (short) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fNaN, 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dNaN, 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fNaN, 0L, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dNaN, 0L, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fNaN, fNaN, Optional.of(fNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dNaN, fNaN, Optional.of(fNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fNaN, dNaN, Optional.of(dNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dNaN, dNaN, Optional.of(dNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fNaN, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, dNaN, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fNaN, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, dNaN, BigDecimal.ZERO, Optional.empty());
         }
 
         @Test
@@ -619,36 +620,36 @@ class StandardNumberTypeEnumTest {
             double dNegInf = Double.NEGATIVE_INFINITY;
 
             // when / then
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BYTE, fPosInf, (byte) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BYTE, fNegInf, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BYTE, dPosInf, (byte) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BYTE, dNegInf, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_SHORT, fPosInf, (short) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_SHORT, fNegInf, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_SHORT, dPosInf, (short) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_SHORT, dNegInf, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_INTEGER, fPosInf, Integer.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_INTEGER, fNegInf, Integer.MIN_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_INTEGER, dPosInf, Integer.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_INTEGER, dNegInf, Integer.MIN_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_LONG, fPosInf, Long.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_LONG, fNegInf, Long.MIN_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_LONG, dPosInf, Long.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_LONG, dNegInf, Long.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fPosInf, (byte) -1, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fNegInf, (byte) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dPosInf, (byte) -1, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dNegInf, (byte) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fPosInf, (short) -1, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fNegInf, (short) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dPosInf, (short) -1, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dNegInf, (short) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fPosInf, Integer.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fNegInf, Integer.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dPosInf, Integer.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dNegInf, Integer.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fPosInf, Long.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fNegInf, Long.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dPosInf, Long.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dNegInf, Long.MIN_VALUE, Optional.empty());
 
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_FLOAT, fPosInf, fPosInf, Optional.of(fPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_FLOAT, fNegInf, fNegInf, Optional.of(fNegInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_FLOAT, dPosInf, fPosInf, Optional.of(fPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_FLOAT, dNegInf, fNegInf, Optional.of(fNegInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_DOUBLE, fPosInf, dPosInf, Optional.of(dPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_DOUBLE, fNegInf, dNegInf, Optional.of(dNegInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_DOUBLE, dPosInf, dPosInf, Optional.of(dPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_DOUBLE, dNegInf, dNegInf, Optional.of(dNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fPosInf, fPosInf, Optional.of(fPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fNegInf, fNegInf, Optional.of(fNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dPosInf, fPosInf, Optional.of(fPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dNegInf, fNegInf, Optional.of(fNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fPosInf, dPosInf, Optional.of(dPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fNegInf, dNegInf, Optional.of(dNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dPosInf, dPosInf, Optional.of(dPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dNegInf, dNegInf, Optional.of(dNegInf));
 
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_INTEGER, fPosInf, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_INTEGER, fNegInf, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_DECIMAL, fPosInf, BigDecimal.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberTypeEnum.T_BIG_DECIMAL, fNegInf, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fPosInf, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fNegInf, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fPosInf, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fNegInf, BigDecimal.ZERO, Optional.empty());
         }
 
         @Test
@@ -784,7 +785,7 @@ class StandardNumberTypeEnumTest {
                     safeMatches = Optional.of(expectation).equals(safeConvertResult);
                 } else {
                     unsafeMatches = numberType.getType().isInstance(unsafeConvertResult);
-                    BigDecimal toBoundsAsBigDecimal = StandardNumberTypeEnum.T_BIG_DECIMAL.convertUnsafe(toBoundsResult);
+                    BigDecimal toBoundsAsBigDecimal = StandardNumberType.T_BIG_DECIMAL.convertUnsafe(toBoundsResult);
                     boundMatches = toBoundsAsBigDecimal.compareTo(numberType.getValueRange().getMinValue()) == 0
                         || toBoundsAsBigDecimal.compareTo(numberType.getValueRange().getMaxValue()) == 0;
                     safeMatches = !safeConvertResult.isPresent();

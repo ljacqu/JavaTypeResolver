@@ -81,7 +81,7 @@ class NumberTypesTest {
     void shouldStreamThroughAllNumberTypeInstances() {
         // given
         Set<NumberType> expectedNumberTypes = new HashSet<>();
-        expectedNumberTypes.addAll(EnumSet.allOf(StandardNumberTypeEnum.class));
+        expectedNumberTypes.addAll(EnumSet.allOf(StandardNumberType.class));
 
         for (Field field : MoreNumberTypes.class.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())
@@ -104,10 +104,10 @@ class NumberTypesTest {
     @Test
     void shouldReturnNumberTypeForClass() {
         // given / when / then
-        assertThat(NumberTypes.from(byte.class), equalTo(StandardNumberTypeEnum.BYTE));
-        assertThat(NumberTypes.from(Byte.class), equalTo(StandardNumberTypeEnum.BYTE));
-        assertThat(NumberTypes.from(long.class), equalTo(StandardNumberTypeEnum.LONG));
-        assertThat(NumberTypes.from(Long.class), equalTo(StandardNumberTypeEnum.LONG));
+        assertThat(NumberTypes.from(byte.class), equalTo(StandardNumberType.BYTE));
+        assertThat(NumberTypes.from(Byte.class), equalTo(StandardNumberType.BYTE));
+        assertThat(NumberTypes.from(long.class), equalTo(StandardNumberType.LONG));
+        assertThat(NumberTypes.from(Long.class), equalTo(StandardNumberType.LONG));
         assertThat(NumberTypes.from(Character.class), equalTo(MoreNumberTypes.CHARACTER));
         assertThat(NumberTypes.from(AtomicInteger.class), equalTo(MoreNumberTypes.ATOMIC_INTEGER));
         assertThat(NumberTypes.from(AtomicLong.class), equalTo(MoreNumberTypes.ATOMIC_LONG));

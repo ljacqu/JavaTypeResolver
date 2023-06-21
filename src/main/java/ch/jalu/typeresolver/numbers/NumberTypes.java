@@ -28,7 +28,7 @@ public final class NumberTypes {
 
     public static Stream<NumberType<?>> streamThroughAll() {
         return Stream.concat(
-            StandardNumberTypeEnum.streamThroughAll(),
+            StandardNumberType.streamThroughAll(),
             Stream.of(MoreNumberTypes.CHARACTER, MoreNumberTypes.ATOMIC_INTEGER, MoreNumberTypes.ATOMIC_LONG));
     }
 

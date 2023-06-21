@@ -11,10 +11,10 @@ public final class MoreNumberTypes {
     public static final NumberType<Character> CHARACTER = new CharacterNumberType();
 
     public static final NumberType<AtomicInteger> ATOMIC_INTEGER =
-        new AtomicNumberType<>(AtomicInteger.class, StandardNumberTypeEnum.T_INTEGER, AtomicInteger::new);
+        new AtomicNumberType<>(AtomicInteger.class, StandardNumberType.T_INTEGER, AtomicInteger::new);
 
     public static final NumberType<AtomicLong> ATOMIC_LONG =
-        new AtomicNumberType<>(AtomicLong.class, StandardNumberTypeEnum.T_LONG, AtomicLong::new);
+        new AtomicNumberType<>(AtomicLong.class, StandardNumberType.T_LONG, AtomicLong::new);
 
     private MoreNumberTypes() {
     }
@@ -82,9 +82,9 @@ public final class MoreNumberTypes {
 
         @Override
         public ValueRangeComparison compareToValueRange(Number number) {
-            ValueRangeComparison rangeComparison = StandardNumberTypeEnum.T_INTEGER.compareToValueRange(number);
+            ValueRangeComparison rangeComparison = StandardNumberType.T_INTEGER.compareToValueRange(number);
             if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
-                int intValue = StandardNumberTypeEnum.T_INTEGER.convertUnsafe(number);
+                int intValue = StandardNumberType.T_INTEGER.convertUnsafe(number);
                 if (intValue > maxValue) {
                     return ValueRangeComparison.ABOVE_MAXIMUM;
                 } else if (intValue < minValue) {
@@ -96,7 +96,7 @@ public final class MoreNumberTypes {
 
         @Override
         public Character convertToBounds(Number number) {
-            int result = StandardNumberTypeEnum.T_INTEGER.convertToBounds(number);
+            int result = StandardNumberType.T_INTEGER.convertToBounds(number);
             if (result > maxValue) {
                 return maxValue;
             } else if (result < minValue) {
