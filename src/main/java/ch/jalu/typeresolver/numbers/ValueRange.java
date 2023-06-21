@@ -49,13 +49,15 @@ public interface ValueRange<T> {
 
     /**
      * Specifies whether {@code this} range can represent <b>all</b> values of the given value range without loss of
-     * magnitude. {@link ValueRange#supportsDecimals() Support for decimals} is ignored by this method as this does not
-     * constitute a loss of magnitude; as such, {@code BIG_INTEGER.supportsAllValuesOf(BIG_DECIMAL)} returns true.
+     * magnitude. Loss of precision is not considered. {@link #supportsDecimals() Support for decimals} is ignored
+     * by this method as it does not constitute a loss of magnitude. For example,
+     * {@code BIG_INTEGER.supportsAllValuesOf(BIG_DECIMAL)} returns true.
      * <p>
-     * In contrast to {@link #isEqualOrSupersetOf}, this method aims to specify whether <b>every</b> possible value of
-     * the {@code other} range can be represented by {@code this} type, including infinity and NaN. Because of this,
-     * {@code BIG_INTEGER.getValueRange().supportsAllValuesOf(DOUBLE.getValueRange()} evaluates to false, while
-     * comparing the same ranges with {@link #isEqualOrSupersetOf} evaluates to true.
+     * In contrast to {@link #isEqualOrSupersetOf}, this method specifies whether <b>every</b> possible value of
+     * the {@code other} range can be represented by {@code this} range, including infinity and NaN. Therefore,
+     * {@code BIG_INTEGER.getValueRange().supportsAllValuesOf(DOUBLE.getValueRange()} evaluates to false
+     * (because BigInteger cannot represent infinity or NaN), while comparing the same ranges with
+     * {@link #isEqualOrSupersetOf} evaluates to true.
      * <p>
      * Developers comparing two number types can use {@link NumberType#supportsAllValuesOf(NumberType)} as a shortcut
      * to this method.
@@ -68,15 +70,10 @@ public interface ValueRange<T> {
     }
 
     /**
-     * Returns whether this value range is equal or larger to the given value range. In other words, it returns
-     * true only if all values in the {@code other} range fit into {@code this} range.
-     * <p>
-     * The comparison is based on whether converting a value from the {@code other} range potentially leads to a loss of
-     * magnitude; loss of precision is not considered. {@link #supportsDecimals() Support for decimals} is irrelevant to
-     * this method. Similarly, the value ranges are not aware about special values like {@link Double#NaN} and whether
-     * they can be represented by the type {@code this} value range is associated with.
-     * As such, the value range of BigInteger is considered to be a superset of {@link Double} despite not having
-     * decimals and not being able to represent infinity or NaN.
+     * Returns whether this value range is equal or larger than the given value range. In other words, it returns
+     * true only if all values in the {@code other} range fit into {@code this} range. The comparison is based on the
+     * minimum and maximum values of the ranges. The presence or absence of decimals or the ability to represent special
+     * values like {@link Double#NaN} is not taken into account.
      * <p>
      * Use {@link #supportsAllValuesOf} if you want to specifically check that <b>every</b> value (such as NaN) of a
      * type can be represented.

@@ -593,22 +593,22 @@ class StandardNumberTypeTest {
             double dNaN = Double.NaN;
 
             // when / then
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fNaN, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dNaN, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fNaN, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dNaN, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fNaN, 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dNaN, 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fNaN, 0L, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dNaN, 0L, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fNaN, fNaN, Optional.of(fNaN));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dNaN, fNaN, Optional.of(fNaN));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fNaN, dNaN, Optional.of(dNaN));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dNaN, dNaN, Optional.of(dNaN));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fNaN, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, dNaN, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fNaN, BigDecimal.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, dNaN, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fNaN, (byte) 0, (byte) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dNaN, (byte) 0, (byte) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fNaN, (short) 0, (short) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dNaN, (short) 0, (short) 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fNaN, 0, 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dNaN, 0, 0, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fNaN, 0L, 0L, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dNaN, 0L, 0L, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fNaN, fNaN, fNaN, Optional.of(fNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dNaN, fNaN, fNaN, Optional.of(fNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fNaN, dNaN, dNaN, Optional.of(dNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dNaN, dNaN, dNaN, Optional.of(dNaN));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fNaN, BigInteger.ZERO, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, dNaN, BigInteger.ZERO, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fNaN, BigDecimal.ZERO, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, dNaN, BigDecimal.ZERO, BigDecimal.ZERO, Optional.empty());
         }
 
         @Test
@@ -620,36 +620,40 @@ class StandardNumberTypeTest {
             double dNegInf = Double.NEGATIVE_INFINITY;
 
             // when / then
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fPosInf, (byte) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fNegInf, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dPosInf, (byte) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dNegInf, (byte) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fPosInf, (short) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fNegInf, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dPosInf, (short) -1, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dNegInf, (short) 0, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fPosInf, Integer.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fNegInf, Integer.MIN_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dPosInf, Integer.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dNegInf, Integer.MIN_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fPosInf, Long.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fNegInf, Long.MIN_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dPosInf, Long.MAX_VALUE, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dNegInf, Long.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fPosInf, (byte) -1, Byte.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, fNegInf, (byte) 0, Byte.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dPosInf, (byte) -1, Byte.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BYTE, dNegInf, (byte) 0, Byte.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fPosInf, (short) -1, Short.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, fNegInf, (short) 0, Short.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dPosInf, (short) -1, Short.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_SHORT, dNegInf, (short) 0, Short.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fPosInf, Integer.MAX_VALUE, Integer.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, fNegInf, Integer.MIN_VALUE, Integer.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dPosInf, Integer.MAX_VALUE, Integer.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_INTEGER, dNegInf, Integer.MIN_VALUE, Integer.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fPosInf, Long.MAX_VALUE, Long.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, fNegInf, Long.MIN_VALUE, Long.MIN_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dPosInf, Long.MAX_VALUE, Long.MAX_VALUE, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_LONG, dNegInf, Long.MIN_VALUE, Long.MIN_VALUE, Optional.empty());
 
-            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fPosInf, fPosInf, Optional.of(fPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fNegInf, fNegInf, Optional.of(fNegInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dPosInf, fPosInf, Optional.of(fPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dNegInf, fNegInf, Optional.of(fNegInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fPosInf, dPosInf, Optional.of(dPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fNegInf, dNegInf, Optional.of(dNegInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dPosInf, dPosInf, Optional.of(dPosInf));
-            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dNegInf, dNegInf, Optional.of(dNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fPosInf, fPosInf, fPosInf, Optional.of(fPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, fNegInf, fNegInf, fNegInf, Optional.of(fNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dPosInf, fPosInf, fPosInf, Optional.of(fPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_FLOAT, dNegInf, fNegInf, fNegInf, Optional.of(fNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fPosInf, dPosInf, dPosInf, Optional.of(dPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, fNegInf, dNegInf, dNegInf, Optional.of(dNegInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dPosInf, dPosInf, dPosInf, Optional.of(dPosInf));
+            assertSafeAndUnsafeConversions(StandardNumberType.T_DOUBLE, dNegInf, dNegInf, dNegInf, Optional.of(dNegInf));
 
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fPosInf, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fNegInf, BigInteger.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fPosInf, BigDecimal.ZERO, Optional.empty());
-            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fNegInf, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fPosInf, BigInteger.ZERO, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, fNegInf, BigInteger.ZERO, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, dPosInf, BigInteger.ZERO, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_INTEGER, dNegInf, BigInteger.ZERO, BigInteger.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fPosInf, BigDecimal.ZERO, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, fNegInf, BigDecimal.ZERO, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, dPosInf, BigDecimal.ZERO, BigDecimal.ZERO, Optional.empty());
+            assertSafeAndUnsafeConversions(StandardNumberType.T_BIG_DECIMAL, dNegInf, BigDecimal.ZERO, BigDecimal.ZERO, Optional.empty());
         }
 
         @Test
@@ -805,8 +809,10 @@ class StandardNumberTypeTest {
         private void assertSafeAndUnsafeConversions(NumberType<?> numberType,
                                                     Number numberToConvert,
                                                     Number expectedUnsafeConversion,
+                                                    Number expectedResultWithinBounds,
                                                     Optional<Number> expectedSafeConversion) {
             assertThat(numberType.convertUnsafe(numberToConvert), equalTo(expectedUnsafeConversion));
+            assertThat(numberType.convertToBounds(numberToConvert), equalTo(expectedResultWithinBounds));
             assertThat(numberType.convertIfNoLossOfMagnitude(numberToConvert), equalTo(expectedSafeConversion));
         }
 

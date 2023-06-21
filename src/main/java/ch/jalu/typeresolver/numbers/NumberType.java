@@ -21,25 +21,54 @@ public interface NumberType<N> {
     Class<N> getType();
 
     /**
-     * Returns a value of {@code this} type that is the closest to the given number. In other words, if the given number
-     * exceeds the value range of {@code this} type, the minimum or maximum value is returned, for example:
-     * {@code BYTE.convertToBounds(200)} returns 127.
+     * Returns a value of {@code this} type that is the closest to the given number. The implementations of this library
+     * can convert every instantiable {@link Number} class of the JDK (e.g. Integer, AtomicLong, BigDecimal, LongAdder).
+     * An IllegalArgumentException is thrown if the number type is unknown.
+     * <br>If the given number exceeds the value range of {@code this} type, the minimum or maximum value is returned.
+     * Other special cases:<ul>
+     *  <li>Float and Double {@code NaN} is converted to 0 if the type does not support the NaN value.</li>
+     *  <li>Negative infinity is converted to the type's minimum value if it does not support infinity;
+     *      positive infinity converts to the maximum value in such cases.</li>
+     *  <li>When converting to BigDecimal or BigInteger, 0 is used for infinity because no minimum or maximum value
+     *      exists for these types.</li>
+     * </ul>
      * <p>
-     * Exception: a value of 0 is returned for BigDecimal and BigInteger types if infinity is encountered,
-     * because no minimum or maximum value exists for these types. {@code NaN} is converted as 0.
+     * Examples from {@link StandardNumberType}:<pre>{@code
+     *   T_INTEGER.convertToBounds(new BigDecimal("1234.6")); // returns `1234`
+     *   T_DOUBLE.convertToBounds(new AtomicLong(-800)); // returns `-800.0`
+     *   T_BYTE.convertToBounds(200); // returns `(byte) 127`, the max value of Byte
+     *   T_SHORT.convertToBounds(Double.NEGATIVE_INFINITY); // returns `(short) -32768`, the min value of Short
+     *   T_BIG_DECIMAL.convertToBounds(Double.NEGATIVE_INFINITY); // returns `0`
+     *   T_LONG.convertToBounds(Double.NEGATIVE_INFINITY); // returns `Long.MIN_VALUE`
+     * }</pre>
+     * <p>
+     * To catch NaN and infinity before this method, it is possible to use
+     * {@link ValueRangeComparison#getErrorForNonFiniteValue(Number)}.
+     * <p>
+     * Other conversion methods on this interface are {@link #convertIfNoLossOfMagnitude} and {@link #convertUnsafe}.
      *
-     * @param number the number to convert
+     * @param numberToConvert the number to convert (not null)
      * @return value of this type that is closest to the given number, never null
      */
-    N convertToBounds(Number number);
+    N convertToBounds(Number numberToConvert);
 
     /**
      * Converts the number to {@code this} type only if no loss of magnitude and meaning occurs, otherwise returns
      * an empty optional. For example, {@code BYTE.convertIfNoLossOfMagnitude(200)} returns an empty Optional (as 200
      * exceeds the max value of the Byte type, 127), while {@code BYTE.convertIfNoLossOfMagnitude(12)} would return
      * an Optional with {@code (byte) 12} as value.
+     * <p>
+     * Examples:<pre>{@code
+     *   T_SHORT.convertIfNoLossOfMagnitude(40); // Optional.of((short) 40)
+     *   T_SHORT.convertIfNoLossOfMagnitude(100_000L); // Optional.empty()
+     *   T_FLOAT.convertIfNoLossOfMagnitude(Double.NaN); // Optional.of(Float.NaN)
+     *   T_LONG.convertIfNoLossOfMagnitude(Double.NaN); // Optional.empty()
+     * }</pre>
+     * <p>
+     * Implementations by this library support all instantiable {@link Number} classes of the JDK as input. An
+     * {@link IllegalArgumentException} is thrown for other types.
      * 
-     * @param number the number to potentially convert
+     * @param number the number to potentially convert (not null)
      * @return optional with the value converted to this type, or empty if it cannot be represented in this type
      */
     default Optional<N> convertIfNoLossOfMagnitude(Number number) {
@@ -50,25 +79,38 @@ public interface NumberType<N> {
     }
 
     /**
-     * Converts the given number to this type without considering underflow or overflow. Among primitive types,
-     * the behavior of this method is exactly like casting a type to another, for example {@code byte b = (byte) 200}.
-     * In this example, a value of -56 is assigned to {@code b} due to overflow. {@code BYTE.convertUnsafe(200)} also
-     * yields a value of -56.
+     * Converts the given number to {@code this} type without considering underflow or overflow. Among primitive types,
+     * this method behaves like casting one type to another. For example, {@code byte b = (byte) 200}
+     * assigns a value of -56 to {@code b} due to overflow. Similarly, {@code BYTE.convertUnsafe(200)} returns -56.
      * <p>
-     * This method never returns null. When {@code this} type is a BigDecimal or BigInteger, non-finite values from
-     * Float and Double are converted to 0, e.g. {@code BIG_DECIMAL.convert(Double.POSITIVE_INFINITY)} returns
-     * {@code BigDecimal.ZERO}.
+     * This method never returns null. When {@code this} type is a BigDecimal or BigInteger, NaN and infinity
+     * values from Float and Double are converted to 0. For instance,
+     * {@code BIG_DECIMAL.convertUnsafe(Double.POSITIVE_INFINITY)} returns {@code BigDecimal.ZERO}.
+     * For other types, the conversion follows the default behavior of Java: e.g.,
+     * {@code BYTE.convertUnsafe(Double.NaN)} = {@code (byte) Double.NaN} = {@code (byte) 0}.
      * <p>
      * Use {@link #convertToBounds} to convert values that are beyond {@code this} type's range to the nearest possible
-     * value.
+     * value, or {@link #convertIfNoLossOfMagnitude} to only convert the number if it can be represented by the type.
+     * <p>
+     * Some implementations by this library throw an {@link IllegalArgumentException} if a number is provided that is
+     * not of an instantiable {@link Number} class of the JDK.
      *
-     * @param number the number to cast
+     * <p>Examples:
+     * <pre>{@code
+     *   T_BYTE.convertUnsafe(-255); // returns (byte) 1, due to underflow
+     *   T_LONG.convertUnsafe(200); // returns 200L
+     *   T_FLOAT.convertUnsafe(Double.POSITIVE_INFINITY); // returns Float.POSITIVE_INFINITY
+     *   T_INTEGER.convertUnsafe(Double.POSITIVE_INFINITY); // returns Integer.MAX_VALUE
+     *   T_BIG_INTEGER.convertUnsafe(Double.POSITIVE_INFINITY); // returns BigInteger.ZERO
+     * }</pre>
+     *
+     * @param number the number to cast (not null)
      * @return the number cast to this type, never null
      */
     N convertUnsafe(Number number);
 
     /**
-     * Returns information about the available set of values this type has.
+     * Returns information about the value range this type can represent.
      * 
      * @return this type's range of possible values
      */
@@ -79,8 +121,18 @@ public interface NumberType<N> {
      * without loss of magnitude, or why it cannot. Use {@link #convertToBounds} if you want to convert the number
      * to this type and use the closest possible value.
      *
+     * <p>The comparison result represents the relationship between the given number and the set of possible values
+     * for this type, expressed through the {@link ValueRangeComparison} enum. Examples:
+     * <pre>{@code
+     *   ValueRangeComparison result1 = T_INTEGER.compareToValueRange(42L);
+     *   // result1 = ValueRangeComparison.WITHIN_RANGE
+     *
+     *   ValueRangeComparison result2 = T_INTEGER.compareToValueRange(Double.POSITIVE_INFINITY);
+     *   // result2 = ValueRangeComparison.UNSUPPORTED_POSITIVE_INFINITY
+     * }</pre>
+     *
      * @param number the number to process
-     * @return comparison result of the number and this type's set of possible values
+     * @return the comparison result indicating the relationship between the number and this type's value range
      */
     ValueRangeComparison compareToValueRange(Number number);
 

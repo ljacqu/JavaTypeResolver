@@ -30,6 +30,8 @@ class MoreNumberTypesTest {
             .verifyConversions(0, (char) 0, (char) 0, (char) 0)
             .verifyConversions(Character.MAX_VALUE + 1, (char) 0, null, Character.MAX_VALUE)
             .verifyConversions(-1, '\uFFFF', null, Character.MIN_VALUE)
+            .verifyConversions(-123456L, '\u1DC0', null, Character.MIN_VALUE)
+            .verifyConversions(3453158812312L, '\uEA98', null, Character.MAX_VALUE)
             .verifyConversions(72.1414, 'H', 'H', 'H')
             .verifyConversions(-3.3, '\uFFFD', null, Character.MIN_VALUE)
             .verifyConversions(65536.0, (char) 0, null, Character.MAX_VALUE)
@@ -239,15 +241,16 @@ class MoreNumberTypesTest {
 
         NumberTypeConversionTester<N> verifyConversions(Number input,
                                                         N expectedUnsafe, N expectedSafe, N expectedWithinBounds) {
-            assertIsEqualOrThrow(numberType.convertUnsafe(input), expectedUnsafe);
-            assertIsEqualOrThrow(numberType.convertIfNoLossOfMagnitude(input).orElse(null), expectedSafe);
-            assertIsEqualOrThrow(numberType.convertToBounds(input), expectedWithinBounds);
+            assertIsEqualOrThrow(input, numberType.convertUnsafe(input), expectedUnsafe);
+            assertIsEqualOrThrow(input, numberType.convertIfNoLossOfMagnitude(input).orElse(null), expectedSafe);
+            assertIsEqualOrThrow(input, numberType.convertToBounds(input), expectedWithinBounds);
             return this;
         }
 
-        private void assertIsEqualOrThrow(Object actual, Object expected) {
+        private void assertIsEqualOrThrow(Number input, Object actual, Object expected) {
             if (!isEqual(numberType, actual, expected)) {
-                fail("Expected '" + expected + "' but got: " + actual);
+                fail("For input " + input + " (" + input.getClass().getSimpleName()
+                    + "), expected '" + expected + "' but got: " + actual);
             }
         }
     }

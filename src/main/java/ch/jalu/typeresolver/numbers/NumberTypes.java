@@ -14,6 +14,9 @@ import java.util.concurrent.atomic.LongAccumulator;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Stream;
 
+/**
+ * Contains {@link NumberType} utilities.
+ */
 public final class NumberTypes {
 
     private static final Map<Class<?>, NumberType<?>> NUMBER_TYPES_BY_CLASS = collectAllNumberTypesByClass();
@@ -21,11 +24,30 @@ public final class NumberTypes {
     private NumberTypes() {
     }
 
+    /**
+     * Returns, if applicable, the {@link NumberType} instance from {@link StandardNumberType} and
+     * {@link MoreNumberTypes} that corresponds to the provided class, null otherwise. Both primitive and
+     * equivalent reference type are supported (e.g. {@code int.class} and {@code Integer.class} return
+     * the same instance).
+     * <p>
+     * If you do not need the returned NumberType to produce values that exactly match the given class (i.e. if you
+     * need the number type for range information and reading of values), you can use
+     * {@link #unwrapToStandardNumberType} to match more types.
+     *
+     * @param clazz the class to process
+     * @param <T> the class's type
+     * @return the number type for the given class, null if not available
+     */
     @Nullable
     public static <T> NumberType<T> from(@Nullable Class<T> clazz) {
         return (NumberType<T>) NUMBER_TYPES_BY_CLASS.get(clazz);
     }
 
+    /**
+     * Provides a stream of all {@link NumberType} implementations provided by this library.
+     *
+     * @return stream of all number types by this library
+     */
     public static Stream<NumberType<?>> streamThroughAll() {
         return Stream.concat(
             StandardNumberType.streamThroughAll(),

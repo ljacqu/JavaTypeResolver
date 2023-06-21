@@ -27,6 +27,8 @@ import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.compareToRange;
  * @see NumberType
  */
 public enum StandardNumberType implements NumberType {
+    // Note: NumberType is implemented without type argument by this enum because of Java type limitations;
+    // see the constants below the enum entries (e.g. T_BYTE) to refer to the entries in a type-safe manner.
 
     /** Byte: [-128, 127]. */
     BYTE(Byte.class, ValueRangeImpl.forLongOrSubset(Byte.MIN_VALUE, Byte.MAX_VALUE)) {
@@ -153,10 +155,10 @@ public enum StandardNumberType implements NumberType {
      * Always returns a number of this entry's {@link #getType() type}.
      */
     @Override
-    public Number convertToBounds(Number number) {
-        ValueRangeComparison rangeComparison = compareToValueRange(number);
+    public Number convertToBounds(Number numberToConvert) {
+        ValueRangeComparison rangeComparison = compareToValueRange(numberToConvert);
         if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
-            return convertUnsafe(number);
+            return convertUnsafe(numberToConvert);
         }
         return getFallbackForValueOutOfRange(rangeComparison);
     }
@@ -433,25 +435,21 @@ public enum StandardNumberType implements NumberType {
      * Conversion method called when the type to convert *to* is FLOAT or DOUBLE.
      */
     private ValueRangeComparison compareToFloatOrDoubleRange(Number number, StandardNumberType numberType) {
-        ValueRangeComparison rangeComparison;
         if (this == FLOAT && numberType == DOUBLE) {
             double doubleValue = number.doubleValue();
-            rangeComparison = Double.isInfinite(doubleValue)
+            return Double.isInfinite(doubleValue)
                 ? ValueRangeComparison.WITHIN_RANGE
                 : compareToRange(doubleValue, -Float.MAX_VALUE, Float.MAX_VALUE);
-        } else {
-            switch (numberType) {
-                case BIG_INTEGER:
-                case BIG_DECIMAL:
-                    BigDecimal bigDecimal = convertToBigDecimal(number, numberType);
-                    rangeComparison = compareToRange(bigDecimal, range.getMinValue(), range.getMaxValue());
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected value: " + numberType);
-            }
         }
 
-        return rangeComparison;
+        switch (numberType) {
+            case BIG_INTEGER:
+            case BIG_DECIMAL:
+                BigDecimal bigDecimal = convertToBigDecimal(number, numberType);
+                return compareToRange(bigDecimal, range.getMinValue(), range.getMaxValue());
+            default:
+                throw new IllegalStateException("Unexpected value: " + numberType);
+        }
     }
 
     private int getMinAsIntOrThrow() {

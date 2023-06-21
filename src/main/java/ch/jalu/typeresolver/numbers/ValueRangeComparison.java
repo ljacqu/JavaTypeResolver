@@ -8,7 +8,7 @@ import java.util.Optional;
 public enum ValueRangeComparison {
 
     /**
-     * The number is within the value range, i.e. can be represented without loss of magnitude.
+     * The number is within the value range, i.e. it can be represented without loss of magnitude.
      */
     WITHIN_RANGE,
 
@@ -33,7 +33,7 @@ public enum ValueRangeComparison {
     UNSUPPORTED_NEGATIVE_INFINITY,
 
     /**
-     * The number is {@code NaN} (Not a Number), which is not supported by the target type.
+     * The number is {@code NaN} (Not-a-Number), which is not supported by the target type.
      */
     UNSUPPORTED_NAN;
 
@@ -54,6 +54,8 @@ public enum ValueRangeComparison {
     /**
      * Returns the appropriate "Unsupported" comparison entry if the given double represents a non-finite value
      * from Float or Double. Useful when attempting to convert to a type that has no support for non-finite values.
+     * This method also behaves correctly for float numbers (i.e. float infinity/NaN is implicitly converted to
+     * a double infinity/NaN in Java).
      *
      * @param value the number to process
      * @return optional with unsupported comparison value if the number is infinity/NaN, when applicable

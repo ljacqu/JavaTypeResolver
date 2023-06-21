@@ -5,20 +5,44 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+/**
+ * Contains {@link NumberType} implementations for additional Java number types that aren't represented in
+ * {@link StandardNumberType}.
+ * <p>
+ * Various methods in {@link NumberTypes} combine {@link StandardNumberType} with the number types of this class.
+ */
 public final class MoreNumberTypes {
 
-    /** Character: [0, 65535]. */
+    /**
+     * Character: [0, 65535]. Does not implement {@link Number} but acts as a number in various ways; for instance,
+     * a {@code char} can be implicitly cast to an {@code int}.
+     */
     public static final NumberType<Character> CHARACTER = new CharacterNumberType();
 
+    /**
+     * AtomicInteger (same value range as {@link StandardNumberType#INTEGER}).
+     */
     public static final NumberType<AtomicInteger> ATOMIC_INTEGER =
         new AtomicNumberType<>(AtomicInteger.class, StandardNumberType.T_INTEGER, AtomicInteger::new);
 
+    /**
+     * AtomicLong (same value range as {@link StandardNumberType#LONG}).
+     */
     public static final NumberType<AtomicLong> ATOMIC_LONG =
         new AtomicNumberType<>(AtomicLong.class, StandardNumberType.T_LONG, AtomicLong::new);
 
     private MoreNumberTypes() {
     }
 
+    /**
+     * Atomic number type implementation: uses a base number type and wraps it in its atomic equivalent.
+     *
+     * @implNote Value ranges that go beyond Long's range are not supported because of the implementation of
+     *           {@link #getValueRange()}.
+     *
+     * @param <B> the base number type (e.g. Integer)
+     * @param <A> the atomic type (e.g. AtomicInteger)
+     */
     private static final class AtomicNumberType<B extends Number, A extends Number> implements NumberType<A> {
 
         private final Class<A> type;
@@ -43,8 +67,8 @@ public final class MoreNumberTypes {
         }
 
         @Override
-        public A convertToBounds(Number number) {
-            B value = baseType.convertToBounds(number);
+        public A convertToBounds(Number numberToConvert) {
+            B value = baseType.convertToBounds(numberToConvert);
             return toAtomicFn.apply(value);
         }
 
@@ -62,6 +86,9 @@ public final class MoreNumberTypes {
         }
     }
 
+    /**
+     * Implementation of the {@link Character} "number" type.
+     */
     private static class CharacterNumberType implements NumberType<Character> {
 
         private final int maxValue = Character.MAX_VALUE;
@@ -95,8 +122,8 @@ public final class MoreNumberTypes {
         }
 
         @Override
-        public Character convertToBounds(Number number) {
-            int result = StandardNumberType.T_INTEGER.convertToBounds(number);
+        public Character convertToBounds(Number numberToConvert) {
+            int result = StandardNumberType.T_INTEGER.convertToBounds(numberToConvert);
             if (result > maxValue) {
                 return maxValue;
             } else if (result < minValue) {
