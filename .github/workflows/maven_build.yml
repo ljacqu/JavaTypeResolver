@@ -1,16 +1,15 @@
 name: Maven build with various JDK versions
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         java: ['8', '11', '17']
     name: Java ${{ matrix.java }} build
+
     steps:
       - uses: actions/checkout@v3
       - name: Set up Java
@@ -19,4 +18,12 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: 'adopt'
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B --file pom.xml package jacoco:report
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        if: matrix.java == '8' && github.event_name != 'pull_request'
+        with:
+          base-path: src/main/java
+          # The file is optional, but the documentation says it's better to specify it.
+          file: target/site/jacoco/jacoco.xml
