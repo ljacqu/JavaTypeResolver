@@ -1,4 +1,4 @@
-name: Maven build with various JDK versions
+name: Maven build
 
 on: [push, pull_request]
 
