@@ -11,10 +11,10 @@ public final class MoreNumberTypes {
     public static final NumberType<Character> CHARACTER = new CharacterNumberType();
 
     public static final NumberType<AtomicInteger> ATOMIC_INTEGER =
-        new AtomicNumberType<>(AtomicInteger.class, StandardNumberType.INTEGER, AtomicInteger::new);
+        new AtomicNumberType<>(AtomicInteger.class, StandardNumberTypeEnum.T_INTEGER, AtomicInteger::new);
 
     public static final NumberType<AtomicLong> ATOMIC_LONG =
-        new AtomicNumberType<>(AtomicLong.class, StandardNumberType.LONG, AtomicLong::new);
+        new AtomicNumberType<>(AtomicLong.class, StandardNumberTypeEnum.T_LONG, AtomicLong::new);
 
     private MoreNumberTypes() {
     }
@@ -22,10 +22,10 @@ public final class MoreNumberTypes {
     private static final class AtomicNumberType<B extends Number, A extends Number> implements NumberType<A> {
 
         private final Class<A> type;
-        private final StandardNumberType<B> baseType;
+        private final NumberType<B> baseType;
         private final Function<B, A> toAtomicFn;
 
-        AtomicNumberType(Class<A> type, StandardNumberType<B> baseType, Function<B, A> toAtomicFn) {
+        AtomicNumberType(Class<A> type, NumberType<B> baseType, Function<B, A> toAtomicFn) {
             this.type = type;
             this.baseType = baseType;
             this.toAtomicFn = toAtomicFn;
@@ -82,9 +82,9 @@ public final class MoreNumberTypes {
 
         @Override
         public ValueRangeComparison compareToValueRange(Number number) {
-            ValueRangeComparison rangeComparison = StandardNumberType.INTEGER.compareToValueRange(number);
+            ValueRangeComparison rangeComparison = StandardNumberTypeEnum.T_INTEGER.compareToValueRange(number);
             if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
-                int intValue = StandardNumberType.INTEGER.convertUnsafe(number);
+                int intValue = StandardNumberTypeEnum.T_INTEGER.convertUnsafe(number);
                 if (intValue > maxValue) {
                     return ValueRangeComparison.ABOVE_MAXIMUM;
                 } else if (intValue < minValue) {
@@ -96,7 +96,7 @@ public final class MoreNumberTypes {
 
         @Override
         public Character convertToBounds(Number number) {
-            int result = StandardNumberType.INTEGER.convertToBounds(number);
+            int result = StandardNumberTypeEnum.T_INTEGER.convertToBounds(number);
             if (result > maxValue) {
                 return maxValue;
             } else if (result < minValue) {

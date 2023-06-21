@@ -5,30 +5,30 @@ import ch.jalu.typeresolver.primitives.Primitives;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.compareToRange;
 
+
+
 /**
- * Represents the standard implementations of {@link Number} and allows to convert from one type to another,
- * among other utilities. These enum entries have the same methods to offer as {@link NumberType}.
+ * {@link NumberType} implementations for standard Java number types: byte, short, integer, long, float, double,
+ * BigInteger and BigDecimal. Allows to convert from one type to another and to compare the types' value ranges
+ * among each other.
  * <p>
- * See also {@link StandardNumberType}, which is more appropriate if you want to work with a specific type and need
- * type safety. Conversions from this enum to {@link StandardNumberType} and vice versa can be achieved with
- * {@link StandardNumberTypeEnum#asNumberType()} and {@link StandardNumberType#asEnum()}.
+ * To use a number type with type safety, please use the constants {@link #T_BYTE}, {@link #T_SHORT} etc.
  *
  * @see StandardNumberTypeEnum#fromClass(Class)
  * @see NumberType
  */
-public enum StandardNumberTypeEnum {
+public enum StandardNumberTypeEnum implements NumberType {
 
-    /**
-     * Byte type.
-     * @see StandardNumberType#BYTE
-     */
+    /** Byte: [-128, 127]. */
     BYTE(Byte.class, ValueRangeImpl.forLongOrSubset(Byte.MIN_VALUE, Byte.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -36,10 +36,7 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Short type.
-     * @see StandardNumberType#SHORT
-     */
+    /** Short: [-32768, 32767]. */
     SHORT(Short.class, ValueRangeImpl.forLongOrSubset(Short.MIN_VALUE, Short.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -47,10 +44,7 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Integer type.
-     * @see StandardNumberType#INTEGER
-     */
+    /** Integer: [-2147483648, 2147483647]. */
     INTEGER(Integer.class, ValueRangeImpl.forLongOrSubset(Integer.MIN_VALUE, Integer.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -58,10 +52,7 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Long type.
-     * @see StandardNumberType#LONG
-     */
+    /** Long: [-9223372036854775808, 9223372036854775807]. */
     LONG(Long.class, ValueRangeImpl.forLongOrSubset(Long.MIN_VALUE, Long.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -69,10 +60,7 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Float type.
-     * @see StandardNumberType#FLOAT
-     */
+    /** Float: [-3.4028235E38, 3.4028235E38].  */
     FLOAT(Float.class, ValueRangeImpl.forDoubleOrFloat(-Float.MAX_VALUE, Float.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -80,10 +68,7 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Double type.
-     * @see StandardNumberType#DOUBLE
-     */
+    /** Double: [-1.7976931348623157E308, 1.7976931348623157E308]. */
     DOUBLE(Double.class, ValueRangeImpl.forDoubleOrFloat(-Double.MAX_VALUE, Double.MAX_VALUE)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -91,10 +76,7 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Big integer type.
-     * @see StandardNumberType#BIG_INTEGER
-     */
+    /** Big integer: integer with a theoretically infinite range of supported values. */
     BIG_INTEGER(BigInteger.class, ValueRangeImpl.infinite(false)) {
         @Override
         public Number convertUnsafe(Number number) {
@@ -102,16 +84,22 @@ public enum StandardNumberTypeEnum {
         }
     },
 
-    /**
-     * Big decimal type.
-     * @see StandardNumberType#BIG_DECIMAL
-     */
+    /** Big decimal: supports decimals and has a theoretically infinite range of supported values. */
     BIG_DECIMAL(BigDecimal.class, ValueRangeImpl.infinite(true)) {
         @Override
         public Number convertUnsafe(Number number) {
             return convertToBigDecimal(number, getRangeOfValueOrThrow(number));
         }
     };
+
+    public static final NumberType<Byte> T_BYTE = (NumberType<Byte>) BYTE;
+    public static final NumberType<Short> T_SHORT = (NumberType<Short>) SHORT;
+    public static final NumberType<Integer> T_INTEGER = (NumberType<Integer>) INTEGER;
+    public static final NumberType<Long> T_LONG = (NumberType<Long>) LONG;
+    public static final NumberType<Float> T_FLOAT = (NumberType<Float>) FLOAT;
+    public static final NumberType<Double> T_DOUBLE = (NumberType<Double>) DOUBLE;
+    public static final NumberType<BigInteger> T_BIG_INTEGER = (NumberType<BigInteger>) BIG_INTEGER;
+    public static final NumberType<BigDecimal> T_BIG_DECIMAL = (NumberType<BigDecimal>) BIG_DECIMAL;
 
     private static final Map<Class<?>, StandardNumberTypeEnum> typeToEnumEntry =
         initReferenceTypeToStandardNumberTypeMap();
@@ -134,36 +122,27 @@ public enum StandardNumberTypeEnum {
     /**
      * @return the type this instance describes and can convert to (corresponds to {@link NumberType#getType()}
      */
+    @Override
     public Class<? extends Number> getType() {
         return type;
     }
 
     /**
-     * Same as {@link NumberType#getValueRange}.
-     *
-     * @return the value range of this number type
+     * {@inheritDoc}
+     * <p>
+     * The range is always typed the same as this entry's {@link #getType() type}.
      */
+    @Override
     public ValueRange<?> getValueRange() {
         return range;
     }
 
     /**
-     * Returns the {@link NumberType} implementation that is equivalent to this enum entry.
-     *
-     * @return number type equivalent of this enum entry
+     * {@inheritDoc}
+     * <p>
+     * Always returns a number of this entry's {@link #getType() type}.
      */
-    public StandardNumberType<?> asNumberType() {
-        return StandardNumberType.from(type);
-    }
-
-    /**
-     * Same as {@link NumberType#convertIfNoLossOfMagnitude}. If a non-empty optional is returned, the contained value
-     * always corresponds to this entry's {@link #getType() type}. Prefer {@link StandardNumberType} if you can benefit
-     * from type safety.
-     *
-     * @param number the number to convert
-     * @return optional with the converted number if possible without loss of magnitude, otherwise empty
-     */
+    @Override
     public Optional<Number> convertIfNoLossOfMagnitude(Number number) {
         if (compareToValueRange(number) == ValueRangeComparison.WITHIN_RANGE) {
             return Optional.of(convertUnsafe(number));
@@ -172,12 +151,11 @@ public enum StandardNumberTypeEnum {
     }
 
     /**
-     * Same as {@link NumberType#convertToBounds}. Always returns a number of this entry's {@link #getType() type},
-     * never null. Prefer {@link StandardNumberType} if you can benefit from type safety.
-     *
-     * @param number the number to convert
-     * @return converted number (adjusted to this type's bounds if necessary)
+     * {@inheritDoc}
+     * <p>
+     * Always returns a number of this entry's {@link #getType() type}.
      */
+    @Override
     public Number convertToBounds(Number number) {
         ValueRangeComparison rangeComparison = compareToValueRange(number);
         if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
@@ -187,12 +165,11 @@ public enum StandardNumberTypeEnum {
     }
 
     /**
-     * Same as {@link NumberType#convertUnsafe}. Always returns a number of this entry's {@link #getType() type},
-     * never null. Prefer {@link StandardNumberType} if you can benefit from type safety.
-     *
-     * @param number the number to convert
-     * @return converted number (maybe affected by overflow or underflow)
+     * {@inheritDoc}
+     * <p>
+     * Always returns a number of this entry's {@link #getType() type}.
      */
+    @Override
     public abstract Number convertUnsafe(Number number);
 
     /**
@@ -208,13 +185,7 @@ public enum StandardNumberTypeEnum {
         return this.range.supportsAllValuesOf(other.range);
     }
 
-    /**
-     * Same as {@link NumberType#compareToValueRange}. Prefer {@link StandardNumberType} if you can benefit
-     * from type safety.
-     *
-     * @param number the number to compare to this type's value range
-     * @return value range comparison result
-     */
+    @Override
     public ValueRangeComparison compareToValueRange(Number number) {
         StandardNumberTypeEnum type = getRangeOfValueOrThrow(number);
         if (this.supportsAllValuesOf(type)) {
@@ -242,6 +213,33 @@ public enum StandardNumberTypeEnum {
     @Nullable
     public static StandardNumberTypeEnum fromClass(Class<?> clazz) {
         return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
+    }
+
+    /**
+     * Returns the instance that corresponds to this class, or null if not applicable.
+     *
+     * @param clazz the class to find the number type for
+     * @param <T> the number type
+     * @return the instance matching the desired type, or null if not applicable
+     * @see NumberTypes#from
+     */
+    @Nullable
+    public static <T extends Number> NumberType<T> fromNumberClass(@Nullable Class<T> clazz) {
+        return fromClass(clazz);
+    }
+
+    public static Stream<NumberType<? extends Number>> streamThroughAll() {
+        return Arrays.stream(values());
+    }
+
+    /**
+     * Creates a stream of the number type instances that represent one of the six Java number types that
+     * are associated with a primitive type: byte, short, int, long, float, and double.
+     *
+     * @return stream of the number types for the six primitive number types
+     */
+    public static Stream<NumberType<?>> streamThroughPrimitiveTypes() {
+        return Stream.of(T_BYTE, T_SHORT, T_INTEGER, T_LONG, T_FLOAT, T_DOUBLE);
     }
 
     /**
@@ -278,6 +276,11 @@ public enum StandardNumberTypeEnum {
             return BIG_DECIMAL;
         }
         throw new IllegalArgumentException("Unsupported number type: " + number.getClass());
+    }
+
+    @Override
+    public String toString() {
+        return "StandardNumberTypeEnum[" + type.getSimpleName() + "]";
     }
 
     private static StandardNumberTypeEnum getRangeOfValueOrThrow(Number number) {

@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAccumulator;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -81,12 +80,16 @@ class NumberTypesTest {
     @Test
     void shouldStreamThroughAllNumberTypeInstances() {
         // given
-        Set<NumberType<?>> expectedNumberTypes = Stream.of(StandardNumberType.class, MoreNumberTypes.class)
-            .flatMap(clz -> Arrays.stream(clz.getDeclaredFields()))
-            .filter(field -> Modifier.isStatic(field.getModifiers())
-                             && NumberType.class.isAssignableFrom(field.getType()) && !field.isSynthetic())
-            .map(field -> (NumberType<?>) getStatic(field))
-            .collect(Collectors.toSet());
+        Set<NumberType> expectedNumberTypes = new HashSet<>();
+        expectedNumberTypes.addAll(EnumSet.allOf(StandardNumberTypeEnum.class));
+
+        for (Field field : MoreNumberTypes.class.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())
+                    && NumberType.class.isAssignableFrom(field.getType()) && !field.isSynthetic()) {
+                NumberType<?> value = getStatic(field);
+                expectedNumberTypes.add(value);
+            }
+        }
 
         // when
         List<NumberType<?>> result = NumberTypes.streamThroughAll()
@@ -101,10 +104,10 @@ class NumberTypesTest {
     @Test
     void shouldReturnNumberTypeForClass() {
         // given / when / then
-        assertThat(NumberTypes.from(byte.class), equalTo(StandardNumberType.BYTE));
-        assertThat(NumberTypes.from(Byte.class), equalTo(StandardNumberType.BYTE));
-        assertThat(NumberTypes.from(long.class), equalTo(StandardNumberType.LONG));
-        assertThat(NumberTypes.from(Long.class), equalTo(StandardNumberType.LONG));
+        assertThat(NumberTypes.from(byte.class), equalTo(StandardNumberTypeEnum.BYTE));
+        assertThat(NumberTypes.from(Byte.class), equalTo(StandardNumberTypeEnum.BYTE));
+        assertThat(NumberTypes.from(long.class), equalTo(StandardNumberTypeEnum.LONG));
+        assertThat(NumberTypes.from(Long.class), equalTo(StandardNumberTypeEnum.LONG));
         assertThat(NumberTypes.from(Character.class), equalTo(MoreNumberTypes.CHARACTER));
         assertThat(NumberTypes.from(AtomicInteger.class), equalTo(MoreNumberTypes.ATOMIC_INTEGER));
         assertThat(NumberTypes.from(AtomicLong.class), equalTo(MoreNumberTypes.ATOMIC_LONG));
