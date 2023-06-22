@@ -32,13 +32,14 @@ public final class NumberTypes {
      * <p>
      * If you do not need the returned NumberType to produce values that exactly match the given class (i.e. if you
      * need the number type for range information and reading of values), you can use
-     * {@link #unwrapToStandardNumberType} to match more types.
+     * {@link #unwrapToStandardNumberType(Number)} to match more types.
      *
      * @param clazz the class to process
      * @param <T> the class's type
      * @return the number type for the given class, null if not available
      */
     @Nullable
+    @SuppressWarnings("unchecked")
     public static <T> NumberType<T> from(@Nullable Class<T> clazz) {
         return (NumberType<T>) NUMBER_TYPES_BY_CLASS.get(clazz);
     }

@@ -209,6 +209,16 @@ public enum StandardNumberType implements NumberType {
         }
     }
 
+    /**
+     * Returns the {@link NumberType} instance of this enum that corresponds to the given class, null otherwise.
+     * Primitive and reference types are accepted (e.g., {@code short.class} and {@code Short.class} both map to
+     * {@link #SHORT}).
+     * <br>Use {@link #fromNumberClass} to avoid unchecked warnings; it will return the number type with its type
+     * parameter corresponding to the given class.
+     *
+     * @param clazz the class to find the number type for
+     * @return the instance matching the given type, or null if not applicable
+     */
     @Nullable
     public static StandardNumberType fromClass(Class<?> clazz) {
         return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
@@ -216,17 +226,26 @@ public enum StandardNumberType implements NumberType {
 
     /**
      * Returns the instance that corresponds to this class, or null if not applicable.
+     * Primitive and reference types are accepted (e.g., {@code short.class} and {@code Short.class} both map to
+     * {@link #T_SHORT}).
      *
      * @param clazz the class to find the number type for
      * @param <T> the number type
-     * @return the instance matching the desired type, or null if not applicable
+     * @return the instance matching the given type, or null if not applicable
      * @see NumberTypes#from
      */
     @Nullable
+    @SuppressWarnings("unchecked")
     public static <T extends Number> NumberType<T> fromNumberClass(@Nullable Class<T> clazz) {
         return fromClass(clazz);
     }
 
+    /**
+     * Creates a stream of all number types in this enum, typed as {@link NumberType}.
+     *
+     * @return stream of all number types in this enum
+     */
+    @SuppressWarnings("unchecked")
     public static Stream<NumberType<? extends Number>> streamThroughAll() {
         return Arrays.stream(values());
     }
@@ -237,7 +256,7 @@ public enum StandardNumberType implements NumberType {
      *
      * @return stream of the number types for the six primitive number types
      */
-    public static Stream<NumberType<?>> streamThroughPrimitiveTypes() {
+    public static Stream<NumberType<? extends Number>> streamThroughPrimitiveTypes() {
         return Stream.of(T_BYTE, T_SHORT, T_INTEGER, T_LONG, T_FLOAT, T_DOUBLE);
     }
 
@@ -318,8 +337,7 @@ public enum StandardNumberType implements NumberType {
      * {@link #convertToBounds} or {@link #convertIfNoLossOfMagnitude}.
      * <p>
      * All values of the supported Number implementations can be converted to BigDecimal, except for
-     * infinity and NaN (float or double). If such a value is encountered, the "outside range" function
-     * is called (returns null or BigDecimal zero, depending on conversion flavor).
+     * infinity and NaN (float or double).
      *
      * @param number the number to convert
      * @param numberType the type the number to convert has
@@ -349,12 +367,12 @@ public enum StandardNumberType implements NumberType {
     }
 
     /**
-     * Conversion <b>to</b> BigDecimal for any of the conversion flavors: {@link #convertUnsafe},
+     * Conversion <b>to</b> BigInteger for any of the conversion flavors: {@link #convertUnsafe},
      * {@link #convertToBounds} or {@link #convertIfNoLossOfMagnitude}. Behaves similar to the
      * conversion method that converts to BigDecimal.
      *
      * @param number the number to convert
-     * @param numberType the type the number to convert has
+     * @param numberType the value range of the number's type to convert
      * @return the converted number
      */
     private static BigInteger convertToBigInteger(Number number, StandardNumberType numberType) {
@@ -410,8 +428,8 @@ public enum StandardNumberType implements NumberType {
     }
 
     /**
-     * Returns the {@code compareTo}-like result of this number's value with the value range of the Long type.
-     * Only supports number whose value range is larger than Long.
+     * Compares this number's value with the value range of the Long type. Only supports number whose value range
+     * is larger than Long.
      *
      * @param number the number to process
      * @param numberType the number's type

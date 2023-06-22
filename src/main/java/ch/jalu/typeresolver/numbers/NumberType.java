@@ -9,7 +9,7 @@ import java.util.Optional;
  * Standard implementations for basic Java number types are available at
  * {@link StandardNumberType} and {@link MoreNumberTypes}.
  *
- * @param <N>
+ * @param <N> the number type of this instance
  * @see StandardNumberType
  * @see NumberTypes#from(Class)
  */
