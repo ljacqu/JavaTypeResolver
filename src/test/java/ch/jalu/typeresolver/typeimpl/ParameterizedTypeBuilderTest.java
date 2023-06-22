@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 
-import static ch.jalu.typeresolver.typeimpl.ParameterizedTypeBuilder.newTypeFromClass;
+import static ch.jalu.typeresolver.typeimpl.ParameterizedTypeBuilder.parameterizedTypeBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,9 +34,15 @@ class ParameterizedTypeBuilderTest {
     @Test
     void shouldCreateParameterizedTypeFromClass() {
         // given / when
-        ParameterizedTypeImpl comparablePt = ParameterizedTypeBuilder.newTypeFromClass(Comparable.class).build();
-        ParameterizedTypeImpl mapPt = ParameterizedTypeBuilder.newTypeFromClass(Map.class).build();
-        ParameterizedTypeImpl listPt = ParameterizedTypeBuilder.newTypeFromClass(List.class).build();
+        ParameterizedTypeImpl comparablePt = parameterizedTypeBuilder(Comparable.class)
+            .withTypeVariables()
+            .build();
+        ParameterizedTypeImpl mapPt = parameterizedTypeBuilder(Map.class)
+            .withTypeVariables()
+            .build();
+        ParameterizedTypeImpl listPt = parameterizedTypeBuilder(List.class)
+            .withTypeVariables()
+            .build();
 
         // then
         assertThat(comparablePt.getActualTypeArguments(), arrayContaining(Comparable.class.getTypeParameters()[0]));
@@ -51,11 +57,11 @@ class ParameterizedTypeBuilderTest {
     void shouldThrowForRawTypeWithNoTypeParameters() {
         // given / when
         IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class,
-            () -> ParameterizedTypeBuilder.newTypeFromClass(String.class).build());
+            () -> parameterizedTypeBuilder(String.class));
         IllegalArgumentException ex2 = assertThrows(IllegalArgumentException.class,
-            () -> ParameterizedTypeBuilder.newTypeFromClass(int.class).build());
+            () -> parameterizedTypeBuilder(int.class));
         assertThrows(NullPointerException.class,
-            () -> ParameterizedTypeBuilder.newTypeFromClass(null).build());
+            () -> parameterizedTypeBuilder(null));
 
         // then
         assertThat(ex1.getMessage(), equalTo("Class 'class java.lang.String' has no type arguments"));
@@ -96,9 +102,9 @@ class ParameterizedTypeBuilderTest {
         ParameterizedType map2 = ParameterizedTypeBuilder.newMapType(LinkedHashMap.class, null, null);
 
         // then
-        assertThat(list, equalTo(ParameterizedTypeBuilder.newTypeFromClass(ArrayList.class).build()));
-        assertThat(map1, equalTo(ParameterizedTypeBuilder.newTypeFromClass(Map.class).withTypeArg(0, Integer.class).build()));
-        assertThat(map2, equalTo(ParameterizedTypeBuilder.newTypeFromClass(LinkedHashMap.class).build()));
+        assertThat(list, equalTo(parameterizedTypeBuilder(ArrayList.class).withTypeVariables().build()));
+        assertThat(map1, equalTo(parameterizedTypeBuilder(Map.class).withTypeVariables().withTypeArg(0, Integer.class).build()));
+        assertThat(map2, equalTo(parameterizedTypeBuilder(LinkedHashMap.class).withTypeVariables().build()));
     }
 
     /**
@@ -136,10 +142,10 @@ class ParameterizedTypeBuilderTest {
     @Test
     void shouldCreateTypesBasedOnClassAndIndexedArgs() {
         // given / when
-        ParameterizedTypeImpl comparable = newTypeFromClass(Comparable.class)
+        ParameterizedTypeImpl comparable = parameterizedTypeBuilder(Comparable.class)
             .withTypeArg(0, Integer.class)
             .build();
-        ParameterizedTypeImpl map = newTypeFromClass(Map.class)
+        ParameterizedTypeImpl map = parameterizedTypeBuilder(Map.class)
             .withTypeArg(0, String.class)
             .withTypeArg(1, TypeInfo.of(comparable))
             .build();
@@ -188,7 +194,7 @@ class ParameterizedTypeBuilderTest {
     void shouldThrowForUnmatchedTypeParams() {
         // given
         TypeVariable<?>[] typeParams = BiFunction.class.getTypeParameters();
-        ParameterizedTypeBuilder mapBuilder = newTypeFromClass(Map.class);
+        ParameterizedTypeBuilder mapBuilder = parameterizedTypeBuilder(Map.class);
 
         // when
         IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class,
@@ -205,6 +211,42 @@ class ParameterizedTypeBuilderTest {
         assertThat(ex2.getMessage(), equalTo("Type parameter index -1 is out of bounds for interface java.util.Map"));
         assertThat(ex3.getMessage(), equalTo("No type parameter 'Q' on interface java.util.Map"));
         assertThat(ex4.getMessage(), equalTo("No type parameter matched 'T' on interface java.util.Map"));
+    }
+
+    @Test
+    void shouldSetOriginalTypeParameters() {
+        // given
+        ParameterizedType pt = (ParameterizedType) new TypeReference<BiFunction<String, Double, Long>>() { }.getType();
+        ParameterizedTypeBuilder builder1 = new ParameterizedTypeBuilder(pt);
+        ParameterizedTypeBuilder builder2 = new ParameterizedTypeBuilder(pt);
+
+        // when
+        ParameterizedTypeImpl result1 = builder1
+            .withTypeVariables()
+            .build();
+        ParameterizedTypeImpl result2 = builder2
+            .withTypeArg(0, (Type) null)
+            .withTypeArg(BiFunction.class.getTypeParameters()[1], (Type) null)
+            .withTypeArg("R", (Type) null)
+            .build();
+
+        // then
+        ParameterizedTypeImpl biFunctionWithTypeVars = new ParameterizedTypeImpl(BiFunction.class, null,
+            BiFunction.class.getTypeParameters());
+        assertThat(result1, equalTo(biFunctionWithTypeVars));
+        assertThat(result2, equalTo(biFunctionWithTypeVars));
+    }
+
+    @Test
+    void shouldThrowIfTypeParameterHasNotBeenSet() {
+        // given
+        ParameterizedTypeBuilder builder = parameterizedTypeBuilder(Map.class);
+
+        // when
+        IllegalStateException ex = assertThrows(IllegalStateException.class, builder::build);
+
+        // then
+        assertThat(ex.getMessage(), equalTo("Type parameter 'K' at index 0 has not been set"));
     }
 
     private void assertEqualToCreationViaGenericInterface(ParameterizedTypeImpl typeToCheck,

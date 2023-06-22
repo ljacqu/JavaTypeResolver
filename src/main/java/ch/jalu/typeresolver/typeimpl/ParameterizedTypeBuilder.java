@@ -16,7 +16,16 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Builder of parameterized types.
+ * Builder to create parameterized types programmatically.
+ * <p>
+ * Example:<pre>{@code
+ *   ParameterizedType pt = newTypeFromClass(Optional.class)
+ *     .withTypeArg(0, String.class)
+ *     .build();
+ *  // pt = Optional<String>
+ * }</pre>
+ * You can also start with the existing values of a parameterized type using the constructor
+ * {@link ParameterizedTypeBuilder#ParameterizedTypeBuilder(ParameterizedType)}.
  */
 public class ParameterizedTypeBuilder {
 
@@ -24,7 +33,6 @@ public class ParameterizedTypeBuilder {
     @Nullable
     private final Type ownerType;
     private final TypeVariable<?>[] typeParameters;
-    private final Type[] oldTypeArguments;
     private final Type[] newTypeArguments;
 
     /**
@@ -36,8 +44,7 @@ public class ParameterizedTypeBuilder {
         this.rawType = CommonTypeUtil.getRawType(parameterizedType);
         this.ownerType = parameterizedType.getOwnerType();
         this.typeParameters = rawType.getTypeParameters();
-        this.oldTypeArguments = parameterizedType.getActualTypeArguments();
-        this.newTypeArguments = new Type[typeParameters.length];
+        this.newTypeArguments = parameterizedType.getActualTypeArguments().clone();
     }
 
     private ParameterizedTypeBuilder(Class<?> rawType) {
@@ -49,7 +56,6 @@ public class ParameterizedTypeBuilder {
         this.rawType = rawType;
         this.ownerType = createOwnerType(rawType);
         this.typeParameters = typeParams;
-        this.oldTypeArguments = new Type[typeParameters.length];
         this.newTypeArguments = new Type[typeParameters.length];
     }
 
@@ -57,9 +63,10 @@ public class ParameterizedTypeBuilder {
      * Creates a builder with the given Class as its base type.
      *
      * @param clazz the raw type of the parameterized type that will be created
-     * @return new builder with the given class as raw type
+     * @return new builder with the given class as the raw type
+     * @throws IllegalArgumentException if the class has no type parameters
      */
-    public static ParameterizedTypeBuilder newTypeFromClass(Class<?> clazz) {
+    public static ParameterizedTypeBuilder parameterizedTypeBuilder(Class<?> clazz) {
         return new ParameterizedTypeBuilder(clazz);
     }
 
@@ -74,9 +81,10 @@ public class ParameterizedTypeBuilder {
      * {@link ch.jalu.typeresolver.reference.TypeReference TypeReference} instead:<br>
      * {@code Type type = new TypeReference<ArrayList<String>>(){ }.getType()}.
      *
-     * @param baseType the collection type
+     * @param baseType the collection type to use as raw type
      * @param typeArgument the type argument of the collection
      * @return parameterized type
+     * @throws IllegalArgumentException if the base type does not have at least one type parameter
      */
     public static ParameterizedTypeImpl newCollectionType(Class<? extends Collection> baseType,
                                                           @Nullable Type typeArgument) {
@@ -96,21 +104,26 @@ public class ParameterizedTypeBuilder {
      * {@link ch.jalu.typeresolver.reference.TypeReference TypeReference} instead:<br>
      * {@code Type type = new TypeReference<HashMap<String, Double>>(){ }.getType()}.
      *
-     * @param mapImplType the map implementation type to use
+     * @param baseType the map implementation type to use as raw type
      * @param keyType the key type argument
      * @param valueType the value type argument
      * @return parameterized type
+     * @throws IllegalArgumentException if the base type does not have at least two type parameters
      */
-    public static ParameterizedTypeImpl newMapType(Class<? extends Map> mapImplType,
+    public static ParameterizedTypeImpl newMapType(Class<? extends Map> baseType,
                                                    @Nullable Type keyType, @Nullable Type valueType) {
-        return new ParameterizedTypeBuilder(mapImplType)
+        return new ParameterizedTypeBuilder(baseType)
             .withTypeArg(0, keyType)
             .withTypeArg(1, valueType)
             .build();
     }
 
     /**
-     * @see #withTypeArg(int, Type)
+     * Sets the type argument to the given index. Equivalent to {@link #withTypeArg(int, Type)}.
+     *
+     * @param typeParameterIndex the index of the parameter to set (0-based)
+     * @param typeInfo type info whose type should be set as argument
+     * @return this builder
      */
     public ParameterizedTypeBuilder withTypeArg(int typeParameterIndex, TypeInfo typeInfo) {
         return withTypeArg(typeParameterIndex, typeInfo.getType());
@@ -126,6 +139,7 @@ public class ParameterizedTypeBuilder {
      * @param typeParameterIndex the index of the parameter to set (0-based)
      * @param type the type to set (or null to reset to the type variable)
      * @return this builder
+     * @throws IllegalArgumentException if the type parameter index is out of bounds
      */
     public ParameterizedTypeBuilder withTypeArg(int typeParameterIndex, @Nullable Type type) {
         if (typeParameterIndex < 0 || typeParameterIndex >= typeParameters.length) {
@@ -138,7 +152,12 @@ public class ParameterizedTypeBuilder {
     }
 
     /**
-     * @see #withTypeArg(String, Type)
+     * Sets the type argument for the parameter with the given name. Equivalent to {@link #withTypeArg(int, Type)}.
+     *
+     * @param typeParameterName the name of the type parameter to set
+     * @param typeInfo type info whose type should be set as argument
+     * @return this builder
+     * @throws IllegalArgumentException if the raw type does not have a type parameter matching the name
      */
     public ParameterizedTypeBuilder withTypeArg(String typeParameterName, TypeInfo typeInfo) {
         return withTypeArg(typeParameterName, typeInfo.getType());
@@ -150,9 +169,10 @@ public class ParameterizedTypeBuilder {
      * <p>
      *  Example: <pre>{@code newTypeFromClass(Optional.class).withTypeArg("T", Double.class).build();}</pre>
      *
-     * @param typeParameterName the name of the type parameter to change
+     * @param typeParameterName the name of the type parameter to set
      * @param type the type to set (or null to reset to the type variable)
      * @return this builder
+     * @throws IllegalArgumentException if the raw type does not have a type parameter matching the name
      */
     public ParameterizedTypeBuilder withTypeArg(String typeParameterName, @Nullable Type type) {
         int index = findIndexOfMatchingTypeParam(p -> p.getName().equals(typeParameterName),
@@ -162,15 +182,21 @@ public class ParameterizedTypeBuilder {
     }
 
     /**
-     * @see #withTypeArg(TypeVariable, Type)
+     * Sets the given type variable to the provided type. Equivalent to {@link #withTypeArg(TypeVariable, Type)}.
+     *
+     * @param typeVariable the type variable to match
+     * @param typeInfo type info whose type should be set as argument
+     * @return this builder
+     * @throws IllegalArgumentException if the type variable does not belong to the raw type
      */
     public ParameterizedTypeBuilder withTypeArg(TypeVariable<?> typeVariable, TypeInfo typeInfo) {
         return withTypeArg(typeVariable, typeInfo.getType());
     }
 
     /**
-     * Sets the given type variable to the provided type. Null can be provided to reset the type parameter back to
-     * the class's type variable. Throws an exception if the type variable could not be matched.
+     * Sets the type parameter identified by the given type variable to the provided type. Null can be provided to
+     * reset the type parameter back to the class's type variable. Throws an exception if the type variable could not
+     * be matched.
      * <p>
      *  Example:<pre>{@code
      *    TypeVariable<?> tv = Optional.class.getTypeParameters()[0];
@@ -180,6 +206,7 @@ public class ParameterizedTypeBuilder {
      * @param typeVariable the type variable to match
      * @param type the type to set (or null to reset to the type variable)
      * @return this builder
+     * @throws IllegalArgumentException if the type variable does not belong to the raw type
      */
     public ParameterizedTypeBuilder withTypeArg(TypeVariable<?> typeVariable, @Nullable Type type) {
         Predicate<TypeVariable<?>> filter = curVar -> curVar.getName().equals(typeVariable.getName())
@@ -191,16 +218,29 @@ public class ParameterizedTypeBuilder {
     }
 
     /**
+     * Resets all type parameters to the type variables of the raw type.
+     *
+     * @return this builder
+     */
+    public ParameterizedTypeBuilder withTypeVariables() {
+        TypeVariable<? extends Class<?>>[] typeVariables = rawType.getTypeParameters();
+        System.arraycopy(typeVariables, 0, this.newTypeArguments, 0, typeVariables.length);
+        return this;
+    }
+
+    /**
      * Creates a parameterized type with the configured raw type and type arguments.
+     * An exception is thrown if any type argument is missing.
      *
      * @return new parameterized type
+     * @throws IllegalStateException if a type parameter has not been associated with a value
      */
     public ParameterizedTypeImpl build() {
         for (int i = 0; i < typeParameters.length; ++i) {
             if (newTypeArguments[i] == null) {
-                if ((newTypeArguments[i] = oldTypeArguments[i]) == null) {
-                    newTypeArguments[i] = typeParameters[i];
-                }
+                String typeVariableName = typeParameters[i].getName();
+                throw new IllegalStateException(
+                    "Type parameter '" + typeVariableName + "' at index " + i + " has not been set");
             }
         }
         return new ParameterizedTypeImpl(rawType, ownerType, newTypeArguments);

@@ -67,6 +67,20 @@ class GenericArrayTypeImplTest extends AbstractTypeImplTest {
         assertThrows(IllegalArgumentException.class, () -> GenericArrayTypeImpl.create(type, -5));
     }
 
+    @Test
+    void shouldHaveCorrectJavaDocExample() {
+        // given / when
+        Type stringListType = new TypeReference<List<String>>() { }.getType();
+        Type result1 = GenericArrayTypeImpl.create(stringListType, 1); // Result: List<String>[]
+        Type result2 = GenericArrayTypeImpl.create(stringListType, 3); // Result: List<String>[][][]
+        Type result3 = GenericArrayTypeImpl.create(stringListType, 0); // Result: List<String>
+
+        // then
+        assertThat(result1, equalTo(new TypeReference<List<String>[]>() { }.getType()));
+        assertThat(result2, equalTo(new TypeReference<List<String>[][][]>() { }.getType()));
+        assertThat(result3, equalTo(new TypeReference<List<String>>() { }.getType()));
+    }
+
     private static final class GenericArrayTypes<T> {
 
         private T[] tArray1d;

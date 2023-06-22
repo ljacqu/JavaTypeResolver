@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static ch.jalu.typeresolver.typeimpl.ParameterizedTypeBuilder.parameterizedTypeBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -29,7 +30,9 @@ class ParameterizedTypeBuilderOwnerTypeTest {
     void shouldCreateParameterizedTypeWithProperOwnerType(Class<?> rawType, Field fieldOfType,
                                                           OwnerTypeToken[] ownerTypeExpectations) {
         // given / when
-        ParameterizedTypeImpl result = ParameterizedTypeBuilder.newTypeFromClass(rawType).build();
+        ParameterizedTypeImpl result = parameterizedTypeBuilder(rawType)
+            .withTypeVariables()
+            .build();
 
         // then
         Type expectedType = fieldOfType.getGenericType();
@@ -128,8 +131,12 @@ class ParameterizedTypeBuilderOwnerTypeTest {
         }
 
         // when
-        ParameterizedType result1 = ParameterizedTypeBuilder.newTypeFromClass(AnonClass.class).build();
-        ParameterizedType result2 = ParameterizedTypeBuilder.newTypeFromClass(AnonClass.AnonClass2.class).build();
+        ParameterizedType result1 = parameterizedTypeBuilder(AnonClass.class)
+            .withTypeVariables()
+            .build();
+        ParameterizedType result2 = parameterizedTypeBuilder(AnonClass.AnonClass2.class)
+            .withTypeVariables()
+            .build();
 
         // then
         Type type1 = AnonClass.class.getDeclaredField("selfTyped").getGenericType();
@@ -146,7 +153,9 @@ class ParameterizedTypeBuilderOwnerTypeTest {
         }
 
         // when
-        ParameterizedType result = ParameterizedTypeBuilder.newTypeFromClass(LocalNp2Ext.class).build();
+        ParameterizedType result = parameterizedTypeBuilder(LocalNp2Ext.class)
+            .withTypeVariables()
+            .build();
 
         // then
         assertThat(result.getOwnerType(), nullValue());
