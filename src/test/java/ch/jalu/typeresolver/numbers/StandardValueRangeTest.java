@@ -74,7 +74,7 @@ class StandardValueRangeTest {
     }
 
     /**
-     * Tests the code sample in the JavaDoc of {@link StandardValueRange#findRangeOrThrow}. This test
+     * Tests the code sample in the Javadoc of {@link StandardValueRange#findRangeOrThrow}. This test
      * attempts to ensure that the code in the Javadoc is correct and runnable.
      */
     @Test
