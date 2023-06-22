@@ -23,13 +23,13 @@ public final class MoreNumberTypes {
      * AtomicInteger (same value range as {@link StandardNumberType#INTEGER}).
      */
     public static final NumberType<AtomicInteger> ATOMIC_INTEGER =
-        new AtomicNumberType<>(AtomicInteger.class, StandardNumberType.T_INTEGER, AtomicInteger::new);
+        new AtomicNumberType<>(AtomicInteger.class, StandardNumberType.TYPE_INTEGER, AtomicInteger::new);
 
     /**
      * AtomicLong (same value range as {@link StandardNumberType#LONG}).
      */
     public static final NumberType<AtomicLong> ATOMIC_LONG =
-        new AtomicNumberType<>(AtomicLong.class, StandardNumberType.T_LONG, AtomicLong::new);
+        new AtomicNumberType<>(AtomicLong.class, StandardNumberType.TYPE_LONG, AtomicLong::new);
 
     private MoreNumberTypes() {
     }
@@ -80,9 +80,10 @@ public final class MoreNumberTypes {
         @Override
         public ValueRange<A> getValueRange() {
             ValueRange<B> baseValueRange = baseType.getValueRange();
-            return ValueRangeImpl.forLongOrSubset(
-                toAtomicFn.apply(baseValueRange.getMinInOwnType()),
-                toAtomicFn.apply(baseValueRange.getMaxInOwnType()));
+            A atomicMinValue = toAtomicFn.apply(baseValueRange.getMinInOwnType());
+            A atomicMaxValue = toAtomicFn.apply(baseValueRange.getMaxInOwnType());
+            return new ValueRangeImpl<>(atomicMinValue, atomicMaxValue,
+                baseValueRange.getMinValue(), baseValueRange.getMaxValue(), false, false);
         }
     }
 
@@ -109,9 +110,9 @@ public final class MoreNumberTypes {
 
         @Override
         public ValueRangeComparison compareToValueRange(Number number) {
-            ValueRangeComparison rangeComparison = StandardNumberType.T_INTEGER.compareToValueRange(number);
+            ValueRangeComparison rangeComparison = StandardNumberType.TYPE_INTEGER.compareToValueRange(number);
             if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
-                int intValue = StandardNumberType.T_INTEGER.convertUnsafe(number);
+                int intValue = StandardNumberType.TYPE_INTEGER.convertUnsafe(number);
                 if (intValue > maxValue) {
                     return ValueRangeComparison.ABOVE_MAXIMUM;
                 } else if (intValue < minValue) {
@@ -123,7 +124,7 @@ public final class MoreNumberTypes {
 
         @Override
         public Character convertToBounds(Number numberToConvert) {
-            int result = StandardNumberType.T_INTEGER.convertToBounds(numberToConvert);
+            int result = StandardNumberType.TYPE_INTEGER.convertToBounds(numberToConvert);
             if (result > maxValue) {
                 return maxValue;
             } else if (result < minValue) {
