@@ -10,7 +10,7 @@ import java.util.Objects;
  * Example: given generic array type {@code List<String>[][]},
  * <br>{@code getArrayPropertiesOfType(type); // description with dimension=2 and componentType=String.class}
  */
-public class GenericArrayTypeProperties implements AbstractArrayProperties {
+public class GenericArrayTypeProperties implements ArrayTypeProperties {
 
     private final Type componentType;
     private final int dimension;

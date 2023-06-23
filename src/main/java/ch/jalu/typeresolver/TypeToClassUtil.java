@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
+
 import javax.annotation.Nullable;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -36,7 +38,7 @@ public final class TypeToClassUtil {
             GenericArrayType gat = (GenericArrayType) type;
             Class<?> componentAsClass = getSafeToWriteClass(gat.getGenericComponentType());
             if (componentAsClass != null) {
-                return CommonTypeUtil.createArrayClass(componentAsClass);
+                return ArrayTypeUtils.createArrayClass(componentAsClass);
             }
         }
         return null;
@@ -76,7 +78,7 @@ public final class TypeToClassUtil {
             // ParameterizedType or a TypeVariable. If a type variable is unbounded, the JRE sets Object as the bound.
             // However, if the type was somehow resolved we might have an array of wildcard, for example.
             if (componentAsClass != null) {
-                return CommonTypeUtil.createArrayClass(componentAsClass);
+                return ArrayTypeUtils.createArrayClass(componentAsClass);
             }
             return Object[].class;
         }

@@ -5,7 +5,7 @@ import java.lang.reflect.Type;
 /**
  * Describes an array type.
  */
-public interface AbstractArrayProperties {
+public interface ArrayTypeProperties {
 
     /**
      * Returns the component of the array. Never an array itself.

@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 
@@ -63,7 +64,7 @@ class TypeVariableResolver {
         } else if (type instanceof GenericArrayType) {
             GenericArrayType gat = (GenericArrayType) type;
             Type resolvedComponentType = resolve(gat.getGenericComponentType());
-            return CommonTypeUtil.createArrayType(resolvedComponentType);
+            return ArrayTypeUtils.createArrayType(resolvedComponentType);
         }
         return type;
     }

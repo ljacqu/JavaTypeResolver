@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.array.AbstractArrayProperties;
+import ch.jalu.typeresolver.array.ArrayTypeProperties;
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -74,12 +75,12 @@ final class TypeVisitor {
                 visitClassesRecursively(genericInterface, typeConsumer);
             }
         } else {
-            AbstractArrayProperties arrayProperties = CommonTypeUtil.getArrayProperty(type);
+            ArrayTypeProperties arrayProperties = ArrayTypeUtils.getArrayProperty(type);
             List<Type> componentTypeList = gatherAllTypesOfComponent(arrayProperties);
 
             // An array like Double[][] is also a Number[][] or an Object[][], but only for the same dimension
             for (Type component : componentTypeList) {
-                Type arrayType = CommonTypeUtil.createArrayType(component, arrayProperties.getDimension());
+                Type arrayType = ArrayTypeUtils.createArrayType(component, arrayProperties.getDimension());
                 typeConsumer.accept(arrayType);
             }
 
@@ -87,14 +88,14 @@ final class TypeVisitor {
             List<Type> arrayClassParents = Arrays.asList(Serializable.class, Cloneable.class, Object.class);
             for (int dimension = arrayProperties.getDimension() - 1; dimension >= 0; --dimension) {
                 for (Type arrayClassParent : arrayClassParents) {
-                    Type arrayType = CommonTypeUtil.createArrayType(arrayClassParent, dimension);
+                    Type arrayType = ArrayTypeUtils.createArrayType(arrayClassParent, dimension);
                     typeConsumer.accept(arrayType);
                 }
             }
         }
     }
 
-    private static List<Type> gatherAllTypesOfComponent(AbstractArrayProperties arrayProperties) {
+    private static List<Type> gatherAllTypesOfComponent(ArrayTypeProperties arrayProperties) {
         TypeVariableResolver componentResolver = new TypeVariableResolver(arrayProperties.getComponentType());
         List<Type> typesOfComponent = new ArrayList<>();
         visitAllTypes(arrayProperties.getComponentType(), componentResolver, typesOfComponent::add);

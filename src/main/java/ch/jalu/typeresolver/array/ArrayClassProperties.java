@@ -10,7 +10,7 @@ import java.util.Objects;
  * <p>
  * {@code getArrayPropertiesOfClass(String.class); // description with componentType=String.class and dimension=0}
  */
-public class ArrayClassProperties implements AbstractArrayProperties {
+public class ArrayClassProperties implements ArrayTypeProperties {
 
     private final Class<?> componentType;
     private final int dimension;
