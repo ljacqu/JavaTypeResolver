@@ -15,11 +15,12 @@ public interface ArrayTypeProperties {
     Type getComponentType();
 
     /**
-     * Returns the dimension of the array type, i.e. 1 for a regular array type like {@code String[]},
-     * or, for instance, 3 for a type like {@code double[][][]}. May return 0 if the processed type
-     * is not an array.
+     * Returns the dimension of the array type. For example, the dimension is 1 for a regular array type like
+     * {@code String[]}; for {@code double[][][]}, the dimension is 3. If the processed type is not an array, the
+     * method returns 0.
      *
-     * @return the dimension, or 0 if is not an array
+     * @return the dimension, or 0 if it is not an array
      */
     int getDimension();
+
 }

@@ -12,6 +12,19 @@ import static org.hamcrest.Matchers.not;
 class ArrayClassPropertiesTest {
 
     @Test
+    void shouldHaveValidJavadocExample() {
+        // given / when
+        ArrayClassProperties arrayProps1 = new ArrayClassProperties(String[][].class);
+        ArrayClassProperties expected1 = new ArrayClassProperties(String.class, 2);
+        ArrayClassProperties arrayProps2 = new ArrayClassProperties(String.class);
+        ArrayClassProperties expected2 = new ArrayClassProperties(String.class, 0);
+
+        // then
+        assertThat(arrayProps1, equalTo(expected1));
+        assertThat(arrayProps2, equalTo(expected2));
+    }
+
+    @Test
     void shouldUnwrapArrayClass() {
         // given / when / then
         testArrayDescription(String[].class, String.class, 1);
@@ -42,12 +55,12 @@ class ArrayClassPropertiesTest {
         ArrayClassProperties prop = new ArrayClassProperties(Integer.class, 2);
 
         // when / then
-        assertThat(prop.toString(), equalTo(prop.getClass().getSimpleName() + "[dimension=2,componentType='class java.lang.Integer']"));
+        assertThat(prop.toString(), equalTo(prop.getClass().getSimpleName() + "[componentType='class java.lang.Integer', dimension=2]"));
     }
 
     private static void testArrayDescription(Class<?> givenArrayClass,
                                              Class<?> expectedComponentType, int expectedDimension) {
-        ArrayClassProperties actualDescription = ArrayClassProperties.getArrayPropertiesOfClass(givenArrayClass);
+        ArrayClassProperties actualDescription = new ArrayClassProperties(givenArrayClass);
 
         assertThat(actualDescription.getComponentType(), equalTo(expectedComponentType));
         assertThat(actualDescription.getDimension(), equalTo(expectedDimension));

@@ -17,6 +17,8 @@ public final class ArrayTypeUtils {
     /**
      * Returns an array class of the given component type, e.g. if the componentType is {@code String.class},
      * then {@code String[].class} is returned.
+     * <p>
+     * As of Java 12, you can use {@code componentType.arrayType()}.
      *
      * @param componentType the component type of the array
      * @return array class of the given component
@@ -47,11 +49,17 @@ public final class ArrayTypeUtils {
     }
 
     /**
-     * Returns an array class or a {@link java.lang.reflect.GenericArrayType} instance whose component type is
-     * the {@code componentType} argument.
+     * Returns an array class or a {@link GenericArrayType} instance whose component type is the {@code componentType}
+     * argument.
+     * <p>
+     * This method does not validate the component type, making it possible to create generic array types that might not
+     * make sense or that may never be provided by the JDK. The JDK specifies that the component of a generic array type
+     * is either a {@link java.lang.reflect.ParameterizedType parameterized type} or a
+     * {@link java.lang.reflect.TypeVariable type variable}.
      *
      * @param componentType the component type to create an array type for
      * @return the appropriate array type
+     * @throws IllegalArgumentException if the dimension is negative, or if the component type is {@code void.class}
      */
     public static Type createArrayType(Type componentType) {
         return createArrayType(componentType, 1);
@@ -60,6 +68,11 @@ public final class ArrayTypeUtils {
     /**
      * Returns an array class or a generic array type whose component is the provided component type and
      * with the given dimension.
+     * <p>
+     * This method does not validate the component type, making it possible to create generic array types that might not
+     * make sense or that may never be provided by the JDK. The JDK specifies that the component of a generic array type
+     * is either a {@link java.lang.reflect.ParameterizedType parameterized type} or a
+     * {@link java.lang.reflect.TypeVariable type variable}.
      *
      * @param componentType the component type
      * @param dimension the dimension of the array (may not be negative)
@@ -78,13 +91,13 @@ public final class ArrayTypeUtils {
      * if it is not an array. Never returns null.
      *
      * @param type the type to inspect
-     * @return array description of the given type
+     * @return array description of the given type, never null
      */
     public static ArrayTypeProperties getArrayProperty(Type type) {
         if (type instanceof Class<?>) {
-            return ArrayClassProperties.getArrayPropertiesOfClass((Class<?>) type);
+            return new ArrayClassProperties((Class<?>) type);
         } else if (type instanceof GenericArrayType) {
-            return GenericArrayTypeProperties.getArrayPropertiesOfType((GenericArrayType) type);
+            return new GenericArrayTypeProperties((GenericArrayType) type);
         }
         return new GenericArrayTypeProperties(type, 0);
     }

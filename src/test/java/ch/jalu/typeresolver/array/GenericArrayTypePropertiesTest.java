@@ -18,6 +18,18 @@ import static org.hamcrest.Matchers.not;
 class GenericArrayTypePropertiesTest {
 
     @Test
+    void shouldHaveWorkingExampleInJavadoc() {
+        // given / when
+        Type stringList = new TypeReference<List<String>>() { }.getType();
+        GenericArrayType stringListArray = (GenericArrayType) new TypeReference<List<String>[][]>() { }.getType();
+        GenericArrayTypeProperties arrayProps = new GenericArrayTypeProperties(stringListArray);
+        GenericArrayTypeProperties expected = new GenericArrayTypeProperties(stringList, 2);
+
+        // then
+        assertThat(arrayProps, equalTo(expected));
+    }
+
+    @Test
     <T> void shouldUnwrapGenericArrayType() {
         // given
         TypeReference<List<String>[][][]> stringList3d = new TypeReference<List<String>[][][]>() { };
@@ -61,12 +73,12 @@ class GenericArrayTypePropertiesTest {
         GenericArrayTypeProperties prop = new GenericArrayTypeProperties(listType, 3);
 
         // when / then
-        assertThat(prop.toString(), equalTo(prop.getClass().getSimpleName() + "[dimension=3,componentType='java.util.List<java.lang.Integer>']"));
+        assertThat(prop.toString(), equalTo(prop.getClass().getSimpleName() + "[componentType='java.util.List<java.lang.Integer>', dimension=3]"));
     }
 
     private static void testGenericArrayDescription(Type givenArrayClass,
                                                     TypeReference<?> expectedComponentType, int expectedDimension) {
-        GenericArrayTypeProperties actualDescription = GenericArrayTypeProperties.getArrayPropertiesOfType((GenericArrayType) givenArrayClass);
+        GenericArrayTypeProperties actualDescription = new GenericArrayTypeProperties((GenericArrayType) givenArrayClass);
 
         assertThat(actualDescription.getComponentType(), equalTo(expectedComponentType.getType()));
         assertThat(actualDescription.getDimension(), equalTo(expectedDimension));

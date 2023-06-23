@@ -3,12 +3,15 @@ package ch.jalu.typeresolver.array;
 import java.util.Objects;
 
 /**
- * Describes a class' array details by specifying the array dimension of this class and its component type.
+ * Describes a class' array type properties by specifying the array dimension of this class and its component type.
  * <p>
- * Example: {@code getArrayPropertiesOfClass(String[][].class);
- *   // description with componentType=String.class and dimension=2}
- * <p>
- * {@code getArrayPropertiesOfClass(String.class); // description with componentType=String.class and dimension=0}
+ * Examples:<pre>{@code
+ * ArrayClassProperties arrayProps1 = new ArrayClassProperties(String[][].class);
+ * // arrayProps1 = new ArrayClassProperties(String.class, 2)
+ * ArrayClassProperties arrayProps1 = new ArrayClassProperties(String.class);
+ * // arrayProps2 = new ArrayClassProperties(String.class, 0)}</pre>
+ *
+ * @see ArrayTypeUtils#getArrayProperty
  */
 public class ArrayClassProperties implements ArrayTypeProperties {
 
@@ -16,7 +19,7 @@ public class ArrayClassProperties implements ArrayTypeProperties {
     private final int dimension;
 
     /**
-     * Constructor. Use {@link #getArrayPropertiesOfClass(Class)} for static imports.
+     * Constructor.
      *
      * @param clazz the class to describe
      */
@@ -41,16 +44,6 @@ public class ArrayClassProperties implements ArrayTypeProperties {
     public ArrayClassProperties(Class<?> componentType, int dimension) {
         this.componentType = componentType;
         this.dimension = dimension;
-    }
-
-    /**
-     * Returns the array properties of the given class.
-     *
-     * @param clazz the class to process
-     * @return the array properties of the given class
-     */
-    public static ArrayClassProperties getArrayPropertiesOfClass(Class<?> clazz) {
-        return new ArrayClassProperties(clazz);
     }
 
     @Override
@@ -81,6 +74,6 @@ public class ArrayClassProperties implements ArrayTypeProperties {
 
     @Override
     public String toString() {
-        return "ArrayClassProperties[dimension=" + dimension + ",componentType='" + componentType + "']";
+        return "ArrayClassProperties[componentType='" + componentType + "', dimension=" + dimension + "]";
     }
 }
