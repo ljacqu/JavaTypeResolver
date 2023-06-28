@@ -5,7 +5,8 @@ import java.lang.annotation.Annotation;
 
 /**
  * Extendable class with a method dedicated for each {@link ClassType}, with appropriately cast method parameters.
- * This class's methods are meant to be (partially) overridden.
+ * This class's methods are meant to be overridden. The methods can be overridden partially if only certain class types
+ * are of interest.
  *
  * @param <R> the result type of the callback
  * @see ClassUtil#processClassByType
@@ -63,7 +64,8 @@ public abstract class ClassTypeCallback<R> {
     /**
      * Called when the class to process is an array class, such as {@code int[].class} or {@code String[][].class}.
      * <p>
-     * Note that the class cannot be blindly cast to {@code Class<? extends Object[]>} due to arrays of primitive types.
+     * Note that the class cannot be cast to {@code Class<? extends Object[]>} without checking beforehand, due to
+     * arrays of primitive types such as {@code int[].class}.
      *
      * @param arrayClass the array class
      * @return result or null
@@ -96,7 +98,7 @@ public abstract class ClassTypeCallback<R> {
     }
 
     /**
-     * Called when the class to process is a "regular class" (cf. {@link ClassUtil#isActualJavaClass}).
+     * Called when the class to process is a "regular class", as explained in {@link ClassUtil#isRegularJavaClass}.
      *
      * @param regularClass the Java class
      * @return result or null

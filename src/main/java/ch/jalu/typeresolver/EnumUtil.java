@@ -15,29 +15,29 @@ public final class EnumUtil {
     }
 
     /**
-     * Returns the enum entry with the given name if the provided class is an enum and has an entry that matches
-     * exactly the given name. Null is returned otherwise.
+     * Returns an optional of the enum entry with the given name if the provided class is an enum and has an entry that
+     * matches exactly the given name. Otherwise, an empty optional is returned.
      *
      * @param clazz the class to check for enum entries, or null
      * @param name the name to match, or null
      * @param <T> the class type
-     * @return the enum entry if the name was non-null, the class was an enum and had such an enum entry; null otherwise
+     * @return optional of the enum entry if the class is an enum and has an entry of the given name; empty otherwise
      */
-    @Nullable
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T> T valueOfOrNull(@Nullable Class<T> clazz, @Nullable String name) {
+    public static <T> Optional<T> tryValueOf(@Nullable Class<T> clazz, @Nullable String name) {
         if (clazz == null || !clazz.isEnum() || name == null) {
-            return null;
+            return Optional.empty();
         }
         try {
-            return (T) Enum.valueOf((Class) clazz, name);
+            return Optional.of((T) Enum.valueOf((Class) clazz, name));
         } catch (IllegalArgumentException ignored) {
-            return null;
+            return Optional.empty();
         }
     }
 
     /**
-     * Specifies whether the given class is an enum or a synthetic class of an enum entry.
+     * Indicates whether the given class is an enum or a synthetic class of an enum entry. Synthetic classes are
+     * created when an enum entry extends the enum type anonymously.
      * <p>
      * Examples:<pre>{@code
      *   Class<?> class1 = NumericShaper.Range.class;

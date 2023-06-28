@@ -47,6 +47,9 @@ public final class ClassUtil {
     /**
      * Loads a class or throws an {@link IllegalArgumentException}. This method wraps {@link Class#forName(String)}
      * to throw a runtime exception for convenience.
+     * <p>
+     * Note that errors thrown by {@link Class#forName(String)} (e.g. {@link LinkageError}) are not caught as they
+     * typically indicate more severe issues.
      *
      * @param name the class name to load
      * @return the loaded class, never null
@@ -61,8 +64,7 @@ public final class ClassUtil {
 
     /**
      * Returns the {@link Class#getName() class name} of the object null-safely, returning "null" if the object is null.
-     * See also {@link #getSemanticName(Object)} for another null-safe, more user-appropriate name of an object
-     * or class.
+     * Use {@link #getSemanticName(Object)} to generate a null-safe, more user-appropriate name of the object's type.
      *
      * @param object the object whose type should be returned as string
      * @return the object's class name, or "null" if the object was null
@@ -147,8 +149,8 @@ public final class ClassUtil {
      * @param clazz the class to inspect, or null
      * @return true if the class is a "regular Java class"
      */
-    public static boolean isActualJavaClass(@Nullable Class<?> clazz) {
-        return clazz != null && getType(clazz) == ClassType.REGULAR_CLASS;
+    public static boolean isRegularJavaClass(@Nullable Class<?> clazz) {
+        return getType(clazz) == ClassType.REGULAR_CLASS;
     }
 
     /**
@@ -179,8 +181,8 @@ public final class ClassUtil {
     }
 
     /**
-     * Returns the result obtained by the given's {@link ClassTypeCallback} method that is applicable for the given
-     * class's type.
+     * Calls the method on the given {@link ClassTypeCallback} that corresponds to the given class's type and
+     * returns the result.
      *
      * @param clazz the class to inspect and process
      * @param typeCallback the type callback to generate a result with

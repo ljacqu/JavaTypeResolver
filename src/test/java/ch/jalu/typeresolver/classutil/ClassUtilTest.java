@@ -3,6 +3,8 @@ package ch.jalu.typeresolver.classutil;
 import ch.jalu.typeresolver.TypeInfo;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.annotation.Nullable;
 import java.awt.font.NumericShaper;
@@ -10,6 +12,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +25,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.matchesRegex;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -98,12 +104,37 @@ class ClassUtilTest {
         assertThat(ClassUtil.getClassName(3), equalTo("java.lang.Integer"));
         assertThat(ClassUtil.getClassName(DayOfWeek.MONDAY), equalTo("java.time.DayOfWeek"));
         assertThat(ClassUtil.getClassName(new String[0]), equalTo("[Ljava.lang.String;"));
-        assertThat(ClassUtil.getClassName(EnumSample.CM), equalTo("ch.jalu.typeresolver.classutil.ClassUtilTest$EnumSample"));
-        assertThat(ClassUtil.getClassName(EnumSample.M), matchesRegex("ch\\.jalu\\.typeresolver\\.classutil\\.ClassUtilTest\\$EnumSample\\$\\d+"));
+        assertThat(ClassUtil.getClassName(EnumSample.DIRECT), equalTo("ch.jalu.typeresolver.classutil.ClassUtilTest$EnumSample"));
+        assertThat(ClassUtil.getClassName(EnumSample.EXTENDING), matchesRegex("ch\\.jalu\\.typeresolver\\.classutil\\.ClassUtilTest\\$EnumSample\\$\\d+"));
     }
 
     @Nested
     class SemanticTypeAndName {
+
+        @Test
+        void shouldDetermineWhetherIsRegularClass() {
+            // given / when / then
+            assertTrue(ClassUtil.isRegularJavaClass(Object.class));
+            assertTrue(ClassUtil.isRegularJavaClass(String.class));
+            assertTrue(ClassUtil.isRegularJavaClass(Double.class));
+            assertTrue(ClassUtil.isRegularJavaClass(HashMap.class));
+            assertTrue(ClassUtil.isRegularJavaClass(getClass()));
+            assertTrue(ClassUtil.isRegularJavaClass(FakeAnnotationType.class));
+            assertTrue(ClassUtil.isRegularJavaClass(EnumSample.InnerClassOfEnum.class));
+            assertTrue(ClassUtil.isRegularJavaClass(EnumSample.EXTENDING.getObject().getClass()));
+
+            assertFalse(ClassUtil.isRegularJavaClass(null));
+            assertFalse(ClassUtil.isRegularJavaClass(EnumSample.class)); // enum
+            assertFalse(ClassUtil.isRegularJavaClass(EnumSample.EXTENDING.getClass())); // enum entry
+            assertFalse(ClassUtil.isRegularJavaClass(Test.class)); // annotation
+            assertFalse(ClassUtil.isRegularJavaClass(int.class)); // primitive
+            assertFalse(ClassUtil.isRegularJavaClass(void.class)); // primitive
+            assertFalse(ClassUtil.isRegularJavaClass(Object[].class)); // array
+            assertFalse(ClassUtil.isRegularJavaClass(double[].class)); // array
+            assertFalse(ClassUtil.isRegularJavaClass(Map.class)); // interface
+            assertFalse(ClassUtil.isRegularJavaClass(Map.Entry.class)); // interface
+            assertFalse(ClassUtil.isRegularJavaClass(getClass().getAnnotation(Nested.class).getClass())); // proxy
+        }
 
         @Test
         void shouldReturnSimpleClassNameOrNull() {
@@ -121,17 +152,16 @@ class ClassUtilTest {
         @Test
         void shouldReturnTypeNamesForEnums() {
             // given
-            EnumSample[] units = new EnumSample[0];
-            Object mEntries = Array.newInstance(EnumSample.M.getClass(), 2);
-            Object localClassInEnumEntry = EnumSample.M.getObject();
+            Object arrayOfExtendingType = Array.newInstance(EnumSample.EXTENDING.getClass(), 0);
+            Object localClassInEnumEntry = EnumSample.EXTENDING.getObject();
             EnumSample.InnerClassOfEnum innerClassOfEnum = new EnumSample.InnerClassOfEnum();
 
             // when / then
             Stream.of(
-                    new SemanticTypeAndNameTestCase(EnumSample.CM, EnumSample.class, "ClassUtilTest$EnumSample"),
-                    new SemanticTypeAndNameTestCase(EnumSample.M, EnumSample.class, "ClassUtilTest$EnumSample"),
-                    new SemanticTypeAndNameTestCase(units, EnumSample[].class, "ClassUtilTest$EnumSample[]"),
-                    new SemanticTypeAndNameTestCase(mEntries, Self.class, "ClassUtilTest$EnumSample$1[]"),
+                    new SemanticTypeAndNameTestCase(EnumSample.DIRECT, EnumSample.class, "ClassUtilTest$EnumSample"),
+                    new SemanticTypeAndNameTestCase(EnumSample.EXTENDING, EnumSample.class, "ClassUtilTest$EnumSample"),
+                    new SemanticTypeAndNameTestCase(new EnumSample[0], EnumSample[].class, "ClassUtilTest$EnumSample[]"),
+                    new SemanticTypeAndNameTestCase(arrayOfExtendingType, Self.class, "ClassUtilTest$EnumSample$1[]"),
                     new SemanticTypeAndNameTestCase(localClassInEnumEntry, Self.class, "ClassUtilTest$EnumSample$1$Local"),
                     new SemanticTypeAndNameTestCase(innerClassOfEnum, EnumSample.InnerClassOfEnum.class, "ClassUtilTest$EnumSample$InnerClassOfEnum"),
                     new SemanticTypeAndNameTestCase(EnumSample.NestedEnum.FIRST, EnumSample.NestedEnum.class, "ClassUtilTest$EnumSample$NestedEnum"),
@@ -142,17 +172,17 @@ class ClassUtilTest {
         @Test
         void shouldReturnTypeNamesForAnnotations() throws NoSuchMethodException {
             // given
-            Test test = getClass().getDeclaredMethod("shouldReturnTypeNamesForAnnotations").getAnnotation(Test.class);
-            String proxyClassName = test.getClass().getSimpleName();
-            Object array = Array.newInstance(test.getClass(), 2);
-            Test[][] array2d = new Test[0][0];
+            Test testAnnotation = getClass().getDeclaredMethod("shouldReturnTypeNamesForAnnotations").getAnnotation(Test.class);
+            String testAnnProxyClassName = testAnnotation.getClass().getSimpleName();
+            Object proxyClassArray = Array.newInstance(testAnnotation.getClass(), 0);
+            Test[][] testArray2d = new Test[0][0];
             Annotation fakeAnnotationType = new FakeAnnotationType();
 
             // when / then
             Stream.of(
-                    new SemanticTypeAndNameTestCase(test, Test.class, proxyClassName, "@Test"),
-                    new SemanticTypeAndNameTestCase(array, Self.class, proxyClassName + "[]"),
-                    new SemanticTypeAndNameTestCase(array2d, Test[][].class, "Test[][]"),
+                    new SemanticTypeAndNameTestCase(testAnnotation, Test.class, testAnnProxyClassName, "@Test"),
+                    new SemanticTypeAndNameTestCase(proxyClassArray, Self.class, testAnnProxyClassName + "[]"),
+                    new SemanticTypeAndNameTestCase(testArray2d, Test[][].class, "Test[][]"),
                     new SemanticTypeAndNameTestCase(fakeAnnotationType, Self.class, "ClassUtilTest$FakeAnnotationType"),
                     new SemanticTypeAndNameTestCase(new FakeAnnotationType[0], FakeAnnotationType[].class, "ClassUtilTest$FakeAnnotationType[]"))
                 .forEach(SemanticTypeAndNameTestCase::verify);
@@ -171,9 +201,10 @@ class ClassUtilTest {
             assertThat(ClassUtil.getType(null), nullValue());
             assertThat(ClassUtil.getType(TimeUnit.class), equalTo(ClassType.ENUM));
             assertThat(ClassUtil.getType(EnumSample.class), equalTo(ClassType.ENUM));
-            assertThat(ClassUtil.getType(EnumSample.M.getClass()), equalTo(ClassType.ENUM_ENTRY));
+            assertThat(ClassUtil.getType(EnumSample.EXTENDING.getClass()), equalTo(ClassType.ENUM_ENTRY));
             assertThat(ClassUtil.getType(Override.class), equalTo(ClassType.ANNOTATION));
             assertThat(ClassUtil.getType(int.class), equalTo(ClassType.PRIMITIVE));
+            assertThat(ClassUtil.getType(void.class), equalTo(ClassType.PRIMITIVE));
             assertThat(ClassUtil.getType(Runnable.class), equalTo(ClassType.INTERFACE));
             assertThat(ClassUtil.getType(int[].class), equalTo(ClassType.ARRAY));
             assertThat(ClassUtil.getType(String[][].class), equalTo(ClassType.ARRAY));
@@ -198,7 +229,7 @@ class ClassUtilTest {
         void shouldUseEnumEntryCallback() {
             // given
             ClassTypeCallback<String> typeCallback = new CallbackTestImpl();
-            Class<?> clazz = EnumSample.M.getClass();
+            Class<?> clazz = EnumSample.EXTENDING.getClass();
 
             // when
             String result = ClassUtil.processClassByType(clazz, typeCallback);
@@ -284,6 +315,57 @@ class ClassUtilTest {
             // then
             assertThat(result, equalTo("regularClass[" + String.class.getName() + "]"));
         }
+
+        @ParameterizedTest
+        @EnumSource(ClassType.class)
+        void shouldSupportNull(ClassType classType) {
+            // given
+            Class<?> clazz = getSampleClassForType(classType);
+            ClassTypeCallback<Integer> callback = new ClassTypeCallback<Integer>() { };
+            assertThat(ClassUtil.getType(clazz), equalTo(classType)); // validate assumption
+
+            // when
+            Integer result = ClassUtil.processClassByType(clazz, callback);
+
+            // then
+            assertThat(result, nullValue());
+        }
+
+        @Test
+        void shouldNotUseCallbackIfClassIsNull() {
+            // given
+            CallbackTestImpl typeCallback = new CallbackTestImpl();
+
+            // when
+            String result = ClassUtil.processClassByType(null, typeCallback);
+
+            // then
+            assertThat(result, nullValue());
+            assertThat(typeCallback.methodCalls, equalTo(0));
+        }
+
+        private Class<?> getSampleClassForType(ClassType classType) {
+            switch (classType) {
+                case ENUM:
+                    return EnumSample.class;
+                case ENUM_ENTRY:
+                    return EnumSample.EXTENDING.getClass();
+                case ANNOTATION:
+                    return Nullable.class;
+                case PRIMITIVE:
+                    return int.class;
+                case ARRAY:
+                    return TimeUnit[].class;
+                case INTERFACE:
+                    return Iterable.class;
+                case PROXY_CLASS:
+                    return getClass().getAnnotation(Nested.class).getClass();
+                case REGULAR_CLASS:
+                    return Math.class;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + classType);
+            }
+        }
     }
 
     // ----------
@@ -349,43 +431,53 @@ class ClassUtilTest {
 
     private static final class CallbackTestImpl extends ClassTypeCallback<String> {
 
+        int methodCalls;
+
         @Override
         public String forEnum(Class<? extends Enum<?>> enumClass) {
+            ++methodCalls;
             return "enum[" + enumClass.getName() + "]";
         }
 
         @Override
         public String forEnumEntry(Class<? extends Enum<?>> enumClass, Class<? extends Enum<?>> enumEntryClass) {
+            ++methodCalls;
             return "enumEntry[" + enumClass.getName() + "]";
         }
 
         @Override
         public String forAnnotation(Class<? extends Annotation> annotationClass) {
+            ++methodCalls;
             return "annotation[" + annotationClass.getName() + "]";
         }
 
         @Override
         public String forPrimitiveType(Class<?> primitiveClass) {
+            ++methodCalls;
             return "primitiveType[" + primitiveClass.getName() + "]";
         }
 
         @Override
         public String forArrayType(Class<?> arrayClass) {
+            ++methodCalls;
             return "arrayType[" + arrayClass.getName() + "]";
         }
 
         @Override
         public String forInterface(Class<?> interfaceType) {
+            ++methodCalls;
             return "interface[" + interfaceType.getName() + "]";
         }
 
         @Override
         public String forProxyClass(Class<?> proxyClass) {
+            ++methodCalls;
             return "proxyClass[" + proxyClass.getName() + "]";
         }
 
         @Override
         public String forRegularClass(Class<?> regularClass) {
+            ++methodCalls;
             return "regularClass[" + regularClass.getName() + "]";
         }
     }
@@ -397,9 +489,9 @@ class ClassUtilTest {
 
     private enum EnumSample {
 
-        CM,
+        DIRECT,
 
-        M() {
+        EXTENDING() {
             class Local {
 
             }
@@ -408,16 +500,14 @@ class ClassUtilTest {
             public Object getObject() {
                 return new Local();
             }
-        },
-
-        KM;
+        };
 
         EnumSample() {
 
         }
 
         public Object getObject() {
-            return null;
+            throw new IllegalStateException("Should only be called for entry that overrides it");
         }
 
         static final class InnerClassOfEnum {
@@ -432,6 +522,7 @@ class ClassUtilTest {
         }
     }
 
+    /** Class which is not an annotation but implements the annotation interface manually. */
     private static class FakeAnnotationType implements Annotation {
 
         @Override

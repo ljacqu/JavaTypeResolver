@@ -15,7 +15,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,16 +64,20 @@ class EnumUtilTest {
     @Test
     void shouldTryToResolveNameToEntry() {
         // given / when / then
-        assertThat(EnumUtil.valueOfOrNull(TestEnum.class, "FIRST"), equalTo(TestEnum.FIRST));
-        assertThat(EnumUtil.valueOfOrNull(TestEnum.class, "SECOND"), equalTo(TestEnum.SECOND));
-        assertThat(EnumUtil.valueOfOrNull(TestEnum.class, "THIRD"), equalTo(TestEnum.THIRD));
-        assertThat(EnumUtil.valueOfOrNull(TimeUnit.class, "MINUTES"), equalTo(TimeUnit.MINUTES));
+        assertThat(EnumUtil.tryValueOf(TestEnum.class, "FIRST"), equalTo(Optional.of(TestEnum.FIRST)));
+        assertThat(EnumUtil.tryValueOf(TestEnum.class, "SECOND"), equalTo(Optional.of(TestEnum.SECOND)));
+        assertThat(EnumUtil.tryValueOf(TestEnum.class, "THIRD"), equalTo(Optional.of(TestEnum.THIRD)));
+        assertThat(EnumUtil.tryValueOf(TimeUnit.class, "MINUTES"), equalTo(Optional.of(TimeUnit.MINUTES)));
+        assertThat(EnumUtil.tryValueOf(TestEnum.NestedEnum.class, "SECOND"), equalTo(Optional.of(TestEnum.NestedEnum.SECOND)));
 
-        assertThat(EnumUtil.valueOfOrNull(TestEnum.class, null), nullValue());
-        assertThat(EnumUtil.valueOfOrNull(TestEnum.class, "WRONG"), nullValue());
-        assertThat(EnumUtil.valueOfOrNull(null, "ENTRY"), nullValue());
-        assertThat(EnumUtil.valueOfOrNull(HashMap.class, "WRONG"), nullValue());
-        assertThat(EnumUtil.valueOfOrNull(TimeUnit.class, "WRONG"), nullValue());
+        assertThat(EnumUtil.tryValueOf(null, null), equalTo(Optional.empty()));
+        assertThat(EnumUtil.tryValueOf(TestEnum.class, null), equalTo(Optional.empty()));
+        assertThat(EnumUtil.tryValueOf(null, "ENTRY"), equalTo(Optional.empty()));
+
+        assertThat(EnumUtil.tryValueOf(TestEnum.class, "WRONG"), equalTo(Optional.empty()));
+        assertThat(EnumUtil.tryValueOf(TestEnum.NestedEnum.class, "WRONG"), equalTo(Optional.empty()));
+        assertThat(EnumUtil.tryValueOf(HashMap.class, "WRONG"), equalTo(Optional.empty()));
+        assertThat(EnumUtil.tryValueOf(TimeUnit.class, "WRONG"), equalTo(Optional.empty()));
     }
 
     @Test
@@ -146,7 +149,7 @@ class EnumUtilTest {
         FIRST,
 
         SECOND() {
-            class InsideSecondClass {
+            class InsideSecondClass { // Referenced via TestEnum.SECOND.getClass().getDeclaredClasses()[0];
 
             }
         },

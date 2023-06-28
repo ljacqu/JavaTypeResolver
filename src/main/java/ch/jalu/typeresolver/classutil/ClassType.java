@@ -9,8 +9,8 @@ public enum ClassType {
     ENUM,
 
     /**
-     * The class is the synthetic class of an enum entry that anonymously extends the base type. This class returns
-     * false for {@link Class#isEnum()} but is assignable to {@link Enum}.
+     * The class is the synthetic class of an enum entry that anonymously extends the enum type. Although this class
+     * returns {@code false} for the {@link Class#isEnum()} method, it is assignable to the {@link Enum} type.
      * <br>Example: {@code NumericShaper.Range.ETHIOPIC.getClass()}
      */
     ENUM_ENTRY,
@@ -35,7 +35,7 @@ public enum ClassType {
     PRIMITIVE,
 
     /**
-     * The class is an array, such as {@code String[]}.
+     * The class is an array, such as {@code String[].class} or {@code int[].class}.
      *
      * @see ch.jalu.typeresolver.array.ArrayClassProperties
      */
@@ -54,8 +54,11 @@ public enum ClassType {
 
     /**
      * The class is a "regular" Java class, which typically means it was declared with the {@code class} or
-     * {@code record} keyword. An enum type is also considered a "regular class".
+     * {@code record} keyword. A class is considered a "regular class" by exclusion: it is a "regular class" if none of
+     * the other types of this enum apply to it.
      * <br>Example: {@link String}
+     * <p>
+     * Note that nested classes and anonymous classes may also be considered "regular classes".
      */
     REGULAR_CLASS
 
