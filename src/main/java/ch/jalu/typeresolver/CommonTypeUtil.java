@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import ch.jalu.typeresolver.array.ArrayTypeUtil;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.GenericArrayType;
@@ -63,7 +63,7 @@ public final class CommonTypeUtil {
             GenericArrayType gat = (GenericArrayType) type;
             Class<?> componentAsClass = getDefinitiveClass(gat.getGenericComponentType());
             if (componentAsClass != null) {
-                return ArrayTypeUtils.createArrayClass(componentAsClass);
+                return ArrayTypeUtil.createArrayClass(componentAsClass);
             }
         }
         return null;

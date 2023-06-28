@@ -13,7 +13,7 @@ import java.util.Objects;
  * GenericArrayTypeProperties arrayProps = new GenericArrayTypeProperties(stringListArray);
  * // arrayProps = new GenericArrayTypeProperties(stringList, 2)}</pre>
  *
- * @see ArrayTypeUtils#getArrayProperty
+ * @see ArrayTypeUtil#getArrayProperty
  */
 public class GenericArrayTypeProperties implements ArrayTypeProperties {
 

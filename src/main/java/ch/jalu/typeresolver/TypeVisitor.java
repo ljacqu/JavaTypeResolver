@@ -1,7 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeProperties;
-import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import ch.jalu.typeresolver.array.ArrayTypeUtil;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -75,12 +75,12 @@ final class TypeVisitor {
                 visitClassesRecursively(genericInterface, typeConsumer);
             }
         } else {
-            ArrayTypeProperties arrayProperties = ArrayTypeUtils.getArrayProperty(type);
+            ArrayTypeProperties arrayProperties = ArrayTypeUtil.getArrayProperty(type);
             List<Type> componentTypeList = gatherAllTypesOfComponent(arrayProperties);
 
             // An array like Double[][] is also a Number[][] or an Object[][], but only for the same dimension
             for (Type component : componentTypeList) {
-                Type arrayType = ArrayTypeUtils.createArrayType(component, arrayProperties.getDimension());
+                Type arrayType = ArrayTypeUtil.createArrayType(component, arrayProperties.getDimension());
                 typeConsumer.accept(arrayType);
             }
 
@@ -88,7 +88,7 @@ final class TypeVisitor {
             List<Type> arrayClassParents = Arrays.asList(Serializable.class, Cloneable.class, Object.class);
             for (int dimension = arrayProperties.getDimension() - 1; dimension >= 0; --dimension) {
                 for (Type arrayClassParent : arrayClassParents) {
-                    Type arrayType = ArrayTypeUtils.createArrayType(arrayClassParent, dimension);
+                    Type arrayType = ArrayTypeUtil.createArrayType(arrayClassParent, dimension);
                     typeConsumer.accept(arrayType);
                 }
             }

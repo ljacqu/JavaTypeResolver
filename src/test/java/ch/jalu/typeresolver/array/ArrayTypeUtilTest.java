@@ -16,15 +16,15 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Test for {@link ArrayTypeUtils}.
+ * Test for {@link ArrayTypeUtil}.
  */
-class ArrayTypeUtilsTest {
+class ArrayTypeUtilTest {
 
     @Test
     void shouldCreateArrayClass() {
         // given / when
-        Class<?> stringArr = ArrayTypeUtils.createArrayClass(String.class);
-        Class<?> byte3dArr = ArrayTypeUtils.createArrayClass(byte[][].class);
+        Class<?> stringArr = ArrayTypeUtil.createArrayClass(String.class);
+        Class<?> byte3dArr = ArrayTypeUtil.createArrayClass(byte[][].class);
 
         // then
         assertThat(stringArr, equalTo(String[].class));
@@ -34,9 +34,9 @@ class ArrayTypeUtilsTest {
     @Test
     void shouldCreateArrayClassWithDefinedDimension() {
         // given / when
-        Class<?> stringArr = ArrayTypeUtils.createArrayClass(String.class, 3);
-        Class<?> charArr = ArrayTypeUtils.createArrayClass(char.class, 0);
-        Class<?> bigDecimalArr = ArrayTypeUtils.createArrayClass(BigDecimal.class, 2);
+        Class<?> stringArr = ArrayTypeUtil.createArrayClass(String.class, 3);
+        Class<?> charArr = ArrayTypeUtil.createArrayClass(char.class, 0);
+        Class<?> bigDecimalArr = ArrayTypeUtil.createArrayClass(BigDecimal.class, 2);
 
         // then
         assertThat(stringArr, equalTo(String[][][].class));
@@ -47,15 +47,15 @@ class ArrayTypeUtilsTest {
     @Test
     void shouldCreateClassWithAdditionalArrayDimension() {
         // given / when / then
-        assertThat(ArrayTypeUtils.createArrayClass(String.class), equalTo(String[].class));
-        assertThat(ArrayTypeUtils.createArrayClass(byte[].class), equalTo(byte[][].class));
-        assertThat(ArrayTypeUtils.createArrayClass(Serializable[][][].class), equalTo(Serializable[][][][].class));
+        assertThat(ArrayTypeUtil.createArrayClass(String.class), equalTo(String[].class));
+        assertThat(ArrayTypeUtil.createArrayClass(byte[].class), equalTo(byte[][].class));
+        assertThat(ArrayTypeUtil.createArrayClass(Serializable[][][].class), equalTo(Serializable[][][][].class));
     }
 
     @Test
     void shouldThrowForVoidAsComponent() {
         // given / when / then
-        assertThrows(IllegalArgumentException.class, () -> ArrayTypeUtils.createArrayClass(void.class));
+        assertThrows(IllegalArgumentException.class, () -> ArrayTypeUtil.createArrayClass(void.class));
     }
 
     @Test
@@ -65,8 +65,8 @@ class ArrayTypeUtilsTest {
         Type genericList = new TypeReference<List<Double>>() { }.getType();
 
         // when
-        Type integerArray = ArrayTypeUtils.createArrayType(integer, 2);
-        Type genericListArray = ArrayTypeUtils.createArrayType(genericList, 3);
+        Type integerArray = ArrayTypeUtil.createArrayType(integer, 2);
+        Type genericListArray = ArrayTypeUtil.createArrayType(genericList, 3);
 
         // then
         assertThat(integerArray, equalTo(Integer[][].class));
@@ -80,8 +80,8 @@ class ArrayTypeUtilsTest {
         Type genericSet = new TypeReference<Set<TimeUnit>>() { }.getType();
 
         // when / then
-        assertThat(ArrayTypeUtils.createArrayType(string, 0), equalTo(string));
-        assertThat(ArrayTypeUtils.createArrayType(genericSet, 0), equalTo(genericSet));
+        assertThat(ArrayTypeUtil.createArrayType(string, 0), equalTo(string));
+        assertThat(ArrayTypeUtil.createArrayType(genericSet, 0), equalTo(genericSet));
     }
 
     @Test
@@ -91,8 +91,8 @@ class ArrayTypeUtilsTest {
         Type genericSet = new TypeReference<Set<TimeUnit>>() { }.getType();
 
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> ArrayTypeUtils.createArrayType(string, -2));
-        assertThrows(IllegalArgumentException.class, () -> ArrayTypeUtils.createArrayType(genericSet, -1));
+        assertThrows(IllegalArgumentException.class, () -> ArrayTypeUtil.createArrayType(string, -2));
+        assertThrows(IllegalArgumentException.class, () -> ArrayTypeUtil.createArrayType(genericSet, -1));
     }
 
     @Test
@@ -102,8 +102,8 @@ class ArrayTypeUtilsTest {
         Class<?> charArray = char[][][].class;
 
         // when
-        ArrayTypeProperties doubleArrayProperties = ArrayTypeUtils.getArrayProperty(doubleListArray);
-        ArrayTypeProperties charArrayProperties = ArrayTypeUtils.getArrayProperty(charArray);
+        ArrayTypeProperties doubleArrayProperties = ArrayTypeUtil.getArrayProperty(doubleListArray);
+        ArrayTypeProperties charArrayProperties = ArrayTypeUtil.getArrayProperty(charArray);
 
         // then
         assertThat(doubleArrayProperties.getComponentType(), equalTo(new TypeReference<List<Double>>() { }.getType()));
@@ -119,8 +119,8 @@ class ArrayTypeUtilsTest {
         Type wildcard = WildcardTypeImpl.newUnboundedWildcard();
 
         // when
-        ArrayTypeProperties stringClassInfo = ArrayTypeUtils.getArrayProperty(stringClass);
-        ArrayTypeProperties wildcardInfo = ArrayTypeUtils.getArrayProperty(wildcard);
+        ArrayTypeProperties stringClassInfo = ArrayTypeUtil.getArrayProperty(stringClass);
+        ArrayTypeProperties wildcardInfo = ArrayTypeUtil.getArrayProperty(wildcard);
 
         // then
         assertThat(stringClassInfo.getComponentType(), equalTo(stringClass));

@@ -11,7 +11,7 @@ import java.util.Objects;
  * ArrayClassProperties arrayProps1 = new ArrayClassProperties(String.class);
  * // arrayProps2 = new ArrayClassProperties(String.class, 0)}</pre>
  *
- * @see ArrayTypeUtils#getArrayProperty
+ * @see ArrayTypeUtil#getArrayProperty
  */
 public class ArrayClassProperties implements ArrayTypeProperties {
 

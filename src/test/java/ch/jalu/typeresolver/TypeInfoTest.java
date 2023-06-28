@@ -1,7 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.JavaVersionHelper.ConstableAndConstantDescTypes;
-import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import ch.jalu.typeresolver.array.ArrayTypeUtil;
 import ch.jalu.typeresolver.reference.NestedTypeReference;
 import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.samples.nestedclasses.AdditionalNestedClassExt;
@@ -309,8 +309,8 @@ class TypeInfoTest {
             Class<?> constantDesc = constableTypes.get().getConstantDescClass();
             assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, constable, constantDesc, Object.class));
 
-            Class<?> constableArray = ArrayTypeUtils.createArrayClass(constable);
-            Class<?> constantDescArray = ArrayTypeUtils.createArrayClass(constantDesc);
+            Class<?> constableArray = ArrayTypeUtil.createArrayClass(constable);
+            Class<?> constantDescArray = ArrayTypeUtil.createArrayClass(constantDesc);
             assertThat(stringArrayAll, containsInAnyOrder(
                 String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), constableArray, constantDescArray, Object[].class,
                 Object.class, Cloneable.class, Serializable.class));

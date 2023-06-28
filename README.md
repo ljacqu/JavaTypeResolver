@@ -67,12 +67,12 @@ public static void main(String... args) {
 
 ```java
 public static void main(String... args) {
-  AbstractArrayProperties arrayInfo = ArrayTypeUtils.getArrayProperty(String[][].class);
+  AbstractArrayProperties arrayInfo = ArrayTypeUtil.getArrayProperty(String[][].class);
   // Outputs: "Component = class java.lang.String, dimension = 2"
   System.out.println("Component = " + arrayInfo.getComponentType() + ", dimension = " + arrayInfo.getDimension());
 
   Type listType = new TypeReference<List<String>>() { }.getType();
-  Type doubleArr = ArrayTypeUtils.createArrayType(listType, 3);
+  Type doubleArr = ArrayTypeUtil.createArrayType(listType, 3);
   // Outputs: "Created type: java.util.List<java.lang.String>[][][]"
   System.out.println("Created type: " + doubleArr);
 }

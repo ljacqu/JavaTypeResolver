@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import ch.jalu.typeresolver.array.ArrayTypeUtil;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 
 import javax.annotation.Nullable;
@@ -225,7 +225,7 @@ public class TypeInfo {
 
         if (clazz.isArray()) {
             TypeInfo resolvedComponent = getComponentType().resolveSuperclass(clazz.getComponentType());
-            return of(ArrayTypeUtils.createArrayType(resolvedComponent.getType()));
+            return of(ArrayTypeUtil.createArrayType(resolvedComponent.getType()));
         } else if (clazz.getTypeParameters().length > 0) {
             TypeVariableResolver resolver = getOrInitResolver();
             return new TypeInfo(new ParameterizedTypeImpl(clazz,
