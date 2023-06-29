@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.array.ArrayTypeUtil;
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.GenericArrayType;
@@ -11,9 +11,9 @@ import java.lang.reflect.WildcardType;
 /**
  * Contains simple utility methods for Type objects.
  */
-public final class CommonTypeUtil {
+public final class CommonTypeUtils {
 
-    private CommonTypeUtil() {
+    private CommonTypeUtils() {
     }
 
     /**
@@ -63,7 +63,7 @@ public final class CommonTypeUtil {
             GenericArrayType gat = (GenericArrayType) type;
             Class<?> componentAsClass = getDefinitiveClass(gat.getGenericComponentType());
             if (componentAsClass != null) {
-                return ArrayTypeUtil.createArrayClass(componentAsClass);
+                return ArrayTypeUtils.createArrayClass(componentAsClass);
             }
         }
         return null;

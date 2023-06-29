@@ -21,7 +21,7 @@ class ClassTypeTest {
         // given
         Test ann = getClass().getDeclaredMethod("shouldHaveValidDemo").getAnnotation(Test.class);
         String annClassStr = ann.getClass().toString();     // Prints something like "$Proxy9"
-        ClassType type = ClassUtil.getType(ann.getClass()); // Prints PROXY_CLASS
+        ClassType type = ClassUtils.getType(ann.getClass()); // Prints PROXY_CLASS
 
         // when / then
         // Java 8 and 11 have something like com.sun.proxy.$Proxy8, whereas Java 16 has "jdk.proxy2.$Proxy8"

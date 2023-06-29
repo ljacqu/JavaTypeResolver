@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static ch.jalu.typeresolver.classutil.ClassUtil.getSemanticType;
+import static ch.jalu.typeresolver.classutil.ClassUtils.getSemanticType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -31,11 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Test for {@link ClassUtil}.
+ * Test for {@link ClassUtils}.
  */
-class ClassUtilTest {
+class ClassUtilsTest {
 
-    /** Tests the Javadoc on {@link ClassUtil#getSemanticType}. */
+    /** Tests the Javadoc on {@link ClassUtils#getSemanticType}. */
     @Test
     void shouldHaveValidJavadocExample() {
         Class<?> r1 = getSemanticType(null);
@@ -59,36 +59,36 @@ class ClassUtilTest {
         @Test
         void shouldCheckWhetherClassExists() {
             // given / when / then
-            assertThat(ClassUtil.classExists("java.lang.String"), equalTo(true));
-            assertThat(ClassUtil.classExists("ch.jalu.typeresolver.TypeInfo"), equalTo(true));
-            assertThat(ClassUtil.classExists(Test.class.getCanonicalName()), equalTo(true));
+            assertThat(ClassUtils.classExists("java.lang.String"), equalTo(true));
+            assertThat(ClassUtils.classExists("ch.jalu.typeresolver.TypeInfo"), equalTo(true));
+            assertThat(ClassUtils.classExists(Test.class.getCanonicalName()), equalTo(true));
 
-            assertThat(ClassUtil.classExists("java.lang.DoesNotExist"), equalTo(false));
-            assertThat(ClassUtil.classExists("ch.jalu.typeresolver.Bogus"), equalTo(false));
+            assertThat(ClassUtils.classExists("java.lang.DoesNotExist"), equalTo(false));
+            assertThat(ClassUtils.classExists("ch.jalu.typeresolver.Bogus"), equalTo(false));
         }
 
         @Test
         void shouldLoadClassIfPossible() {
             // given / when / then
-            assertThat(ClassUtil.tryLoadClass("java.lang.String"), equalTo(Optional.of(String.class)));
-            assertThat(ClassUtil.tryLoadClass("ch.jalu.typeresolver.TypeInfo"), equalTo(Optional.of(TypeInfo.class)));
-            assertThat(ClassUtil.tryLoadClass(Test.class.getCanonicalName()), equalTo(Optional.of(Test.class)));
+            assertThat(ClassUtils.tryLoadClass("java.lang.String"), equalTo(Optional.of(String.class)));
+            assertThat(ClassUtils.tryLoadClass("ch.jalu.typeresolver.TypeInfo"), equalTo(Optional.of(TypeInfo.class)));
+            assertThat(ClassUtils.tryLoadClass(Test.class.getCanonicalName()), equalTo(Optional.of(Test.class)));
 
-            assertThat(ClassUtil.tryLoadClass("java.lang.DoesNotExist"), equalTo(Optional.empty()));
-            assertThat(ClassUtil.tryLoadClass("ch.jalu.typeresolver.Bogus"), equalTo(Optional.empty()));
+            assertThat(ClassUtils.tryLoadClass("java.lang.DoesNotExist"), equalTo(Optional.empty()));
+            assertThat(ClassUtils.tryLoadClass("ch.jalu.typeresolver.Bogus"), equalTo(Optional.empty()));
         }
 
         @Test
         void shouldLoadClassOrThrowException() {
             // given / when / then
-            assertThat(ClassUtil.loadClassOrThrow("java.lang.String"), equalTo(String.class));
-            assertThat(ClassUtil.loadClassOrThrow("ch.jalu.typeresolver.TypeInfo"), equalTo(TypeInfo.class));
-            assertThat(ClassUtil.loadClassOrThrow(Test.class.getCanonicalName()), equalTo(Test.class));
+            assertThat(ClassUtils.loadClassOrThrow("java.lang.String"), equalTo(String.class));
+            assertThat(ClassUtils.loadClassOrThrow("ch.jalu.typeresolver.TypeInfo"), equalTo(TypeInfo.class));
+            assertThat(ClassUtils.loadClassOrThrow(Test.class.getCanonicalName()), equalTo(Test.class));
 
             IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class,
-                () -> ClassUtil.loadClassOrThrow("java.lang.DoesNotExist"));
+                () -> ClassUtils.loadClassOrThrow("java.lang.DoesNotExist"));
             IllegalArgumentException ex2 = assertThrows(IllegalArgumentException.class,
-                () -> ClassUtil.loadClassOrThrow("ch.jalu.typeresolver.Bogus"));
+                () -> ClassUtils.loadClassOrThrow("ch.jalu.typeresolver.Bogus"));
 
             assertThat(ex1.getMessage(), equalTo("Class 'java.lang.DoesNotExist' could not be loaded"));
             assertThat(ex1.getCause(), instanceOf(ClassNotFoundException.class));
@@ -100,12 +100,12 @@ class ClassUtilTest {
     @Test
     void shouldReturnClassNameNullSafely() {
         // given / when / then
-        assertThat(ClassUtil.getClassName(null), equalTo("null"));
-        assertThat(ClassUtil.getClassName(3), equalTo("java.lang.Integer"));
-        assertThat(ClassUtil.getClassName(DayOfWeek.MONDAY), equalTo("java.time.DayOfWeek"));
-        assertThat(ClassUtil.getClassName(new String[0]), equalTo("[Ljava.lang.String;"));
-        assertThat(ClassUtil.getClassName(EnumSample.DIRECT), equalTo("ch.jalu.typeresolver.classutil.ClassUtilTest$EnumSample"));
-        assertThat(ClassUtil.getClassName(EnumSample.EXTENDING), matchesRegex("ch\\.jalu\\.typeresolver\\.classutil\\.ClassUtilTest\\$EnumSample\\$\\d+"));
+        assertThat(ClassUtils.getClassName(null), equalTo("null"));
+        assertThat(ClassUtils.getClassName(3), equalTo("java.lang.Integer"));
+        assertThat(ClassUtils.getClassName(DayOfWeek.MONDAY), equalTo("java.time.DayOfWeek"));
+        assertThat(ClassUtils.getClassName(new String[0]), equalTo("[Ljava.lang.String;"));
+        assertThat(ClassUtils.getClassName(EnumSample.DIRECT), equalTo("ch.jalu.typeresolver.classutil.ClassUtilsTest$EnumSample"));
+        assertThat(ClassUtils.getClassName(EnumSample.EXTENDING), matchesRegex("ch\\.jalu\\.typeresolver\\.classutil\\.ClassUtilsTest\\$EnumSample\\$\\d+"));
     }
 
     @Nested
@@ -114,26 +114,26 @@ class ClassUtilTest {
         @Test
         void shouldDetermineWhetherIsRegularClass() {
             // given / when / then
-            assertTrue(ClassUtil.isRegularJavaClass(Object.class));
-            assertTrue(ClassUtil.isRegularJavaClass(String.class));
-            assertTrue(ClassUtil.isRegularJavaClass(Double.class));
-            assertTrue(ClassUtil.isRegularJavaClass(HashMap.class));
-            assertTrue(ClassUtil.isRegularJavaClass(getClass()));
-            assertTrue(ClassUtil.isRegularJavaClass(FakeAnnotationType.class));
-            assertTrue(ClassUtil.isRegularJavaClass(EnumSample.InnerClassOfEnum.class));
-            assertTrue(ClassUtil.isRegularJavaClass(EnumSample.EXTENDING.getObject().getClass()));
+            assertTrue(ClassUtils.isRegularJavaClass(Object.class));
+            assertTrue(ClassUtils.isRegularJavaClass(String.class));
+            assertTrue(ClassUtils.isRegularJavaClass(Double.class));
+            assertTrue(ClassUtils.isRegularJavaClass(HashMap.class));
+            assertTrue(ClassUtils.isRegularJavaClass(getClass()));
+            assertTrue(ClassUtils.isRegularJavaClass(FakeAnnotationType.class));
+            assertTrue(ClassUtils.isRegularJavaClass(EnumSample.InnerClassOfEnum.class));
+            assertTrue(ClassUtils.isRegularJavaClass(EnumSample.EXTENDING.getObject().getClass()));
 
-            assertFalse(ClassUtil.isRegularJavaClass(null));
-            assertFalse(ClassUtil.isRegularJavaClass(EnumSample.class)); // enum
-            assertFalse(ClassUtil.isRegularJavaClass(EnumSample.EXTENDING.getClass())); // enum entry
-            assertFalse(ClassUtil.isRegularJavaClass(Test.class)); // annotation
-            assertFalse(ClassUtil.isRegularJavaClass(int.class)); // primitive
-            assertFalse(ClassUtil.isRegularJavaClass(void.class)); // primitive
-            assertFalse(ClassUtil.isRegularJavaClass(Object[].class)); // array
-            assertFalse(ClassUtil.isRegularJavaClass(double[].class)); // array
-            assertFalse(ClassUtil.isRegularJavaClass(Map.class)); // interface
-            assertFalse(ClassUtil.isRegularJavaClass(Map.Entry.class)); // interface
-            assertFalse(ClassUtil.isRegularJavaClass(getClass().getAnnotation(Nested.class).getClass())); // proxy
+            assertFalse(ClassUtils.isRegularJavaClass(null));
+            assertFalse(ClassUtils.isRegularJavaClass(EnumSample.class)); // enum
+            assertFalse(ClassUtils.isRegularJavaClass(EnumSample.EXTENDING.getClass())); // enum entry
+            assertFalse(ClassUtils.isRegularJavaClass(Test.class)); // annotation
+            assertFalse(ClassUtils.isRegularJavaClass(int.class)); // primitive
+            assertFalse(ClassUtils.isRegularJavaClass(void.class)); // primitive
+            assertFalse(ClassUtils.isRegularJavaClass(Object[].class)); // array
+            assertFalse(ClassUtils.isRegularJavaClass(double[].class)); // array
+            assertFalse(ClassUtils.isRegularJavaClass(Map.class)); // interface
+            assertFalse(ClassUtils.isRegularJavaClass(Map.Entry.class)); // interface
+            assertFalse(ClassUtils.isRegularJavaClass(getClass().getAnnotation(Nested.class).getClass())); // proxy
         }
 
         @Test
@@ -158,14 +158,14 @@ class ClassUtilTest {
 
             // when / then
             Stream.of(
-                    new SemanticTypeAndNameTestCase(EnumSample.DIRECT, EnumSample.class, "ClassUtilTest$EnumSample"),
-                    new SemanticTypeAndNameTestCase(EnumSample.EXTENDING, EnumSample.class, "ClassUtilTest$EnumSample"),
-                    new SemanticTypeAndNameTestCase(new EnumSample[0], EnumSample[].class, "ClassUtilTest$EnumSample[]"),
-                    new SemanticTypeAndNameTestCase(arrayOfExtendingType, Self.class, "ClassUtilTest$EnumSample$1[]"),
-                    new SemanticTypeAndNameTestCase(localClassInEnumEntry, Self.class, "ClassUtilTest$EnumSample$1$Local"),
-                    new SemanticTypeAndNameTestCase(innerClassOfEnum, EnumSample.InnerClassOfEnum.class, "ClassUtilTest$EnumSample$InnerClassOfEnum"),
-                    new SemanticTypeAndNameTestCase(EnumSample.NestedEnum.FIRST, EnumSample.NestedEnum.class, "ClassUtilTest$EnumSample$NestedEnum"),
-                    new SemanticTypeAndNameTestCase(EnumSample.NestedEnum.SECOND, EnumSample.NestedEnum.class, "ClassUtilTest$EnumSample$NestedEnum"))
+                    new SemanticTypeAndNameTestCase(EnumSample.DIRECT, EnumSample.class, "ClassUtilsTest$EnumSample"),
+                    new SemanticTypeAndNameTestCase(EnumSample.EXTENDING, EnumSample.class, "ClassUtilsTest$EnumSample"),
+                    new SemanticTypeAndNameTestCase(new EnumSample[0], EnumSample[].class, "ClassUtilsTest$EnumSample[]"),
+                    new SemanticTypeAndNameTestCase(arrayOfExtendingType, Self.class, "ClassUtilsTest$EnumSample$1[]"),
+                    new SemanticTypeAndNameTestCase(localClassInEnumEntry, Self.class, "ClassUtilsTest$EnumSample$1$Local"),
+                    new SemanticTypeAndNameTestCase(innerClassOfEnum, EnumSample.InnerClassOfEnum.class, "ClassUtilsTest$EnumSample$InnerClassOfEnum"),
+                    new SemanticTypeAndNameTestCase(EnumSample.NestedEnum.FIRST, EnumSample.NestedEnum.class, "ClassUtilsTest$EnumSample$NestedEnum"),
+                    new SemanticTypeAndNameTestCase(EnumSample.NestedEnum.SECOND, EnumSample.NestedEnum.class, "ClassUtilsTest$EnumSample$NestedEnum"))
                 .forEach(SemanticTypeAndNameTestCase::verify);
         }
 
@@ -183,8 +183,8 @@ class ClassUtilTest {
                     new SemanticTypeAndNameTestCase(testAnnotation, Test.class, testAnnProxyClassName, "@Test"),
                     new SemanticTypeAndNameTestCase(proxyClassArray, Self.class, testAnnProxyClassName + "[]"),
                     new SemanticTypeAndNameTestCase(testArray2d, Test[][].class, "Test[][]"),
-                    new SemanticTypeAndNameTestCase(fakeAnnotationType, Self.class, "ClassUtilTest$FakeAnnotationType"),
-                    new SemanticTypeAndNameTestCase(new FakeAnnotationType[0], FakeAnnotationType[].class, "ClassUtilTest$FakeAnnotationType[]"))
+                    new SemanticTypeAndNameTestCase(fakeAnnotationType, Self.class, "ClassUtilsTest$FakeAnnotationType"),
+                    new SemanticTypeAndNameTestCase(new FakeAnnotationType[0], FakeAnnotationType[].class, "ClassUtilsTest$FakeAnnotationType[]"))
                 .forEach(SemanticTypeAndNameTestCase::verify);
         }
     }
@@ -198,18 +198,18 @@ class ClassUtilTest {
             Class<?> annotationProxyClass = getClass().getAnnotation(Nested.class).getClass();
 
             // when / then
-            assertThat(ClassUtil.getType(null), nullValue());
-            assertThat(ClassUtil.getType(TimeUnit.class), equalTo(ClassType.ENUM));
-            assertThat(ClassUtil.getType(EnumSample.class), equalTo(ClassType.ENUM));
-            assertThat(ClassUtil.getType(EnumSample.EXTENDING.getClass()), equalTo(ClassType.ENUM_ENTRY));
-            assertThat(ClassUtil.getType(Override.class), equalTo(ClassType.ANNOTATION));
-            assertThat(ClassUtil.getType(int.class), equalTo(ClassType.PRIMITIVE));
-            assertThat(ClassUtil.getType(void.class), equalTo(ClassType.PRIMITIVE));
-            assertThat(ClassUtil.getType(Runnable.class), equalTo(ClassType.INTERFACE));
-            assertThat(ClassUtil.getType(int[].class), equalTo(ClassType.ARRAY));
-            assertThat(ClassUtil.getType(String[][].class), equalTo(ClassType.ARRAY));
-            assertThat(ClassUtil.getType(annotationProxyClass), equalTo(ClassType.PROXY_CLASS));
-            assertThat(ClassUtil.getType(String.class), equalTo(ClassType.REGULAR_CLASS));
+            assertThat(ClassUtils.getType(null), nullValue());
+            assertThat(ClassUtils.getType(TimeUnit.class), equalTo(ClassType.ENUM));
+            assertThat(ClassUtils.getType(EnumSample.class), equalTo(ClassType.ENUM));
+            assertThat(ClassUtils.getType(EnumSample.EXTENDING.getClass()), equalTo(ClassType.ENUM_ENTRY));
+            assertThat(ClassUtils.getType(Override.class), equalTo(ClassType.ANNOTATION));
+            assertThat(ClassUtils.getType(int.class), equalTo(ClassType.PRIMITIVE));
+            assertThat(ClassUtils.getType(void.class), equalTo(ClassType.PRIMITIVE));
+            assertThat(ClassUtils.getType(Runnable.class), equalTo(ClassType.INTERFACE));
+            assertThat(ClassUtils.getType(int[].class), equalTo(ClassType.ARRAY));
+            assertThat(ClassUtils.getType(String[][].class), equalTo(ClassType.ARRAY));
+            assertThat(ClassUtils.getType(annotationProxyClass), equalTo(ClassType.PROXY_CLASS));
+            assertThat(ClassUtils.getType(String.class), equalTo(ClassType.REGULAR_CLASS));
         }
 
         @Test
@@ -219,7 +219,7 @@ class ClassUtilTest {
             Class<?> clazz = TimeUnit.class;
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("enum[" + TimeUnit.class.getName() + "]"));
@@ -232,7 +232,7 @@ class ClassUtilTest {
             Class<?> clazz = EnumSample.EXTENDING.getClass();
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("enumEntry[" + EnumSample.class.getName() + "]"));
@@ -245,7 +245,7 @@ class ClassUtilTest {
             Class<?> clazz = Override.class;
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("annotation[" + Override.class.getName() + "]"));
@@ -258,7 +258,7 @@ class ClassUtilTest {
             Class<?> clazz = int.class;
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("primitiveType[" + int.class.getName() + "]"));
@@ -271,7 +271,7 @@ class ClassUtilTest {
             Class<?> clazz = int[].class;
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("arrayType[" + int[].class.getName() + "]"));
@@ -284,7 +284,7 @@ class ClassUtilTest {
             Class<?> clazz = Runnable.class;
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("interface[" + Runnable.class.getName() + "]"));
@@ -297,7 +297,7 @@ class ClassUtilTest {
             Class<?> clazz = getClass().getAnnotation(Nested.class).getClass();
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("proxyClass[" + clazz.getName() + "]"));
@@ -310,7 +310,7 @@ class ClassUtilTest {
             Class<?> clazz = String.class;
 
             // when
-            String result = ClassUtil.processClassByType(clazz, typeCallback);
+            String result = ClassUtils.processClassByType(clazz, typeCallback);
 
             // then
             assertThat(result, equalTo("regularClass[" + String.class.getName() + "]"));
@@ -322,10 +322,10 @@ class ClassUtilTest {
             // given
             Class<?> clazz = getSampleClassForType(classType);
             ClassTypeCallback<Integer> callback = new ClassTypeCallback<Integer>() { };
-            assertThat(ClassUtil.getType(clazz), equalTo(classType)); // validate assumption
+            assertThat(ClassUtils.getType(clazz), equalTo(classType)); // validate assumption
 
             // when
-            Integer result = ClassUtil.processClassByType(clazz, callback);
+            Integer result = ClassUtils.processClassByType(clazz, callback);
 
             // then
             assertThat(result, nullValue());
@@ -337,7 +337,7 @@ class ClassUtilTest {
             CallbackTestImpl typeCallback = new CallbackTestImpl();
 
             // when
-            String result = ClassUtil.processClassByType(null, typeCallback);
+            String result = ClassUtils.processClassByType(null, typeCallback);
 
             // then
             assertThat(result, nullValue());
@@ -408,13 +408,13 @@ class ClassUtilTest {
                     + expectedSemanticType + "', but got: '" + actualSemanticType + "'");
             }
 
-            String actualSemanticNameFromObj = ClassUtil.getSemanticName(input);
+            String actualSemanticNameFromObj = ClassUtils.getSemanticName(input);
             if (!actualSemanticNameFromObj.equals(expectedNameFromObject)) {
                 fail("For '" + input + "' (" + inputClass + "), expected semantic name (from obj) '"
                     + expectedNameFromObject + "', but got: '" + actualSemanticNameFromObj + "'");
             }
 
-            String actualSemanticNameFromClass = ClassUtil.getSemanticName(inputClass);
+            String actualSemanticNameFromClass = ClassUtils.getSemanticName(inputClass);
             if (!actualSemanticNameFromClass.equals(expectedNameFromClass)) {
                 fail("For '" + input + "' (" + inputClass + "), expected semantic name (from class) '"
                     + expectedNameFromClass + "', but got: '" + actualSemanticNameFromClass + "'");

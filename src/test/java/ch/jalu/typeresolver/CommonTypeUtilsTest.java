@@ -15,9 +15,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
- * Test for {@link CommonTypeUtil}.
+ * Test for {@link CommonTypeUtils}.
  */
-class CommonTypeUtilTest {
+class CommonTypeUtilsTest {
 
     @Test
     void shouldReturnRawTypeAsClass() {
@@ -26,8 +26,8 @@ class CommonTypeUtilTest {
         ParameterizedType map = (ParameterizedType) new TypeReference<Map<Integer, ?>>() { }.getType();
 
         // when / then
-        assertThat(CommonTypeUtil.getRawType(list), equalTo(List.class));
-        assertThat(CommonTypeUtil.getRawType(map), equalTo(Map.class));
+        assertThat(CommonTypeUtils.getRawType(list), equalTo(List.class));
+        assertThat(CommonTypeUtils.getRawType(map), equalTo(Map.class));
     }
 
     @Test
@@ -41,11 +41,11 @@ class CommonTypeUtilTest {
         WildcardTypeImpl wildcardWithObjectAndString = new WildcardTypeImpl(new Type[]{ Object.class, String.class }, new Type[0]);
 
         // when / then
-        assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObject), equalTo(false));
-        assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithString), equalTo(true));
+        assertThat(CommonTypeUtils.hasExplicitUpperBound(wildcardWithObject), equalTo(false));
+        assertThat(CommonTypeUtils.hasExplicitUpperBound(wildcardWithString), equalTo(true));
 
-        assertThat(CommonTypeUtil.hasExplicitUpperBound(emptyWildcard), equalTo(false));
-        assertThat(CommonTypeUtil.hasExplicitUpperBound(wildcardWithObjectAndString), equalTo(true));
+        assertThat(CommonTypeUtils.hasExplicitUpperBound(emptyWildcard), equalTo(false));
+        assertThat(CommonTypeUtils.hasExplicitUpperBound(wildcardWithObjectAndString), equalTo(true));
     }
 
     @Test
@@ -55,9 +55,9 @@ class CommonTypeUtilTest {
         Type stringListArr = new TypeReference<List<String>[][]>() { }.getType();
 
         // when / then
-        assertThat(CommonTypeUtil.getDefinitiveClass(String.class), equalTo(String.class));
-        assertThat(CommonTypeUtil.getDefinitiveClass(stringList), equalTo(List.class));
-        assertThat(CommonTypeUtil.getDefinitiveClass(stringListArr), equalTo(List[][].class));
+        assertThat(CommonTypeUtils.getDefinitiveClass(String.class), equalTo(String.class));
+        assertThat(CommonTypeUtils.getDefinitiveClass(stringList), equalTo(List.class));
+        assertThat(CommonTypeUtils.getDefinitiveClass(stringListArr), equalTo(List[][].class));
     }
 
     @Test
@@ -67,7 +67,7 @@ class CommonTypeUtilTest {
         Type wildcardArray = new GenericArrayTypeImpl(wildcard);
 
         // when / then
-        assertThat(CommonTypeUtil.getDefinitiveClass(wildcard), nullValue());
-        assertThat(CommonTypeUtil.getDefinitiveClass(wildcardArray), nullValue());
+        assertThat(CommonTypeUtils.getDefinitiveClass(wildcard), nullValue());
+        assertThat(CommonTypeUtils.getDefinitiveClass(wildcardArray), nullValue());
     }
 }

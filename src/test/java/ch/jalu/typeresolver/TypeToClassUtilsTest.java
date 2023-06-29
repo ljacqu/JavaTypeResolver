@@ -20,9 +20,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 /**
- * Test for {@link TypeToClassUtil}.
+ * Test for {@link TypeToClassUtils}.
  */
-class TypeToClassUtilTest {
+class TypeToClassUtilsTest {
 
     @Test
     void shouldReturnClassIfArgumentIsClass() {
@@ -132,8 +132,8 @@ class TypeToClassUtilTest {
     }
 
     private static void checkHasReadAndWriteClass(Type givenType, Class<?> expectedSafeToRead, Class<?> expectedSafeToWrite) {
-        assertThat(TypeToClassUtil.getSafeToReadClass(givenType), equalTo(expectedSafeToRead));
-        assertThat(TypeToClassUtil.getSafeToWriteClass(givenType), equalTo(expectedSafeToWrite));
+        assertThat(TypeToClassUtils.getSafeToReadClass(givenType), equalTo(expectedSafeToRead));
+        assertThat(TypeToClassUtils.getSafeToWriteClass(givenType), equalTo(expectedSafeToWrite));
     }
 
     // -----------

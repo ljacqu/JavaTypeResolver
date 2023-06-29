@@ -9,7 +9,7 @@ import java.lang.annotation.Annotation;
  * are of interest.
  *
  * @param <R> the result type of the callback
- * @see ClassUtil#processClassByType
+ * @see ClassUtils#processClassByType
  */
 public abstract class ClassTypeCallback<R> {
 
@@ -98,7 +98,7 @@ public abstract class ClassTypeCallback<R> {
     }
 
     /**
-     * Called when the class to process is a "regular class", as explained in {@link ClassUtil#isRegularJavaClass}.
+     * Called when the class to process is a "regular class", as explained in {@link ClassUtils#isRegularJavaClass}.
      *
      * @param regularClass the Java class
      * @return result or null

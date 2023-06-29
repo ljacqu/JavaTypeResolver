@@ -1,7 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeProperties;
-import ch.jalu.typeresolver.array.ArrayTypeUtil;
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
@@ -62,14 +62,14 @@ class ReadmeDemoTest {
 
   @Test
   void shouldExecuteThirdDemoAsExpected() {
-    ArrayTypeProperties arrayInfo = ArrayTypeUtil.getArrayProperty(String[][].class);
+    ArrayTypeProperties arrayInfo = ArrayTypeUtils.getArrayProperty(String[][].class);
     // Outputs: "Component = class java.lang.String, dimension = 2"
     // System.out.println("Component = " + arrayInfo.getComponentType() + ", dimension = " + arrayInfo.getDimension());
     assertThat(arrayInfo.getComponentType(), equalTo(String.class));
     assertThat(arrayInfo.getDimension(), equalTo(2));
 
     Type listType = new TypeReference<List<String>>() { }.getType();
-    Type doubleArr = ArrayTypeUtil.createArrayType(listType, 3);
+    Type doubleArr = ArrayTypeUtils.createArrayType(listType, 3);
     // Outputs: "Created java.util.List<java.lang.String>[][][]"
     // System.out.println("Created type " + doubleArr);
     assertThat(doubleArr.toString(), equalTo("java.util.List<java.lang.String>[][][]"));

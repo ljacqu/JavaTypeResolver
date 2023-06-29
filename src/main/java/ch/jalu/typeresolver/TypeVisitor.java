@@ -1,7 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeProperties;
-import ch.jalu.typeresolver.array.ArrayTypeUtil;
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -45,7 +45,7 @@ final class TypeVisitor {
      */
     static <E, C extends Collection<? super E>> C gatherAllTypes(Type type, TypeVariableResolver resolver,
                                                                  C collection, Function<Type, E> typeToElementFn) {
-        if (CommonTypeUtil.getDefinitiveClass(type) != null) {
+        if (CommonTypeUtils.getDefinitiveClass(type) != null) {
             Consumer<Type> typeConsumer = aType -> {
                 E typeAsElement = typeToElementFn.apply(resolver.resolve(aType));
                 collection.add(typeAsElement);
@@ -57,7 +57,7 @@ final class TypeVisitor {
     }
 
     static void visitAllTypes(Type type, TypeVariableResolver resolver, Consumer<Type> typeConsumer) {
-        if (CommonTypeUtil.getDefinitiveClass(type) != null) {
+        if (CommonTypeUtils.getDefinitiveClass(type) != null) {
             visitClassesRecursively(type, aType -> typeConsumer.accept(resolver.resolve(aType)));
         }
     }
@@ -67,7 +67,7 @@ final class TypeVisitor {
             return;
         }
 
-        Class<?> typeAsClass = CommonTypeUtil.getDefinitiveClass(type);
+        Class<?> typeAsClass = CommonTypeUtils.getDefinitiveClass(type);
         if (!typeAsClass.isArray()) {
             typeConsumer.accept(type);
             visitClassesRecursively(typeAsClass.getGenericSuperclass(), typeConsumer);
@@ -75,12 +75,12 @@ final class TypeVisitor {
                 visitClassesRecursively(genericInterface, typeConsumer);
             }
         } else {
-            ArrayTypeProperties arrayProperties = ArrayTypeUtil.getArrayProperty(type);
+            ArrayTypeProperties arrayProperties = ArrayTypeUtils.getArrayProperty(type);
             List<Type> componentTypeList = gatherAllTypesOfComponent(arrayProperties);
 
             // An array like Double[][] is also a Number[][] or an Object[][], but only for the same dimension
             for (Type component : componentTypeList) {
-                Type arrayType = ArrayTypeUtil.createArrayType(component, arrayProperties.getDimension());
+                Type arrayType = ArrayTypeUtils.createArrayType(component, arrayProperties.getDimension());
                 typeConsumer.accept(arrayType);
             }
 
@@ -88,7 +88,7 @@ final class TypeVisitor {
             List<Type> arrayClassParents = Arrays.asList(Serializable.class, Cloneable.class, Object.class);
             for (int dimension = arrayProperties.getDimension() - 1; dimension >= 0; --dimension) {
                 for (Type arrayClassParent : arrayClassParents) {
-                    Type arrayType = ArrayTypeUtil.createArrayType(arrayClassParent, dimension);
+                    Type arrayType = ArrayTypeUtils.createArrayType(arrayClassParent, dimension);
                     typeConsumer.accept(arrayType);
                 }
             }
@@ -103,7 +103,7 @@ final class TypeVisitor {
         // If we were based on something like List[][] we won't get Object in the components since List is an interface,
         // but List[][] is also an Object[][] so we add it here, making sure NOT to do so for primitive component types
         // (e.g. float[][] is not an Object[][])
-        if (!CommonTypeUtil.getDefinitiveClass(arrayProperties.getComponentType()).isPrimitive()
+        if (!CommonTypeUtils.getDefinitiveClass(arrayProperties.getComponentType()).isPrimitive()
                 && !typesOfComponent.contains(Object.class)) {
             typesOfComponent.add(Object.class);
         }

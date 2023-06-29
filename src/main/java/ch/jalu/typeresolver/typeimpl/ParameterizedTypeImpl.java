@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.CommonTypeUtil;
+import ch.jalu.typeresolver.CommonTypeUtils;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.ParameterizedType;
@@ -39,7 +39,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
      * @param parameterizedType the parameterized type to copy from
      */
     public ParameterizedTypeImpl(ParameterizedType parameterizedType) {
-        this.rawType = CommonTypeUtil.getRawType(parameterizedType);
+        this.rawType = CommonTypeUtils.getRawType(parameterizedType);
         this.ownerType = parameterizedType.getOwnerType();
         this.actualTypeArguments = parameterizedType.getActualTypeArguments();
     }

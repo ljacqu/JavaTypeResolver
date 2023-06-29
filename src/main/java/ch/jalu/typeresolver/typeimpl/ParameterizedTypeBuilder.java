@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.CommonTypeUtil;
+import ch.jalu.typeresolver.CommonTypeUtils;
 import ch.jalu.typeresolver.TypeInfo;
 
 import javax.annotation.Nullable;
@@ -41,7 +41,7 @@ public class ParameterizedTypeBuilder {
      * @param parameterizedType the parameterized type to start the builder off with
      */
     public ParameterizedTypeBuilder(ParameterizedType parameterizedType) {
-        this.rawType = CommonTypeUtil.getRawType(parameterizedType);
+        this.rawType = CommonTypeUtils.getRawType(parameterizedType);
         this.ownerType = parameterizedType.getOwnerType();
         this.typeParameters = rawType.getTypeParameters();
         this.newTypeArguments = parameterizedType.getActualTypeArguments().clone();

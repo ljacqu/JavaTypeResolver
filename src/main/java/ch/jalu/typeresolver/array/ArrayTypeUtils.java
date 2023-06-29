@@ -9,9 +9,9 @@ import java.lang.reflect.Type;
 /**
  * Utilities for array types.
  */
-public final class ArrayTypeUtil {
+public final class ArrayTypeUtils {
 
-    private ArrayTypeUtil() {
+    private ArrayTypeUtils() {
     }
 
     /**

@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.classutil;
 
-import ch.jalu.typeresolver.EnumUtil;
+import ch.jalu.typeresolver.EnumUtils;
 import ch.jalu.typeresolver.array.ArrayClassProperties;
 
 import javax.annotation.Nullable;
@@ -11,9 +11,9 @@ import java.util.Optional;
 /**
  * Various utilities to load and inspect {@link Class} objects.
  */
-public final class ClassUtil {
+public final class ClassUtils {
 
-    private ClassUtil() {
+    private ClassUtils() {
     }
 
     /**
@@ -124,7 +124,7 @@ public final class ClassUtil {
     /**
      * Returns a human-friendly string representation of the given class, or of the most meaningful associated type.
      * Concretely, this means any synthetic classes for enum entries are replaced by the enum type itself, as returned
-     * by {@link EnumUtil#asEnumType}.
+     * by {@link EnumUtils#asEnumType}.
      * <p>
      * Prefer using {@link #getSemanticName(Object)} whenever possible, as more semantic types can be inferred based
      * on an object.
@@ -133,8 +133,8 @@ public final class ClassUtil {
      * @return semantic type as class name, or "null" as string (never null itself)
      */
     public static String getSemanticName(@Nullable Class<?> clazz) {
-        return EnumUtil.asEnumType(clazz)
-            .map(ClassUtil::createNameOfSemanticType)
+        return EnumUtils.asEnumType(clazz)
+            .map(ClassUtils::createNameOfSemanticType)
             .orElseGet(() -> createNameOfSemanticType(clazz));
     }
 

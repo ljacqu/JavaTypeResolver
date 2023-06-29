@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 /**
  * Utilities for enum classes.
  */
-public final class EnumUtil {
+public final class EnumUtils {
 
-    private EnumUtil() {
+    private EnumUtils() {
     }
 
     /**
@@ -43,10 +43,10 @@ public final class EnumUtil {
      *   Class<?> class1 = NumericShaper.Range.class;
      *   Class<?> class2 = NumericShaper.Range.ETHIOPIC.getClass(); // NumericShaper$Range$1.class
      *
-     *   EnumUtil.isEnumOrEnumEntryType(class1)    = true
-     *   EnumUtil.isEnumOrEnumEntryType(class2)    = true
-     *   EnumUtil.isEnumOrEnumEntryType(null)      = false
-     *   EnumUtil.isEnumOrEnumEntryType(int.class) = false
+     *   EnumUtils.isEnumOrEnumEntryType(class1)    = true
+     *   EnumUtils.isEnumOrEnumEntryType(class2)    = true
+     *   EnumUtils.isEnumOrEnumEntryType(null)      = false
+     *   EnumUtils.isEnumOrEnumEntryType(int.class) = false
      * }</pre>
      *
      * @param clazz the class to inspect, or null
@@ -64,10 +64,10 @@ public final class EnumUtil {
      *   Class<?> class1 = NumericShaper.Range.class;
      *   Class<?> class2 = NumericShaper.Range.ETHIOPIC.getClass(); // NumericShaper$Range$1.class
      *
-     *   EnumUtil.asEnumType(class1)    = Optional.of(NumericShaper.Range.class)
-     *   EnumUtil.asEnumType(class2)    = Optional.of(NumericShaper.Range.class)
-     *   EnumUtil.asEnumType(null)      = Optional.empty()
-     *   EnumUtil.asEnumType(int.class) = Optional.empty()
+     *   EnumUtils.asEnumType(class1)    = Optional.of(NumericShaper.Range.class)
+     *   EnumUtils.asEnumType(class2)    = Optional.of(NumericShaper.Range.class)
+     *   EnumUtils.asEnumType(null)      = Optional.empty()
+     *   EnumUtils.asEnumType(int.class) = Optional.empty()
      * }</pre>
      * <p>
      * Note: to always get the actual enum class of an enum entry, use {@link Enum#getDeclaringClass}.

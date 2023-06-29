@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.CommonTypeUtil;
+import ch.jalu.typeresolver.CommonTypeUtils;
 
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
@@ -89,7 +89,7 @@ public class WildcardTypeImpl implements WildcardType {
         if (lowerBounds.length > 0) {
             bounds = lowerBounds;
             sb.append("? super ");
-        } else if (!CommonTypeUtil.hasExplicitUpperBound(this)) {
+        } else if (!CommonTypeUtils.hasExplicitUpperBound(this)) {
             return "?";
         } else { // upperBounds.length > 0
             bounds = upperBounds;

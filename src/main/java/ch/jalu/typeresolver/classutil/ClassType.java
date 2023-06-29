@@ -24,7 +24,7 @@ public enum ClassType {
      * @Test void demo() throws Exception {
      *   Test ann = getClass().getDeclaredMethod("demo").getAnnotation(Test.class);
      *   System.out.println(ann.getClass()); // Prints something like "$Proxy9"
-     *   System.out.println(ClassUtil.getType(ann.getClass())); // Prints PROXY_CLASS
+     *   System.out.println(ClassUtils.getType(ann.getClass())); // Prints PROXY_CLASS
      * }}</pre>
      */
     ANNOTATION,

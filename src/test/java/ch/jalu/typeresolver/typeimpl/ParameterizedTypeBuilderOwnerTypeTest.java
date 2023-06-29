@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.typeimpl;
 
-import ch.jalu.typeresolver.TypeToClassUtil;
+import ch.jalu.typeresolver.TypeToClassUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -170,7 +170,7 @@ class ParameterizedTypeBuilderOwnerTypeTest {
     private void printOwnerTypes(Type ownerType) {
         Type currentOwner = ownerType;
         while (currentOwner != null) {
-            String typeName = TypeToClassUtil.getSafeToReadClass(currentOwner).getSimpleName();
+            String typeName = TypeToClassUtils.getSafeToReadClass(currentOwner).getSimpleName();
             System.out.println(" " + currentOwner.getClass().getSimpleName() + " [" + typeName + "]");
             if (currentOwner instanceof ParameterizedType) {
                 currentOwner = ((ParameterizedType) currentOwner).getOwnerType();
@@ -210,7 +210,7 @@ class ParameterizedTypeBuilderOwnerTypeTest {
                 if (currentOwnerLevel instanceof Class<?>) {
                     actualType = "cls(" + ((Class<?>) currentOwnerLevel).getSimpleName() + ")";
                 } else if (currentOwnerLevel instanceof ParameterizedType) {
-                    actualType = "pt(" + TypeToClassUtil.getSafeToReadClass(currentOwnerLevel).getSimpleName() + ")";
+                    actualType = "pt(" + TypeToClassUtils.getSafeToReadClass(currentOwnerLevel).getSimpleName() + ")";
                 } else { // currentOwnerLevel == null
                     actualType = Objects.toString(currentOwnerLevel);
                 }

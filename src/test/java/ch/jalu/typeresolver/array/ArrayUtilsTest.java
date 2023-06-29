@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.array;
 
-import ch.jalu.typeresolver.EnumUtil;
+import ch.jalu.typeresolver.EnumUtils;
 import ch.jalu.typeresolver.array.ArrayUtils.ArrayComponentType;
 import ch.jalu.typeresolver.primitives.Primitives;
 import org.junit.jupiter.api.Nested;
@@ -81,7 +81,7 @@ class ArrayUtilsTest {
             assertThat(Array.getLength(emptyCopy), equalTo(0));
 
             List<Object> elements = createListWithItems(componentType, false);
-            Object emptyValue = EnumUtil.tryValueOf(Primitives.class, componentType.name())
+            Object emptyValue = EnumUtils.tryValueOf(Primitives.class, componentType.name())
                 .map(Primitives::getDefaultValue)
                 .orElse(null);
 
@@ -110,7 +110,7 @@ class ArrayUtilsTest {
 
             // then
             List<Object> elements = createListWithItems(componentType, false);
-            Object emptyValue = EnumUtil.tryValueOf(Primitives.class, componentType.name())
+            Object emptyValue = EnumUtils.tryValueOf(Primitives.class, componentType.name())
                 .map(Primitives::getDefaultValue)
                 .orElse(null);
 

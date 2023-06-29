@@ -1,7 +1,7 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.JavaVersionHelper.ConstableAndConstantDescTypes;
-import ch.jalu.typeresolver.array.ArrayTypeUtil;
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.reference.TypeReference;
 import org.junit.jupiter.api.Test;
 
@@ -90,8 +90,8 @@ class TypeVisitorTest {
         // then
         Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
         if (constableTypes.isPresent()) {
-            Class<?> constableArray = ArrayTypeUtil.createArrayClass(constableTypes.get().getConstableClass());
-            Class<?> constantDescArray = ArrayTypeUtil.createArrayClass(constableTypes.get().getConstantDescClass());
+            Class<?> constableArray = ArrayTypeUtils.createArrayClass(constableTypes.get().getConstableClass());
+            Class<?> constantDescArray = ArrayTypeUtils.createArrayClass(constableTypes.get().getConstantDescClass());
 
             assertThat(stringArrayAll, containsInAnyOrder(
                 String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), constableArray, constantDescArray, Object[].class,
@@ -181,7 +181,7 @@ class TypeVisitorTest {
         // given
         TypeInfo typeInfo = new TypeInfo(BigDecimal.class);
         List<String> typesOfBigDecimal = new ArrayList<>();
-        Consumer<Type> typeVisitor = type -> typesOfBigDecimal.add(CommonTypeUtil.getDefinitiveClass(type).getSimpleName());
+        Consumer<Type> typeVisitor = type -> typesOfBigDecimal.add(CommonTypeUtils.getDefinitiveClass(type).getSimpleName());
 
         // when
         typeInfo.visitAllTypes(typeVisitor);
