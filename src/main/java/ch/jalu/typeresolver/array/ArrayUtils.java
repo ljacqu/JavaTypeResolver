@@ -11,16 +11,17 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Offers methods that delegate to various methods in {@link Arrays} with specific array types. Useful if an array
- * is of unknown type ({@code float[]}, {@code String[]}, etc.). Methods throw a runtime exception if the given
- * object is not an array; check whether an object is an array first with {@code object.getClass().isArray()}.
+ * This class contains methods that can handle arrays of any type ({@code boolean[]}, {@code byte[]}, {@code Object[]},
+ * etc.). Most methods delegate to methods in {@link Arrays} with the appropriate signature. The methods in this class
+ * are useful when dealing with arrays held as {@code Object} variable whose specific array type is unknown.
  * <p>
- * See individual methods for specific caveats.
+ * Methods throw a runtime exception if the given object is not an array. To check if an object is an array, use
+ * {@code object.getClass().isArray()}. See individual methods for specific caveats.
  */
 @SuppressWarnings("checkstyle:OneStatementPerLine") // Justification: line-by-line aligned casts in switch statements
-public final class ArraysMethodsDelegator {
+public final class ArrayUtils {
 
-    private ArraysMethodsDelegator() {
+    private ArrayUtils() {
     }
 
     /**
@@ -258,8 +259,8 @@ public final class ArraysMethodsDelegator {
      * {@link Arrays#stream(int[])}, return different types of streams, this method returns an object stream which is
      * constructed by getting the elements of the array by index.
      * <p>
-     * It may be better to handle array types individually with their respective stream types when performance is
-     * crucial.
+     * It may be more efficient to handle array types individually with their respective stream types when performance
+     * is crucial.
      *
      * @param array the array to stream over
      * @return stream of the array's elements (as reference types)

@@ -1,7 +1,7 @@
 package ch.jalu.typeresolver.array;
 
 import ch.jalu.typeresolver.EnumUtil;
-import ch.jalu.typeresolver.array.ArraysMethodsDelegator.ArrayComponentType;
+import ch.jalu.typeresolver.array.ArrayUtils.ArrayComponentType;
 import ch.jalu.typeresolver.primitives.Primitives;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,9 +28,9 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Test for {@link ArraysMethodsDelegator}.
+ * Test for {@link ArrayUtils}.
  */
-class ArraysMethodsDelegatorTest {
+class ArrayUtilsTest {
 
     /** Holds all tests for delegation methods that test the working scenarios (i.e. no exceptions). */
     @Nested
@@ -46,10 +46,10 @@ class ArraysMethodsDelegatorTest {
             Object searchKey = elements.get(3);
 
             // when
-            int idxOfEmpty = ArraysMethodsDelegator.binarySearch(emptyArr, searchKey);
-            int idxOfFull = ArraysMethodsDelegator.binarySearch(sortedArr, searchKey);
-            int idxOfPartial = ArraysMethodsDelegator.binarySearch(sortedArr, 2, 5, searchKey);
-            int idxOutOfRange = ArraysMethodsDelegator.binarySearch(sortedArr, 0, 3, searchKey);
+            int idxOfEmpty = ArrayUtils.binarySearch(emptyArr, searchKey);
+            int idxOfFull = ArrayUtils.binarySearch(sortedArr, searchKey);
+            int idxOfPartial = ArrayUtils.binarySearch(sortedArr, 2, 5, searchKey);
+            int idxOutOfRange = ArrayUtils.binarySearch(sortedArr, 0, 3, searchKey);
 
             // then
             assertThat(idxOfEmpty, lessThan(0));
@@ -71,9 +71,9 @@ class ArraysMethodsDelegatorTest {
             Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
 
             // when
-            Object emptyCopy = ArraysMethodsDelegator.copyOf(emptyArr, 0);
-            Object sevenArr = ArraysMethodsDelegator.copyOf(fiveArr, 7);
-            Object threeArr = ArraysMethodsDelegator.copyOf(emptyArr, 3);
+            Object emptyCopy = ArrayUtils.copyOf(emptyArr, 0);
+            Object sevenArr = ArrayUtils.copyOf(fiveArr, 7);
+            Object threeArr = ArrayUtils.copyOf(emptyArr, 3);
 
             // then
             assertThat(emptyCopy, instanceOf(emptyArr.getClass()));
@@ -104,9 +104,9 @@ class ArraysMethodsDelegatorTest {
             Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
 
             // when
-            Object emptyCopy = ArraysMethodsDelegator.copyOfRange(emptyArr, 0, 3);
-            Object arr26 = ArraysMethodsDelegator.copyOfRange(fiveArr, 2, 6);
-            Object arr49 = ArraysMethodsDelegator.copyOfRange(fiveArr, 4, 9);
+            Object emptyCopy = ArrayUtils.copyOfRange(emptyArr, 0, 3);
+            Object arr26 = ArrayUtils.copyOfRange(fiveArr, 2, 6);
+            Object arr49 = ArrayUtils.copyOfRange(fiveArr, 4, 9);
 
             // then
             List<Object> elements = createListWithItems(componentType, false);
@@ -141,9 +141,9 @@ class ArraysMethodsDelegatorTest {
             Object fiveSortedArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
 
             // when
-            boolean isEq1 = ArraysMethodsDelegator.equals(fiveArr, fiveArr);
-            boolean isEq2 = ArraysMethodsDelegator.equals(fiveArr, fiveSortedArr);
-            boolean isEq3 = ArraysMethodsDelegator.equals(emptyArr, fiveArr);
+            boolean isEq1 = ArrayUtils.equals(fiveArr, fiveArr);
+            boolean isEq2 = ArrayUtils.equals(fiveArr, fiveSortedArr);
+            boolean isEq3 = ArrayUtils.equals(emptyArr, fiveArr);
 
             // then
             assertThat(isEq1, equalTo(true));
@@ -162,10 +162,10 @@ class ArraysMethodsDelegatorTest {
             List<Object> list = createListWithItems(componentType, false);
 
             // when
-            ArraysMethodsDelegator.fill(emptyArr, list.get(1));
-            ArraysMethodsDelegator.fill(fiveArr1, list.get(0));
-            ArraysMethodsDelegator.fill(fiveArr2, 0, 2, list.get(0));
-            ArraysMethodsDelegator.fill(fiveArr3, 2, 5, list.get(3));
+            ArrayUtils.fill(emptyArr, list.get(1));
+            ArrayUtils.fill(fiveArr1, list.get(0));
+            ArrayUtils.fill(fiveArr2, 0, 2, list.get(0));
+            ArrayUtils.fill(fiveArr3, 2, 5, list.get(3));
 
             // then
             assertThat(Array.get(fiveArr1, 0), equalTo(list.get(0)));
@@ -196,9 +196,9 @@ class ArraysMethodsDelegatorTest {
             Object fiveArrSorted = createArray(componentType, ArrayType.FIVE_ITEMS, true);
 
             // when
-            int hashCode1 = ArraysMethodsDelegator.hashCode(emptyArr);
-            int hashCode2 = ArraysMethodsDelegator.hashCode(fiveArr);
-            int hashCode3 = ArraysMethodsDelegator.hashCode(fiveArrSorted);
+            int hashCode1 = ArrayUtils.hashCode(emptyArr);
+            int hashCode2 = ArrayUtils.hashCode(fiveArr);
+            int hashCode3 = ArrayUtils.hashCode(fiveArrSorted);
 
             // then
             assertThat(hashCode1, equalTo(1));
@@ -216,13 +216,13 @@ class ArraysMethodsDelegatorTest {
             Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
 
             // when
-            ArraysMethodsDelegator.parallelSort(emptyArr);
-            ArraysMethodsDelegator.parallelSort(fiveArr1);
-            ArraysMethodsDelegator.parallelSort(fiveArr2, 2, 5);
+            ArrayUtils.parallelSort(emptyArr);
+            ArrayUtils.parallelSort(fiveArr1);
+            ArrayUtils.parallelSort(fiveArr2, 2, 5);
 
             // then
             Object sortedFiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
-            assertThat(ArraysMethodsDelegator.equals(fiveArr1, sortedFiveArr), equalTo(true));
+            assertThat(ArrayUtils.equals(fiveArr1, sortedFiveArr), equalTo(true));
 
             List<Object> list = createListWithItems(componentType, false);
             List<Object> list2Thru5Sorted = new ArrayList<>(5);
@@ -245,13 +245,13 @@ class ArraysMethodsDelegatorTest {
             Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
 
             // when
-            ArraysMethodsDelegator.sort(emptyArr);
-            ArraysMethodsDelegator.sort(fiveArr1);
-            ArraysMethodsDelegator.sort(fiveArr2, 2, 5);
+            ArrayUtils.sort(emptyArr);
+            ArrayUtils.sort(fiveArr1);
+            ArrayUtils.sort(fiveArr2, 2, 5);
 
             // then
             Object sortedFiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
-            assertThat(ArraysMethodsDelegator.equals(fiveArr1, sortedFiveArr), equalTo(true));
+            assertThat(ArrayUtils.equals(fiveArr1, sortedFiveArr), equalTo(true));
 
             List<Object> list = createListWithItems(componentType, false);
             List<Object> list2Thru5Sorted = new ArrayList<>(5);
@@ -273,8 +273,8 @@ class ArraysMethodsDelegatorTest {
             Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
 
             // when
-            String toString1 = ArraysMethodsDelegator.toString(emptyArr);
-            String toString2 = ArraysMethodsDelegator.toString(fiveArr);
+            String toString1 = ArrayUtils.toString(emptyArr);
+            String toString2 = ArrayUtils.toString(fiveArr);
 
             // then
             assertThat(toString1, equalTo("[]"));
@@ -291,9 +291,9 @@ class ArraysMethodsDelegatorTest {
             Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
 
             // when
-            List<Object> listOfEmptyArr = ArraysMethodsDelegator.stream(emptyArr)
+            List<Object> listOfEmptyArr = ArrayUtils.stream(emptyArr)
                 .collect(Collectors.toList());
-            String toStringViaStream = "[" + ArraysMethodsDelegator.stream(fiveArr)
+            String toStringViaStream = "[" + ArrayUtils.stream(fiveArr)
                 .map(String::valueOf)
                 .collect(Collectors.joining(", ")) + "]";
 
@@ -329,35 +329,35 @@ class ArraysMethodsDelegatorTest {
             Object object = new ArrayList<>();
 
             // when / then
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.binarySearch(object, "test"));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.binarySearch(object, 3, 4, "test"));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.copyOf(object, 3));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.copyOfRange(object, 3, 7));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.equals(object, object));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.fill(object, "obj"));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.fill(object, 0, 2, "obj"));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.hashCode(object));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.parallelSort(object));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.parallelSort(object, 0, 2));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.stream(object));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.sort(object));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.sort(object, 0, 3));
-            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.toString(object));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.binarySearch(object, "test"));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.binarySearch(object, 3, 4, "test"));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.copyOf(object, 3));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.copyOfRange(object, 3, 7));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.equals(object, object));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.fill(object, "obj"));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.fill(object, 0, 2, "obj"));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.hashCode(object));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.parallelSort(object));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.parallelSort(object, 0, 2));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.stream(object));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.sort(object));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.sort(object, 0, 3));
+            assertThrows(IllegalArgumentException.class, () -> ArrayUtils.toString(object));
         }
 
         @Test
         void shouldHaveMessageAboutTypeMismatch() {
             // given / when
             IllegalArgumentException iae1 = assertThrows(IllegalArgumentException.class,
-                () -> ArraysMethodsDelegator.copyOf(BigDecimal.TEN, 2));
+                () -> ArrayUtils.copyOf(BigDecimal.TEN, 2));
             NullPointerException npe2 = assertThrows(NullPointerException.class,
-                () -> ArraysMethodsDelegator.hashCode(null));
+                () -> ArrayUtils.hashCode(null));
             IllegalArgumentException iae3 = assertThrows(IllegalArgumentException.class,
-                () -> ArraysMethodsDelegator.fill(new Object(), "t"));
+                () -> ArrayUtils.fill(new Object(), "t"));
             ClassCastException cce4 = assertThrows(ClassCastException.class,
-                () -> ArraysMethodsDelegator.fill(new int[]{3, 1, 4, 1}, "t"));
+                () -> ArrayUtils.fill(new int[]{3, 1, 4, 1}, "t"));
             NullPointerException npe5 = assertThrows(NullPointerException.class,
-                () -> ArraysMethodsDelegator.fill(new double[]{2.0, 1.85}, null));
+                () -> ArrayUtils.fill(new double[]{2.0, 1.85}, null));
 
             // then
             assertThat(iae1.getMessage(), equalTo("Expected an array as argument, but got: class java.math.BigDecimal"));
@@ -479,7 +479,7 @@ class ArraysMethodsDelegatorTest {
         private void verifyFallbackSearchWithBinarySearch(boolean[] array, int from, int to, boolean value) {
             Boolean[] objArray = copyToReferenceBooleanArrayType(array);
 
-            int actualIndex = ArraysMethodsDelegator.simpleBooleanArrayBinarySearch(array, from, to, value);
+            int actualIndex = ArrayUtils.simpleBooleanArrayBinarySearch(array, from, to, value);
             int expectedIndex = Arrays.binarySearch(objArray, from, to, value);
             if (expectedIndex >= 0) {
                 assertThat(actualIndex, greaterThanOrEqualTo(0));
@@ -493,7 +493,7 @@ class ArraysMethodsDelegatorTest {
             Boolean[] objArray = copyToReferenceBooleanArrayType(array);
 
             Arrays.sort(objArray, from, to);
-            ArraysMethodsDelegator.simpleBooleanArraySort(array, from, to);
+            ArrayUtils.simpleBooleanArraySort(array, from, to);
 
             if (array.length > 0) {
                 Boolean[] arrayAfterSorting = copyToReferenceBooleanArrayType(array);
