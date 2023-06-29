@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * <p>
  * See individual methods for specific caveats.
  */
-@SuppressWarnings("checkstyle:OneStatementPerLine")
+@SuppressWarnings("checkstyle:OneStatementPerLine") // Justification: line-by-line aligned casts in switch statements
 public final class ArraysMethodsDelegator {
 
     private ArraysMethodsDelegator() {
@@ -27,7 +27,8 @@ public final class ArraysMethodsDelegator {
      * Delegates to the appropriate method for binary search and returns the result. Depending on the array type,
      * this method calls {@link Arrays#binarySearch(byte[], int, int, byte)},
      * {@link Arrays#binarySearch(char[], int, int, char)}, etc. An exception is thrown if the key does not correspond
-     * to the array type, or if it is null.
+     * to the array type, or if it is null. All elements in {@code Object[]} arrays must implement {@link Comparable}
+     * and be mutually comparable, or an exception will be thrown.
      * <p>
      * There is no binary search for boolean arrays in {@code Arrays}. This class provides a fill-in implementation.
      *
@@ -44,7 +45,8 @@ public final class ArraysMethodsDelegator {
      * Delegates to the appropriate method for binary search and returns the result. Depending on the array type,
      * this method calls {@link Arrays#binarySearch(byte[], int, int, byte)},
      * {@link Arrays#binarySearch(char[], int, int, char)}, etc. An exception is thrown if the key does not correspond
-     * to the array type, or if it is null.
+     * to the array type, or if it is null. All elements in {@code Object[]} arrays must implement {@link Comparable},
+     * and be mutually comparable, or an exception will be thrown.
      * <p>
      * There is no binary search for boolean arrays in {@code Arrays}. This class provides a fill-in implementation.
      *
@@ -58,7 +60,7 @@ public final class ArraysMethodsDelegator {
         ArrayComponentType comp = getArrayComponentType(array);
         verifyArgumentMatchesComponentType(key, comp, "key");
         switch (comp) {
-            case BOOLEAN: return fillInBoolArrayBinarySearch((boolean[]) array, fromIndex, toIndex, (boolean) key);
+            case BOOLEAN: return simpleBooleanArrayBinarySearch((boolean[]) array, fromIndex, toIndex, (boolean) key);
             case BYTE:      return Arrays.binarySearch((byte[]) array,   fromIndex, toIndex, (byte) key);
             case CHARACTER: return Arrays.binarySearch((char[]) array,   fromIndex, toIndex, (char) key);
             case SHORT:     return Arrays.binarySearch((short[]) array,  fromIndex, toIndex, (short) key);
@@ -207,7 +209,8 @@ public final class ArraysMethodsDelegator {
      * calls {@link Arrays#parallelSort(byte[], int, int)}, {@link Arrays#parallelSort(char[], int, int)}, etc.
      * <p>
      * The sorting of {@code Object[]} arrays is delegated to {@link Arrays#parallelSort(Comparable[], int, int)},
-     * which requires the array component to implement {@link Comparable}. An exception is thrown otherwise.
+     * which requires the array component to implement {@link Comparable}. All elements must be mutually comparable.
+     * An exception is thrown otherwise.
      * <p>
      * There is no sorting method for boolean arrays in {@code Arrays}. This class provides a fill-in implementation,
      * which does not perform the search in parallel. Developers requiring more efficient sorting of boolean arrays
@@ -224,7 +227,8 @@ public final class ArraysMethodsDelegator {
      * calls {@link Arrays#parallelSort(byte[], int, int)}, {@link Arrays#parallelSort(char[], int, int)}, etc.
      * <p>
      * The sorting of {@code Object[]} arrays is delegated to {@link Arrays#parallelSort(Comparable[], int, int)},
-     * which requires the array component to implement {@link Comparable}. An exception is thrown otherwise.
+     * which requires the array component to implement {@link Comparable}. All elements must be mutually comparable.
+     * An exception is thrown otherwise.
      * <p>
      * There is no sorting method for boolean arrays in {@code Arrays}. This class provides a fill-in implementation,
      * which does not perform the search in parallel. Developers requiring more efficient sorting of boolean arrays
@@ -237,7 +241,7 @@ public final class ArraysMethodsDelegator {
     public static void parallelSort(Object a, int fromIndex, int toIndex) {
         ArrayComponentType comp = getArrayComponentType(a);
         switch (comp) {
-            case BOOLEAN:  fillInBoolArraySort((boolean[]) a, fromIndex, toIndex); break;
+            case BOOLEAN: simpleBooleanArraySort((boolean[]) a, fromIndex, toIndex); break;
             case BYTE:      Arrays.parallelSort((byte[]) a,   fromIndex, toIndex); break;
             case CHARACTER: Arrays.parallelSort((char[]) a,   fromIndex, toIndex); break;
             case SHORT:     Arrays.parallelSort((short[]) a,  fromIndex, toIndex); break;
@@ -276,7 +280,8 @@ public final class ArraysMethodsDelegator {
      * calls {@link Arrays#sort(byte[], int, int)}, {@link Arrays#sort(char[], int, int)}, etc.
      * <p>
      * The sorting of {@code Object[]} arrays is delegated to {@link Arrays#sort(Object[], int, int)},
-     * which requires the array component to implement {@link Comparable}. An exception is thrown otherwise.
+     * which requires that all elements implement {@link Comparable} and that they be mutually comparable. An exception
+     * is thrown otherwise.
      * <p>
      * There is no sorting method for boolean arrays in {@code Arrays}. This class provides a fill-in implementation.
      * Developers requiring more efficient sorting of boolean arrays are suggested to use another implementation.
@@ -292,7 +297,8 @@ public final class ArraysMethodsDelegator {
      * calls {@link Arrays#sort(byte[], int, int)}, {@link Arrays#sort(char[], int, int)}, etc.
      * <p>
      * The sorting of {@code Object[]} arrays is delegated to {@link Arrays#sort(Object[], int, int)},
-     * which requires the array component to implement {@link Comparable}. An exception is thrown otherwise.
+     * which requires that all elements implement {@link Comparable} and that they be mutually comparable. An exception
+     * is thrown otherwise.
      * <p>
      * There is no sorting method for boolean arrays in {@code Arrays}. This class provides a fill-in implementation.
      * Developers requiring more efficient sorting of boolean arrays are suggested to use another implementation.
@@ -304,7 +310,7 @@ public final class ArraysMethodsDelegator {
     public static void sort(Object a, int fromIndex, int toIndex) {
         ArrayComponentType comp = getArrayComponentType(a);
         switch (comp) {
-            case BOOLEAN: fillInBoolArraySort((boolean[]) a, fromIndex, toIndex); break;
+            case BOOLEAN: simpleBooleanArraySort((boolean[]) a, fromIndex, toIndex); break;
             case BYTE:      Arrays.sort((byte[]) a,   fromIndex, toIndex); break;
             case CHARACTER: Arrays.sort((char[]) a,   fromIndex, toIndex); break;
             case SHORT:     Arrays.sort((short[]) a,  fromIndex, toIndex); break;
@@ -312,7 +318,7 @@ public final class ArraysMethodsDelegator {
             case LONG:      Arrays.sort((long[]) a,   fromIndex, toIndex); break;
             case FLOAT:     Arrays.sort((float[]) a,  fromIndex, toIndex); break;
             case DOUBLE:    Arrays.sort((double[]) a, fromIndex, toIndex); break;
-            default:    Arrays.sort((Comparable[]) a, fromIndex, toIndex);
+            default:        Arrays.sort((Object[]) a, fromIndex, toIndex);
         }
     }
 
@@ -338,7 +344,25 @@ public final class ArraysMethodsDelegator {
         }
     }
 
-    static int fillInBoolArrayBinarySearch(boolean[] array, int fromIndex, int toIndex, boolean value) {
+    /**
+     * Fill-in implementation for a boolean array binary search: allows to search for a value in a boolean array that
+     * has been sorted. The result is the index in the array of a matching value (no guarantee which index it is if
+     * there are multiple matching values). If the value could not be matched, a negative number is returned as
+     * described in binary search methods of {@link Arrays} (e.g. {@link Arrays#binarySearch(char[], int, int, char)}).
+     *
+     * @implNote If the value is not matched, it is guaranteed that this method returns the same negative value as
+     *           {@link Arrays#binarySearch(Object[], int, int, Object)} if the given array were converted to
+     *           {@code Boolean[]}. If there is a match, a valid index with the given value is returned, but it is not
+     *           guaranteed to be the same value as returned by {@code Arrays#binarySearch}.
+     *
+     * @param array the boolean array to search in
+     * @param fromIndex the start index (inclusive) of the range to search in
+     * @param toIndex the end index (exclusive) of the range to search in
+     * @param value the value to search for
+     * @return the matched index, or the "insertion index" as a negative number
+     *         (see {@link Arrays#binarySearch(char[], int, int, char)})
+     */
+    public static int simpleBooleanArrayBinarySearch(boolean[] array, int fromIndex, int toIndex, boolean value) {
         if (fromIndex < toIndex && array[fromIndex] == value) {
             return fromIndex;
         } else if (value) {
@@ -350,7 +374,17 @@ public final class ArraysMethodsDelegator {
         return value ? (-toIndex - 1) : (-fromIndex - 1);
     }
 
-    static void fillInBoolArraySort(boolean[] array, int fromIndex, int toIndex) {
+    /**
+     * Naive implementation of an array sort for boolean arrays. Sorts the entries of the array in the specified range.
+     * <p>
+     * Background: {@link Arrays} has methods for sorting all array types (e.g. {@link Arrays#sort(byte[], int, int)})
+     * except for boolean arrays.
+     *
+     * @param array the array to sort
+     * @param fromIndex the start index (inclusive) of the range that should be sorted
+     * @param toIndex the end index (exclusive) of the range that should be sorted
+     */
+    public static void simpleBooleanArraySort(boolean[] array, int fromIndex, int toIndex) {
         int numberOfFalse = 0;
         for (int i = fromIndex; i < toIndex; ++i) {
             if (!array[i]) {
@@ -363,6 +397,9 @@ public final class ArraysMethodsDelegator {
     }
 
     private static ArrayComponentType getArrayComponentType(Object array) {
+        if (array == null) {
+            throw new NullPointerException("array");
+        }
         ArrayComponentType componentType = ArrayComponentType.resolveComponentForPrimitiveArrays(array.getClass());
         if (componentType != null) {
             return componentType;
@@ -370,25 +407,22 @@ public final class ArraysMethodsDelegator {
         if (Object[].class.isAssignableFrom(array.getClass())) {
             return ArrayComponentType.OBJECT;
         }
-        if (!array.getClass().isArray()) {
-            throw new IllegalArgumentException("Expected a one-dimensional array as argument, but got: "
-                + array.getClass());
-        }
-
-        throw new IllegalArgumentException(
-            "Expected one-dimensional array as argument, but got multi-dimensional array: " + array.getClass());
+        throw new IllegalArgumentException("Expected an array as argument, but got: " + array.getClass());
     }
 
     private static void verifyArgumentMatchesComponentType(Object argument, ArrayComponentType componentType,
                                                            String argumentName) {
         if (argument == null) {
             throw new NullPointerException(argumentName);
-        } else if (!componentType.matches(argument.getClass()) && false) {
+        } else if (!componentType.matches(argument)) {
             throw new ClassCastException("Expected " + argumentName + " to be a "
                 + componentType.name().toLowerCase(Locale.ROOT) + ", instead found: " + argument.getClass());
         }
     }
 
+    /**
+     * Represents the component type an array can have.
+     */
     enum ArrayComponentType {
 
         BOOLEAN(Boolean.class),
@@ -399,9 +433,11 @@ public final class ArraysMethodsDelegator {
         LONG(Long.class),
         FLOAT(Float.class),
         DOUBLE(Double.class),
+        /** Means any extension of Object, such as the component of {@code String[]}, or even {@code int[][]}. */
         OBJECT(Object.class);
 
-        private static final Map<Class<?>, ArrayComponentType> TYPE_TO_ARRAY_COMPONENT = createTypesToArrayComponent();
+        private static final Map<Class<?>, ArrayComponentType> PRIMITIVE_ARRAY_TO_COMPONENT =
+            createPrimitiveArrayTypesToComponentMap();
         private final Class<?> referenceType;
 
         ArrayComponentType(Class<?> referenceType) {
@@ -414,10 +450,10 @@ public final class ArraysMethodsDelegator {
 
         @Nullable
         static ArrayComponentType resolveComponentForPrimitiveArrays(Class<?> clazz) {
-            return TYPE_TO_ARRAY_COMPONENT.get(clazz);
+            return PRIMITIVE_ARRAY_TO_COMPONENT.get(clazz);
         }
 
-        private static Map<Class<?>, ArrayComponentType> createTypesToArrayComponent() {
+        private static Map<Class<?>, ArrayComponentType> createPrimitiveArrayTypesToComponentMap() {
             Map<Class<?>, ArrayComponentType> map = new HashMap<>();
             map.put(boolean[].class, BOOLEAN);
             map.put(byte[].class, BYTE);

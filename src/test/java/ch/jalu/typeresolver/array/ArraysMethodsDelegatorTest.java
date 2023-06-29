@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,293 +25,346 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for {@link ArraysMethodsDelegator}.
  */
 class ArraysMethodsDelegatorTest {
 
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForBinarySearch(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object sortedArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
+    /** Holds all tests for delegation methods that test the working scenarios (i.e. no exceptions). */
+    @Nested
+    class PositiveDelegationMethodTests {
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForBinarySearch(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object sortedArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
 
-        List<Object> elements = createListWithItems(componentType, true);
-        Object searchKey = elements.get(3);
+            List<Object> elements = createListWithItems(componentType, true);
+            Object searchKey = elements.get(3);
 
-        // when
-        int idxOfEmpty = ArraysMethodsDelegator.binarySearch(emptyArr, searchKey);
-        int idxOfFull = ArraysMethodsDelegator.binarySearch(sortedArr, searchKey);
-        int idxOfPartial = ArraysMethodsDelegator.binarySearch(sortedArr, 2, 5, searchKey);
-        int idxOutOfRange = ArraysMethodsDelegator.binarySearch(sortedArr, 0, 3, searchKey);
+            // when
+            int idxOfEmpty = ArraysMethodsDelegator.binarySearch(emptyArr, searchKey);
+            int idxOfFull = ArraysMethodsDelegator.binarySearch(sortedArr, searchKey);
+            int idxOfPartial = ArraysMethodsDelegator.binarySearch(sortedArr, 2, 5, searchKey);
+            int idxOutOfRange = ArraysMethodsDelegator.binarySearch(sortedArr, 0, 3, searchKey);
 
-        // then
-        assertThat(idxOfEmpty, lessThan(0));
+            // then
+            assertThat(idxOfEmpty, lessThan(0));
 
-        // Skip boolean tests because we only have two values -> keys are different. Since it's a custom search impl.,
-        // it's covered with dedicated tests anyway.
-        if (componentType != ArrayComponentType.BOOLEAN) {
-            assertThat(idxOfFull, equalTo(3));
-            assertThat(idxOfPartial, equalTo(3));
-            assertThat(idxOutOfRange, lessThan(0));
+            // Skip boolean tests because we only have two values -> keys are different. Since it's a custom
+            // search implementation, it's covered by dedicated tests anyway.
+            if (componentType != ArrayComponentType.BOOLEAN) {
+                assertThat(idxOfFull, equalTo(3));
+                assertThat(idxOfPartial, equalTo(3));
+                assertThat(idxOutOfRange, lessThan(0));
+            }
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForCopyOf(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+
+            // when
+            Object emptyCopy = ArraysMethodsDelegator.copyOf(emptyArr, 0);
+            Object sevenArr = ArraysMethodsDelegator.copyOf(fiveArr, 7);
+            Object threeArr = ArraysMethodsDelegator.copyOf(emptyArr, 3);
+
+            // then
+            assertThat(emptyCopy, instanceOf(emptyArr.getClass()));
+            assertThat(emptyCopy, not(sameInstance(emptyArr)));
+            assertThat(Array.getLength(emptyCopy), equalTo(0));
+
+            List<Object> elements = createListWithItems(componentType, false);
+            Object emptyValue = EnumUtil.tryValueOf(Primitives.class, componentType.name())
+                .map(Primitives::getDefaultValue)
+                .orElse(null);
+
+            assertThat(sevenArr, instanceOf(fiveArr.getClass()));
+            assertThat(Array.getLength(sevenArr), equalTo(7));
+            assertThat(Array.get(sevenArr, 2), equalTo(elements.get(2)));
+            assertThat(Array.get(sevenArr, 6), equalTo(emptyValue));
+
+            assertThat(threeArr, instanceOf(emptyArr.getClass()));
+            assertThat(Array.getLength(threeArr), equalTo(3));
+            assertThat(Array.get(threeArr, 1), equalTo(emptyValue));
+            assertThat(Array.get(threeArr, 2), equalTo(emptyValue));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForCopyOfRange(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+
+            // when
+            Object emptyCopy = ArraysMethodsDelegator.copyOfRange(emptyArr, 0, 3);
+            Object arr26 = ArraysMethodsDelegator.copyOfRange(fiveArr, 2, 6);
+            Object arr49 = ArraysMethodsDelegator.copyOfRange(fiveArr, 4, 9);
+
+            // then
+            List<Object> elements = createListWithItems(componentType, false);
+            Object emptyValue = EnumUtil.tryValueOf(Primitives.class, componentType.name())
+                .map(Primitives::getDefaultValue)
+                .orElse(null);
+
+            assertThat(emptyCopy, instanceOf(emptyArr.getClass()));
+            assertThat(Array.getLength(emptyCopy), equalTo(3));
+            assertThat(Array.get(emptyCopy, 0), equalTo(emptyValue));
+
+            assertThat(arr26, instanceOf(fiveArr.getClass()));
+            assertThat(arr26, not(sameInstance(fiveArr)));
+            assertThat(Array.getLength(arr26), equalTo(4));
+            assertThat(Array.get(arr26, 1), equalTo(elements.get(3)));
+            assertThat(Array.get(arr26, 3), equalTo(emptyValue));
+
+            assertThat(arr49, instanceOf(emptyArr.getClass()));
+            assertThat(arr49, not(sameInstance(emptyArr)));
+            assertThat(Array.getLength(arr49), equalTo(5));
+            assertThat(Array.get(arr49, 0), equalTo(elements.get(4)));
+            assertThat(Array.get(arr49, 1), equalTo(emptyValue));
+            assertThat(Array.get(arr49, 4), equalTo(emptyValue));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForEqualityCheck(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            Object fiveSortedArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
+
+            // when
+            boolean isEq1 = ArraysMethodsDelegator.equals(fiveArr, fiveArr);
+            boolean isEq2 = ArraysMethodsDelegator.equals(fiveArr, fiveSortedArr);
+            boolean isEq3 = ArraysMethodsDelegator.equals(emptyArr, fiveArr);
+
+            // then
+            assertThat(isEq1, equalTo(true));
+            assertThat(isEq2, equalTo(false));
+            assertThat(isEq3, equalTo(false));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForFilling(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr1 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            Object fiveArr3 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            List<Object> list = createListWithItems(componentType, false);
+
+            // when
+            ArraysMethodsDelegator.fill(emptyArr, list.get(1));
+            ArraysMethodsDelegator.fill(fiveArr1, list.get(0));
+            ArraysMethodsDelegator.fill(fiveArr2, 0, 2, list.get(0));
+            ArraysMethodsDelegator.fill(fiveArr3, 2, 5, list.get(3));
+
+            // then
+            assertThat(Array.get(fiveArr1, 0), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr1, 1), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr1, 2), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr1, 3), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr1, 4), equalTo(list.get(0)));
+
+            assertThat(Array.get(fiveArr2, 0), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr2, 1), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr2, 2), equalTo(list.get(2)));
+            assertThat(Array.get(fiveArr2, 3), equalTo(list.get(3)));
+            assertThat(Array.get(fiveArr2, 4), equalTo(list.get(4)));
+
+            assertThat(Array.get(fiveArr3, 0), equalTo(list.get(0)));
+            assertThat(Array.get(fiveArr3, 1), equalTo(list.get(1)));
+            assertThat(Array.get(fiveArr3, 2), equalTo(list.get(3)));
+            assertThat(Array.get(fiveArr3, 3), equalTo(list.get(3)));
+            assertThat(Array.get(fiveArr3, 4), equalTo(list.get(3)));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForHashCode(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            Object fiveArrSorted = createArray(componentType, ArrayType.FIVE_ITEMS, true);
+
+            // when
+            int hashCode1 = ArraysMethodsDelegator.hashCode(emptyArr);
+            int hashCode2 = ArraysMethodsDelegator.hashCode(fiveArr);
+            int hashCode3 = ArraysMethodsDelegator.hashCode(fiveArrSorted);
+
+            // then
+            assertThat(hashCode1, equalTo(1));
+            assertThat(hashCode2, not(equalTo(1)));
+            assertThat(hashCode3, not(equalTo(1)));
+            assertThat(hashCode3, not(equalTo(hashCode2)));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForParallelSort(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr1 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+
+            // when
+            ArraysMethodsDelegator.parallelSort(emptyArr);
+            ArraysMethodsDelegator.parallelSort(fiveArr1);
+            ArraysMethodsDelegator.parallelSort(fiveArr2, 2, 5);
+
+            // then
+            Object sortedFiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
+            assertThat(ArraysMethodsDelegator.equals(fiveArr1, sortedFiveArr), equalTo(true));
+
+            List<Object> list = createListWithItems(componentType, false);
+            List<Object> list2Thru5Sorted = new ArrayList<>(5);
+            list2Thru5Sorted.addAll(list.subList(0, 2));
+            list2Thru5Sorted.addAll(list.subList(2, 5).stream().sorted().collect(Collectors.toList()));
+
+            assertThat(Array.get(fiveArr2, 0), equalTo(list2Thru5Sorted.get(0)));
+            assertThat(Array.get(fiveArr2, 1), equalTo(list2Thru5Sorted.get(1)));
+            assertThat(Array.get(fiveArr2, 2), equalTo(list2Thru5Sorted.get(2)));
+            assertThat(Array.get(fiveArr2, 3), equalTo(list2Thru5Sorted.get(3)));
+            assertThat(Array.get(fiveArr2, 4), equalTo(list2Thru5Sorted.get(4)));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForSort(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr1 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+            Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+
+            // when
+            ArraysMethodsDelegator.sort(emptyArr);
+            ArraysMethodsDelegator.sort(fiveArr1);
+            ArraysMethodsDelegator.sort(fiveArr2, 2, 5);
+
+            // then
+            Object sortedFiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
+            assertThat(ArraysMethodsDelegator.equals(fiveArr1, sortedFiveArr), equalTo(true));
+
+            List<Object> list = createListWithItems(componentType, false);
+            List<Object> list2Thru5Sorted = new ArrayList<>(5);
+            list2Thru5Sorted.addAll(list.subList(0, 2));
+            list2Thru5Sorted.addAll(list.subList(2, 5).stream().sorted().collect(Collectors.toList()));
+
+            assertThat(Array.get(fiveArr2, 0), equalTo(list2Thru5Sorted.get(0)));
+            assertThat(Array.get(fiveArr2, 1), equalTo(list2Thru5Sorted.get(1)));
+            assertThat(Array.get(fiveArr2, 2), equalTo(list2Thru5Sorted.get(2)));
+            assertThat(Array.get(fiveArr2, 3), equalTo(list2Thru5Sorted.get(3)));
+            assertThat(Array.get(fiveArr2, 4), equalTo(list2Thru5Sorted.get(4)));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldDelegateForToString(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+
+            // when
+            String toString1 = ArraysMethodsDelegator.toString(emptyArr);
+            String toString2 = ArraysMethodsDelegator.toString(fiveArr);
+
+            // then
+            assertThat(toString1, equalTo("[]"));
+
+            String expectedArrString = getExpectedToString(componentType);
+            assertThat(toString2, equalTo(expectedArrString));
+        }
+
+        @ParameterizedTest
+        @EnumSource(ArrayComponentType.class)
+        void shouldCreateStreamForArray(ArrayComponentType componentType) {
+            // given
+            Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
+            Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+
+            // when
+            List<Object> listOfEmptyArr = ArraysMethodsDelegator.stream(emptyArr)
+                .collect(Collectors.toList());
+            String toStringViaStream = "[" + ArraysMethodsDelegator.stream(fiveArr)
+                .map(String::valueOf)
+                .collect(Collectors.joining(", ")) + "]";
+
+            // then
+            assertThat(listOfEmptyArr, empty());
+            String expectedArrString = getExpectedToString(componentType);
+            assertThat(toStringViaStream, equalTo(expectedArrString));
+        }
+
+        private String getExpectedToString(ArrayComponentType componentType) {
+            switch (componentType) {
+                case BOOLEAN:   return "[true, false, true, false, true]";
+                case BYTE:      return "[120, -2, 37, 8, 66]";
+                case CHARACTER: return "[p, o, w, e, d]";
+                case SHORT:     return "[400, 12, 317, 202, -44]";
+                case INTEGER:   return "[17, -4050, 68, 25000, -42]";
+                case LONG:      return "[17, 320, -13, 6, 562398]";
+                case FLOAT:     return "[872.25, -12.5, 3.0, -2.75, 2364.25]";
+                case DOUBLE:    return "[54.2, 15.25, -16.36, 0.33, 8.64]";
+                case OBJECT:    return "[Paris, London, Zürich, Ljubljana, Antwerp]";
+                default:
+                    throw new IllegalStateException("Unexpected value: " + componentType);
+            }
         }
     }
 
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForCopyOf(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
+    @Nested
+    class DelegationMethodErrorHandling {
 
-        // when
-        Object emptyCopy = ArraysMethodsDelegator.copyOf(emptyArr, 0);
-        Object sevenArr = ArraysMethodsDelegator.copyOf(fiveArr, 7);
-        Object threeArr = ArraysMethodsDelegator.copyOf(emptyArr, 3);
+        @Test
+        void shouldThrowForNonArrayInput() {
+            // given
+            Object object = new ArrayList<>();
 
-        // then
-        assertThat(emptyCopy, instanceOf(emptyArr.getClass()));
-        assertThat(emptyCopy, not(sameInstance(emptyArr)));
-        assertThat(Array.getLength(emptyCopy), equalTo(0));
+            // when / then
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.binarySearch(object, "test"));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.binarySearch(object, 3, 4, "test"));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.copyOf(object, 3));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.copyOfRange(object, 3, 7));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.equals(object, object));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.fill(object, "obj"));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.fill(object, 0, 2, "obj"));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.hashCode(object));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.parallelSort(object));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.parallelSort(object, 0, 2));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.stream(object));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.sort(object));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.sort(object, 0, 3));
+            assertThrows(IllegalArgumentException.class, () -> ArraysMethodsDelegator.toString(object));
+        }
 
-        List<Object> elements = createListWithItems(componentType, false);
-        Object emptyValue = EnumUtil.tryValueOf(Primitives.class, componentType.name())
-            .map(Primitives::getDefaultValue)
-            .orElse(null);
+        @Test
+        void shouldHaveMessageAboutTypeMismatch() {
+            // given / when
+            IllegalArgumentException iae1 = assertThrows(IllegalArgumentException.class,
+                () -> ArraysMethodsDelegator.copyOf(BigDecimal.TEN, 2));
+            NullPointerException npe2 = assertThrows(NullPointerException.class,
+                () -> ArraysMethodsDelegator.hashCode(null));
+            IllegalArgumentException iae3 = assertThrows(IllegalArgumentException.class,
+                () -> ArraysMethodsDelegator.fill(new Object(), "t"));
+            ClassCastException cce4 = assertThrows(ClassCastException.class,
+                () -> ArraysMethodsDelegator.fill(new int[]{3, 1, 4, 1}, "t"));
+            NullPointerException npe5 = assertThrows(NullPointerException.class,
+                () -> ArraysMethodsDelegator.fill(new double[]{2.0, 1.85}, null));
 
-        assertThat(sevenArr, instanceOf(fiveArr.getClass()));
-        assertThat(Array.getLength(sevenArr), equalTo(7));
-        assertThat(Array.get(sevenArr, 2), equalTo(elements.get(2)));
-        assertThat(Array.get(sevenArr, 6), equalTo(emptyValue));
-
-        assertThat(threeArr, instanceOf(emptyArr.getClass()));
-        assertThat(Array.getLength(threeArr), equalTo(3));
-        assertThat(Array.get(threeArr, 1), equalTo(emptyValue));
-        assertThat(Array.get(threeArr, 2), equalTo(emptyValue));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForCopyOfRange(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-
-        // when
-        Object emptyCopy = ArraysMethodsDelegator.copyOfRange(emptyArr, 0, 3);
-        Object arr26 = ArraysMethodsDelegator.copyOfRange(fiveArr, 2, 6);
-        Object arr49 = ArraysMethodsDelegator.copyOfRange(fiveArr, 4, 9);
-
-        // then
-        List<Object> elements = createListWithItems(componentType, false);
-        Object emptyValue = EnumUtil.tryValueOf(Primitives.class, componentType.name())
-            .map(Primitives::getDefaultValue)
-            .orElse(null);
-
-        assertThat(emptyCopy, instanceOf(emptyArr.getClass()));
-        assertThat(Array.getLength(emptyCopy), equalTo(3));
-        assertThat(Array.get(emptyCopy, 0), equalTo(emptyValue));
-
-        assertThat(arr26, instanceOf(fiveArr.getClass()));
-        assertThat(arr26, not(sameInstance(fiveArr)));
-        assertThat(Array.getLength(arr26), equalTo(4));
-        assertThat(Array.get(arr26, 1), equalTo(elements.get(3)));
-        assertThat(Array.get(arr26, 3), equalTo(emptyValue));
-
-        assertThat(arr49, instanceOf(emptyArr.getClass()));
-        assertThat(arr49, not(sameInstance(emptyArr)));
-        assertThat(Array.getLength(arr49), equalTo(5));
-        assertThat(Array.get(arr49, 0), equalTo(elements.get(4)));
-        assertThat(Array.get(arr49, 1), equalTo(emptyValue));
-        assertThat(Array.get(arr49, 4), equalTo(emptyValue));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForEqualityCheck(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        Object fiveSortedArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
-
-        // when
-        boolean isEq1 = ArraysMethodsDelegator.equals(fiveArr, fiveArr);
-        boolean isEq2 = ArraysMethodsDelegator.equals(fiveArr, fiveSortedArr);
-        boolean isEq3 = ArraysMethodsDelegator.equals(emptyArr, fiveArr);
-
-        // then
-        assertThat(isEq1, equalTo(true));
-        assertThat(isEq2, equalTo(false));
-        assertThat(isEq3, equalTo(false));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForFilling(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr1 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        Object fiveArr3 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        List<Object> list = createListWithItems(componentType, false);
-
-        // when
-        ArraysMethodsDelegator.fill(emptyArr, list.get(1));
-        ArraysMethodsDelegator.fill(fiveArr1, list.get(0));
-        ArraysMethodsDelegator.fill(fiveArr2, 0, 2, list.get(0));
-        ArraysMethodsDelegator.fill(fiveArr3, 2, 5, list.get(3));
-
-        // then
-        assertThat(Array.get(fiveArr1, 0), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr1, 1), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr1, 2), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr1, 3), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr1, 4), equalTo(list.get(0)));
-
-        assertThat(Array.get(fiveArr2, 0), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr2, 1), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr2, 2), equalTo(list.get(2)));
-        assertThat(Array.get(fiveArr2, 3), equalTo(list.get(3)));
-        assertThat(Array.get(fiveArr2, 4), equalTo(list.get(4)));
-
-        assertThat(Array.get(fiveArr3, 0), equalTo(list.get(0)));
-        assertThat(Array.get(fiveArr3, 1), equalTo(list.get(1)));
-        assertThat(Array.get(fiveArr3, 2), equalTo(list.get(3)));
-        assertThat(Array.get(fiveArr3, 3), equalTo(list.get(3)));
-        assertThat(Array.get(fiveArr3, 4), equalTo(list.get(3)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForHashCode(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        Object fiveArrSorted = createArray(componentType, ArrayType.FIVE_ITEMS, true);
-
-        // when
-        int hashCode1 = ArraysMethodsDelegator.hashCode(emptyArr);
-        int hashCode2 = ArraysMethodsDelegator.hashCode(fiveArr);
-        int hashCode3 = ArraysMethodsDelegator.hashCode(fiveArrSorted);
-
-        // then
-        assertThat(hashCode1, equalTo(1));
-        assertThat(hashCode2, not(equalTo(1)));
-        assertThat(hashCode3, not(equalTo(1)));
-        assertThat(hashCode3, not(equalTo(hashCode2)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForParallelSort(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr1 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-
-        // when
-        ArraysMethodsDelegator.parallelSort(emptyArr);
-        ArraysMethodsDelegator.parallelSort(fiveArr1);
-        ArraysMethodsDelegator.parallelSort(fiveArr2, 2, 5);
-
-        // then
-        Object sortedFiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
-        assertThat(ArraysMethodsDelegator.equals(fiveArr1, sortedFiveArr), equalTo(true));
-
-        List<Object> list = createListWithItems(componentType, false);
-        List<Object> list2Thru5Sorted = new ArrayList<>(5);
-        list2Thru5Sorted.addAll(list.subList(0, 2));
-        list2Thru5Sorted.addAll(list.subList(2, 5).stream().sorted().collect(Collectors.toList()));
-
-        assertThat(Array.get(fiveArr2, 0), equalTo(list2Thru5Sorted.get(0)));
-        assertThat(Array.get(fiveArr2, 1), equalTo(list2Thru5Sorted.get(1)));
-        assertThat(Array.get(fiveArr2, 2), equalTo(list2Thru5Sorted.get(2)));
-        assertThat(Array.get(fiveArr2, 3), equalTo(list2Thru5Sorted.get(3)));
-        assertThat(Array.get(fiveArr2, 4), equalTo(list2Thru5Sorted.get(4)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForSort(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr1 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-        Object fiveArr2 = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-
-        // when
-        ArraysMethodsDelegator.sort(emptyArr);
-        ArraysMethodsDelegator.sort(fiveArr1);
-        ArraysMethodsDelegator.sort(fiveArr2, 2, 5);
-
-        // then
-        Object sortedFiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, true);
-        assertThat(ArraysMethodsDelegator.equals(fiveArr1, sortedFiveArr), equalTo(true));
-
-        List<Object> list = createListWithItems(componentType, false);
-        List<Object> list2Thru5Sorted = new ArrayList<>(5);
-        list2Thru5Sorted.addAll(list.subList(0, 2));
-        list2Thru5Sorted.addAll(list.subList(2, 5).stream().sorted().collect(Collectors.toList()));
-
-        assertThat(Array.get(fiveArr2, 0), equalTo(list2Thru5Sorted.get(0)));
-        assertThat(Array.get(fiveArr2, 1), equalTo(list2Thru5Sorted.get(1)));
-        assertThat(Array.get(fiveArr2, 2), equalTo(list2Thru5Sorted.get(2)));
-        assertThat(Array.get(fiveArr2, 3), equalTo(list2Thru5Sorted.get(3)));
-        assertThat(Array.get(fiveArr2, 4), equalTo(list2Thru5Sorted.get(4)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldDelegateForToString(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-
-        // when
-        String toString1 = ArraysMethodsDelegator.toString(emptyArr);
-        String toString2 = ArraysMethodsDelegator.toString(fiveArr);
-
-        // then
-        assertThat(toString1, equalTo("[]"));
-
-        String expectedArrString = getExpectedToString(componentType);
-        assertThat(toString2, equalTo(expectedArrString));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArrayComponentType.class)
-    void shouldCreateStreamForArray(ArrayComponentType componentType) {
-        // given
-        Object emptyArr = createArray(componentType, ArrayType.EMPTY, false);
-        Object fiveArr = createArray(componentType, ArrayType.FIVE_ITEMS, false);
-
-        // when
-        List<Object> listOfEmptyArr = ArraysMethodsDelegator.stream(emptyArr)
-            .collect(Collectors.toList());
-        String toStringViaStream = "[" + ArraysMethodsDelegator.stream(fiveArr)
-            .map(String::valueOf)
-            .collect(Collectors.joining(", ")) + "]";
-
-        // then
-        assertThat(listOfEmptyArr, empty());
-        String expectedArrString = getExpectedToString(componentType);
-        assertThat(toStringViaStream, equalTo(expectedArrString));
-    }
-
-    private static String getExpectedToString(ArrayComponentType componentType) {
-        switch (componentType) {
-            case BOOLEAN:   return "[true, false, true, false, true]";
-            case BYTE:      return "[120, -2, 37, 8, 66]";
-            case CHARACTER: return "[p, o, w, e, d]";
-            case SHORT:     return "[400, 12, 317, 202, -44]";
-            case INTEGER:   return "[17, -4050, 68, 25000, -42]";
-            case LONG:      return "[17, 320, -13, 6, 562398]";
-            case FLOAT:     return "[872.25, -12.5, 3.0, -2.75, 2364.25]";
-            case DOUBLE:    return "[54.2, 15.25, -16.36, 0.33, 8.64]";
-            case OBJECT:    return "[Paris, London, Zürich, Ljubljana, Antwerp]";
-            default:
-                throw new IllegalStateException("Unexpected value: " + componentType);
+            // then
+            assertThat(iae1.getMessage(), equalTo("Expected an array as argument, but got: class java.math.BigDecimal"));
+            assertThat(npe2.getMessage(), equalTo("array"));
+            assertThat(iae3.getMessage(), equalTo("Argument is not an array"));
+            assertThat(cce4.getMessage(), equalTo("Expected val to be a integer, instead found: class java.lang.String"));
+            assertThat(npe5.getMessage(), equalTo("val"));
         }
     }
 
@@ -425,7 +479,7 @@ class ArraysMethodsDelegatorTest {
         private void verifyFallbackSearchWithBinarySearch(boolean[] array, int from, int to, boolean value) {
             Boolean[] objArray = copyToReferenceBooleanArrayType(array);
 
-            int actualIndex = ArraysMethodsDelegator.fillInBoolArrayBinarySearch(array, from, to, value);
+            int actualIndex = ArraysMethodsDelegator.simpleBooleanArrayBinarySearch(array, from, to, value);
             int expectedIndex = Arrays.binarySearch(objArray, from, to, value);
             if (expectedIndex >= 0) {
                 assertThat(actualIndex, greaterThanOrEqualTo(0));
@@ -439,7 +493,7 @@ class ArraysMethodsDelegatorTest {
             Boolean[] objArray = copyToReferenceBooleanArrayType(array);
 
             Arrays.sort(objArray, from, to);
-            ArraysMethodsDelegator.fillInBoolArraySort(array, from, to);
+            ArraysMethodsDelegator.simpleBooleanArraySort(array, from, to);
 
             if (array.length > 0) {
                 Boolean[] arrayAfterSorting = copyToReferenceBooleanArrayType(array);
