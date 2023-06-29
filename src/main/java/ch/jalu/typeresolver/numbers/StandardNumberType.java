@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.numbers;
 
-import ch.jalu.typeresolver.primitives.Primitives;
+import ch.jalu.typeresolver.primitives.PrimitiveType;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -207,7 +207,7 @@ public enum StandardNumberType implements NumberType {
      */
     @Nullable
     public static StandardNumberType fromClass(Class<?> clazz) {
-        return typeToEnumEntry.get(Primitives.toReferenceType(clazz));
+        return typeToEnumEntry.get(PrimitiveType.toReferenceType(clazz));
     }
 
     /**

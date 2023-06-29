@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.numbers;
 
-import ch.jalu.typeresolver.primitives.Primitives;
+import ch.jalu.typeresolver.primitives.PrimitiveType;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -102,7 +102,7 @@ public final class NumberTypes {
         Map<Class<?>, NumberType<?>> numberTypeByClass = new HashMap<>();
         streamThroughAll().forEach(numberType -> {
             numberTypeByClass.put(numberType.getType(), numberType);
-            Class<?> primitiveType = Primitives.toPrimitiveType(numberType.getType());
+            Class<?> primitiveType = PrimitiveType.toPrimitiveType(numberType.getType());
             numberTypeByClass.put(primitiveType, numberType);
         });
         return Collections.unmodifiableMap(numberTypeByClass);

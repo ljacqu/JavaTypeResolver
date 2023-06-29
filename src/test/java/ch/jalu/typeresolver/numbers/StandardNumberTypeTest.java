@@ -1,6 +1,6 @@
 package ch.jalu.typeresolver.numbers;
 
-import ch.jalu.typeresolver.primitives.Primitives;
+import ch.jalu.typeresolver.primitives.PrimitiveType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -83,7 +83,7 @@ class StandardNumberTypeTest {
             StandardNumberType.streamThroughAll().forEach(numberType -> {
                 assertThat(StandardNumberType.fromClass(numberType.getType()), sameInstance(numberType));
 
-                Class<?> primitiveType = Primitives.toPrimitiveType(numberType.getType());
+                Class<?> primitiveType = PrimitiveType.toPrimitiveType(numberType.getType());
                 if (!primitiveType.equals(numberType.getType())) {
                     assertThat(StandardNumberType.fromClass(primitiveType), sameInstance(numberType));
                 }
@@ -112,7 +112,7 @@ class StandardNumberTypeTest {
                 StandardNumberType.FLOAT, StandardNumberType.DOUBLE));
 
             Set<NumberType<?>> allTypesWithPrimitiveEquivalent = StandardNumberType.streamThroughAll()
-                .filter(type -> Primitives.from(type.getType()) != null)
+                .filter(type -> PrimitiveType.from(type.getType()) != null)
                 .collect(Collectors.toSet());
             assertThat(new HashSet<>(primitiveNumberTypes), equalTo(allTypesWithPrimitiveEquivalent));
         }

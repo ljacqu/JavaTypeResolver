@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Defines primitive-reference class pairs and holds other utilities relating to primitive types.
  */
-public enum Primitives {
+public enum PrimitiveType {
 
     /** Boolean type pair. */
     BOOLEAN(boolean.class, Boolean.class, false),
@@ -36,7 +36,7 @@ public enum Primitives {
 
     private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_REFERENCE_TYPES = initPrimitiveToReferenceTypesMap();
     private static final Map<Class<?>, Class<?>> REFERENCE_TO_PRIMITIVE_TYPES = initReferenceToPrimitiveTypesMap();
-    private static final Map<Class<?>, Primitives> PRIMITIVES_BY_CLASS = initClassToPrimitiveTypes();
+    private static final Map<Class<?>, PrimitiveType> PRIMITIVES_BY_CLASS = initClassToPrimitiveTypes();
 
     private final Class<?> primitiveType;
     private final Class<?> referenceType;
@@ -49,7 +49,7 @@ public enum Primitives {
      * @param referenceType the reference class of this pair
      * @param defaultValue the default value corresponding to the primitive class
      */
-    Primitives(Class<?> primitiveType, Class<?> referenceType, Object defaultValue) {
+    PrimitiveType(Class<?> primitiveType, Class<?> referenceType, Object defaultValue) {
         this.primitiveType = primitiveType;
         this.referenceType = referenceType;
         this.defaultValue = defaultValue;
@@ -81,13 +81,13 @@ public enum Primitives {
     }
 
     /**
-     * Returns the {@link Primitives} entry that corresponds to the given class, or null if not available.
+     * Returns the {@link PrimitiveType} entry that corresponds to the given class, or null if not available.
      *
      * @param clazz the class to search for (primitive or reference type of a primitive-reference class pair)
      * @return the corresponding entry, or null if not applicable
      */
     @Nullable
-    public static Primitives from(Class<?> clazz) {
+    public static PrimitiveType from(Class<?> clazz) {
         return PRIMITIVES_BY_CLASS.get(clazz);
     }
 
@@ -160,9 +160,9 @@ public enum Primitives {
         return Collections.unmodifiableMap(refToPrimTypes);
     }
 
-    private static Map<Class<?>, Primitives> initClassToPrimitiveTypes() {
-        Map<Class<?>, Primitives> classToPrimRefType = new HashMap<>();
-        for (Primitives type : values()) {
+    private static Map<Class<?>, PrimitiveType> initClassToPrimitiveTypes() {
+        Map<Class<?>, PrimitiveType> classToPrimRefType = new HashMap<>();
+        for (PrimitiveType type : values()) {
             classToPrimRefType.put(type.getPrimitiveType(), type);
             classToPrimRefType.put(type.getReferenceType(), type);
         }
