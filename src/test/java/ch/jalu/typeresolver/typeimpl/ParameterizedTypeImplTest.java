@@ -4,6 +4,7 @@ import ch.jalu.typeresolver.reference.TypeReference;
 import ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,7 +24,7 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
             new ParameterizedTypeImpl(List.class, null, Double.class),
             new ParameterizedTypeImpl(Set.class, null, Short[].class),
             new ParameterizedTypeImpl(Map.class, null, String.class,
-                    new ParameterizedTypeImpl(Set.class, null, Short[].class)),
+            new ParameterizedTypeImpl(Set.class, null, Short[].class)),
             new TypeReference<List<Double>>() { }.getType(),
             new TypeReference<Set<Short[]>>() { }.getType(),
             new TypeReference<Map<String, Set<Short[]>>>() { }.getType());
@@ -39,5 +40,17 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         // when / then
         assertThat(parameterizedType.toString(), equalTo("ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer$TypedNestedClass<java.math.BigDecimal>"));
         assertThat(parameterizedType.toString(), equalTo(jreType.toString()));
+    }
+
+    @Test
+    void shouldCopyTypeCorrectly() {
+        // given
+        ParameterizedType listType = (ParameterizedType) new TypeReference<List<String>>() { }.getType();
+
+        // when
+        ParameterizedTypeImpl copy = new ParameterizedTypeImpl(listType);
+
+        // then
+        assertThat(copy, equalTo(listType));
     }
 }

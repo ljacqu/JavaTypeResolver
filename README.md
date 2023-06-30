@@ -1,5 +1,5 @@
 # Java type resolver
-[![Build Status](https://travis-ci.org/ljacqu/JavaTypeResolver.svg?branch=master)](https://travis-ci.org/ljacqu/JavaTypeResolver)
+[![Build Status](https://github.com/ljacqu/JavaTypeResolver/actions/workflows/maven_build.yml/badge.svg)](https://github.com/ljacqu/JavaTypeResolver/actions?query=branch%3Amaster)
 [![Coverage Status](https://coveralls.io/repos/github/ljacqu/JavaTypeResolver/badge.svg?branch=master)](https://coveralls.io/github/ljacqu/JavaTypeResolver?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a19c4b3ca6ea5ed5d083/maintainability)](https://codeclimate.com/github/ljacqu/JavaTypeResolver/maintainability)
 
@@ -67,12 +67,12 @@ public static void main(String... args) {
 
 ```java
 public static void main(String... args) {
-  AbstractArrayProperties arrayInfo = CommonTypeUtil.getArrayProperty(String[][].class);
+  AbstractArrayProperties arrayInfo = ArrayTypeUtils.getArrayProperty(String[][].class);
   // Outputs: "Component = class java.lang.String, dimension = 2"
   System.out.println("Component = " + arrayInfo.getComponentType() + ", dimension = " + arrayInfo.getDimension());
 
   Type listType = new TypeReference<List<String>>() { }.getType();
-  Type doubleArr = CommonTypeUtil.createArrayType(listType, 3);
+  Type doubleArr = ArrayTypeUtils.createArrayType(listType, 3);
   // Outputs: "Created type: java.util.List<java.lang.String>[][][]"
   System.out.println("Created type: " + doubleArr);
 }

@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static ch.jalu.typeresolver.CommonTypeUtil.getRawType;
+import static ch.jalu.typeresolver.CommonTypeUtils.getRawType;
 
 /**
  * Allows to resolve type variables to actual classes from previous context (extension of a class with a type parameter,
@@ -63,7 +64,7 @@ class TypeVariableResolver {
         } else if (type instanceof GenericArrayType) {
             GenericArrayType gat = (GenericArrayType) type;
             Type resolvedComponentType = resolve(gat.getGenericComponentType());
-            return CommonTypeUtil.createArrayType(resolvedComponentType);
+            return ArrayTypeUtils.createArrayType(resolvedComponentType);
         }
         return type;
     }

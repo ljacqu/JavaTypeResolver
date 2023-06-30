@@ -1,5 +1,6 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
 
 import javax.annotation.Nullable;
@@ -132,7 +133,7 @@ public class TypeInfo {
      */
     @Nullable
     public Class<?> toClass() {
-        return TypeToClassUtil.getSafeToWriteClass(type);
+        return TypeToClassUtils.getSafeToWriteClass(type);
     }
 
     /**
@@ -150,7 +151,7 @@ public class TypeInfo {
      * @return the type as Class which is safe for reading (e.g. getting field value or reading from a collection)
      */
     public Class<?> getSafeToReadClass() {
-        return TypeToClassUtil.getSafeToReadClass(type);
+        return TypeToClassUtils.getSafeToReadClass(type);
     }
 
     /**
@@ -224,7 +225,7 @@ public class TypeInfo {
 
         if (clazz.isArray()) {
             TypeInfo resolvedComponent = getComponentType().resolveSuperclass(clazz.getComponentType());
-            return of(CommonTypeUtil.createArrayType(resolvedComponent.getType()));
+            return of(ArrayTypeUtils.createArrayType(resolvedComponent.getType()));
         } else if (clazz.getTypeParameters().length > 0) {
             TypeVariableResolver resolver = getOrInitResolver();
             return new TypeInfo(new ParameterizedTypeImpl(clazz,

@@ -1,5 +1,8 @@
 package ch.jalu.typeresolver.typeimpl;
 
+import ch.jalu.typeresolver.CommonTypeUtils;
+
+import javax.annotation.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -15,22 +18,43 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     private final Type ownerType;
     private final Type[] actualTypeArguments;
 
-    public ParameterizedTypeImpl(Class<?> rawType, Type ownerType, Type... actualTypeArguments) {
+    /**
+     * Constructor. Performs no validation on the arguments whatsoever.
+     * <p>
+     * You can build parameterized types dynamically with {@link ParameterizedTypeBuilder}.
+     *
+     * @param rawType the raw type
+     * @param ownerType the owner type
+     * @param actualTypeArguments the type arguments
+     */
+    public ParameterizedTypeImpl(Class<?> rawType, @Nullable Type ownerType, Type... actualTypeArguments) {
         this.rawType = rawType;
         this.ownerType = ownerType;
         this.actualTypeArguments = actualTypeArguments;
     }
 
-    @Override
-    public Type[] getActualTypeArguments() {
-        return actualTypeArguments;
+    /**
+     * Copy constructor.
+     *
+     * @param parameterizedType the parameterized type to copy from
+     */
+    public ParameterizedTypeImpl(ParameterizedType parameterizedType) {
+        this.rawType = CommonTypeUtils.getRawType(parameterizedType);
+        this.ownerType = parameterizedType.getOwnerType();
+        this.actualTypeArguments = parameterizedType.getActualTypeArguments();
     }
 
     @Override
-    public Type getRawType() {
+    public Type[] getActualTypeArguments() {
+        return actualTypeArguments.clone();
+    }
+
+    @Override
+    public Class<?> getRawType() {
         return rawType;
     }
 
+    @Nullable
     @Override
     public Type getOwnerType() {
         return ownerType;

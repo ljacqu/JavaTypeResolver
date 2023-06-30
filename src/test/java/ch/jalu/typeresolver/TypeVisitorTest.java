@@ -1,5 +1,7 @@
 package ch.jalu.typeresolver;
 
+import ch.jalu.typeresolver.JavaVersionHelper.ConstableAndConstantDescTypes;
+import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.reference.TypeReference;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.RandomAccess;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +58,14 @@ class TypeVisitorTest {
 
         // then
         TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
-        assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
+        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
+        if (constableTypes.isPresent()) {
+            Class<?> constable = constableTypes.get().getConstableClass();
+            Class<?> constantDesc = constableTypes.get().getConstantDescClass();
+            assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, constable, constantDesc, Object.class));
+        } else {
+            assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
+        }
 
         assertThat(arrayListAll, containsInAnyOrder(
             new TypeReference<ArrayList<String>>() { },
@@ -78,9 +88,19 @@ class TypeVisitorTest {
         Set<Type> primitiveIntArrAll = primitiveIntArr.getAllTypes();
 
         // then
-        assertThat(stringArrayAll, containsInAnyOrder(
-            String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
-            Object.class, Cloneable.class, Serializable.class));
+        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
+        if (constableTypes.isPresent()) {
+            Class<?> constableArray = ArrayTypeUtils.createArrayClass(constableTypes.get().getConstableClass());
+            Class<?> constantDescArray = ArrayTypeUtils.createArrayClass(constableTypes.get().getConstantDescClass());
+
+            assertThat(stringArrayAll, containsInAnyOrder(
+                String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), constableArray, constantDescArray, Object[].class,
+                Object.class, Cloneable.class, Serializable.class));
+        } else {
+            assertThat(stringArrayAll, containsInAnyOrder(
+                String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
+                Object.class, Cloneable.class, Serializable.class));
+        }
 
         assertThat(primitiveIntArrAll, containsInAnyOrder(int[].class, Object.class, Cloneable.class, Serializable.class));
     }
@@ -122,8 +142,16 @@ class TypeVisitorTest {
         Set<TypeInfo> linkedHashMapAll = linkedHashMap.getAllTypeInfos();
 
         // then
-        assertThat(timeUnitAll, containsInAnyOrder(TimeUnit.class, Serializable.class, Object.class,
-            new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
+        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
+        if (constableTypes.isPresent()) {
+            Class<?> constable = constableTypes.get().getConstableClass();
+            assertThat(timeUnitAll, containsInAnyOrder(TimeUnit.class, Serializable.class, constable, Object.class,
+                new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
+        } else {
+            assertThat(timeUnitAll, containsInAnyOrder(TimeUnit.class, Serializable.class, Object.class,
+                new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
+        }
+
         assertThat(linkedHashMapAll, containsInAnyOrder(
             new TypeReference<LinkedHashMap<String, ? extends Integer>>() { },
             new TypeReference<HashMap<String, ? extends Integer>>() { },
@@ -153,7 +181,7 @@ class TypeVisitorTest {
         // given
         TypeInfo typeInfo = new TypeInfo(BigDecimal.class);
         List<String> typesOfBigDecimal = new ArrayList<>();
-        Consumer<Type> typeVisitor = type -> typesOfBigDecimal.add(CommonTypeUtil.getDefinitiveClass(type).getSimpleName());
+        Consumer<Type> typeVisitor = type -> typesOfBigDecimal.add(CommonTypeUtils.getDefinitiveClass(type).getSimpleName());
 
         // when
         typeInfo.visitAllTypes(typeVisitor);

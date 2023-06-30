@@ -150,28 +150,13 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <version>4.3.0</version>
-                <configuration>
-                    <!-- Provided by Travis CI -->
-                    <repoToken>${env.coveralls_repo_token}</repoToken>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.9.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <version>5.9.3</version>
             <scope>test</scope>
         </dependency>
