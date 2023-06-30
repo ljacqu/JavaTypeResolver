@@ -893,9 +893,5 @@ class StandardNumberTypeTest {
             assertThat(ex.getCause(), instanceOf(IllegalStateException.class));
             assertThat(ex.getCause().getMessage(), equalTo("Unexpected value: StandardNumberType[FLOAT]"));
         }
-        // compareToLongRange(Number number, StandardValueRange range) {
-        // compareToFloatOrDoubleRange(Number number, StandardValueRange range) {
-        // getMinAsIntOrThrow() {
-        // getMaxAsIntOrThrow() {
     }
 }
