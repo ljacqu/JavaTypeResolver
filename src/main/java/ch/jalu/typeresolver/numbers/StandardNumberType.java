@@ -27,8 +27,8 @@ import static ch.jalu.typeresolver.numbers.RangeComparisonHelper.compareToRange;
  * @see NumberType
  */
 public enum StandardNumberType implements NumberType {
-    // Note: NumberType is implemented without type argument by this enum because of Java type limitations;
-    // see the constants below the enum entries (e.g. T_BYTE) to refer to the entries in a type-safe manner.
+    // Note: NumberType is implemented without type argument by this enum because of Java type limitations.
+    // See the constants below the enum entries (e.g. TYPE_BYTE) to refer to the entries in a type-safe manner.
 
     /** Byte: [-128, 127]. */
     BYTE(Byte.class, StandardValueRange.BYTE) {
@@ -173,8 +173,8 @@ public enum StandardNumberType implements NumberType {
 
     @Override
     public ValueRangeComparison compareToValueRange(Number number) {
-        StandardValueRange range = StandardValueRange.findRangeOrThrow(number);
-        if (this.range.supportsAllValuesOf(range)) {
+        StandardValueRange numberRange = StandardValueRange.findRangeOrThrow(number);
+        if (this.range.supportsAllValuesOf(numberRange)) {
             return ValueRangeComparison.WITHIN_RANGE;
         }
 
@@ -182,12 +182,12 @@ public enum StandardNumberType implements NumberType {
             case BYTE:
             case SHORT:
             case INTEGER:
-                return compareToRangeOfIntOrSmaller(number, range);
+                return compareToRangeOfIntOrSmaller(number, numberRange);
             case LONG:
-                return compareToLongRange(number, range);
+                return compareToLongRange(number, numberRange);
             case FLOAT:
             case DOUBLE:
-                return compareToFloatOrDoubleRange(number, range);
+                return compareToFloatOrDoubleRange(number, numberRange);
             case BIG_INTEGER:
             case BIG_DECIMAL:
                 return ValueRangeComparison.getErrorForNonFiniteValue(number).orElse(ValueRangeComparison.WITHIN_RANGE);
@@ -279,15 +279,12 @@ public enum StandardNumberType implements NumberType {
     }
 
     /**
-     * Conversion <b>to</b> BigDecimal for any of the conversion flavors: {@link #convertUnsafe},
-     * {@link #convertToBounds} or {@link #convertIfNoLossOfMagnitude}.
-     * <p>
-     * All values of the supported Number implementations can be converted to BigDecimal, except for
-     * infinity and NaN (float or double).
+     * Converts the given number <b>to</b> BigDecimal. All values of the supported Number implementations can be
+     * converted to BigDecimal, except for infinity and NaN (float or double). Zero is returned for infinity and NaN.
      *
      * @param number the number to convert
      * @param valueRange the type the number to convert has
-     * @return the converted number
+     * @return the converted number (never null)
      */
     private static BigDecimal convertToBigDecimal(Number number, StandardValueRange valueRange) {
         switch (valueRange) {
@@ -313,13 +310,12 @@ public enum StandardNumberType implements NumberType {
     }
 
     /**
-     * Conversion <b>to</b> BigInteger for any of the conversion flavors: {@link #convertUnsafe},
-     * {@link #convertToBounds} or {@link #convertIfNoLossOfMagnitude}. Behaves similar to the
-     * conversion method that converts to BigDecimal.
+     * Converts the given number <b>to</b> BigInteger. All values of the supported Number implementations can be
+     * converted to BigInteger, except for infinity and NaN (float or double). Zero is returned for infinity and NaN.
      *
      * @param number the number to convert
      * @param range the value range of the number's type to convert
-     * @return the converted number
+     * @return the converted number (never null)
      */
     private static BigInteger convertToBigInteger(Number number, StandardValueRange range) {
         switch (range) {
@@ -344,41 +340,43 @@ public enum StandardNumberType implements NumberType {
         }
     }
 
-    private ValueRangeComparison compareToRangeOfIntOrSmaller(Number number, StandardValueRange range) {
-        StandardValueRange trustedRange = range;
-        ValueRangeComparison rangeComparison = ValueRangeComparison.WITHIN_RANGE;
+    /*
+     * Called when comparing a number to the range of int or smaller (byte, short).
+     */
+    private ValueRangeComparison compareToRangeOfIntOrSmaller(Number number, StandardValueRange numberRange) {
         // Step 1: If number belongs to something with greater range than LONG, check first that it can be represented
         // as a Long so that we can then check if the long value is within bounds.
-        if (!StandardValueRange.LONG.supportsAllValuesOf(range)) {
-            rangeComparison = compareToLongRange(number, range);
-            trustedRange = StandardValueRange.LONG;
+        StandardValueRange narrowedRange;
+        if (StandardValueRange.LONG.supportsAllValuesOf(numberRange)) {
+            narrowedRange = numberRange;
+        } else {
+            ValueRangeComparison longRangeComparison = compareToLongRange(number, numberRange);
+            if (longRangeComparison != ValueRangeComparison.WITHIN_RANGE) {
+                return longRangeComparison;
+            }
+            narrowedRange = StandardValueRange.LONG;
         }
 
         // Step 2: If within LONG bounds, compare the long or int value with this entry's range.
-        if (rangeComparison == ValueRangeComparison.WITHIN_RANGE) {
-            switch (trustedRange) {
-                // case BYTE: not needed, since all other types' range is a superset of Byte's, meaning that bytes are
-                // always converted without any range checks
-                case SHORT:
-                case INTEGER:
-                    rangeComparison = compareToRange(number.intValue(), getMinAsIntOrThrow(), getMaxAsIntOrThrow());
-                    break;
-                case LONG:
-                    rangeComparison = compareToRange(number.longValue(), getMinAsIntOrThrow(), getMaxAsIntOrThrow());
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected value: " + range);
-            }
+        switch (narrowedRange) {
+            // case BYTE: not needed, since all other types' range is a superset of Byte's, meaning that bytes are
+            // always converted without any range checks
+            case SHORT:
+            case INTEGER:
+                return compareToRange(number.intValue(), getMinAsIntOrThrow(), getMaxAsIntOrThrow());
+            case LONG:
+                return compareToRange(number.longValue(), getMinAsIntOrThrow(), getMaxAsIntOrThrow());
+            default:
+                throw new IllegalStateException("Unexpected value: " + narrowedRange);
         }
-        return rangeComparison;
     }
 
     /**
-     * Compares this number's value with the value range of the Long type. Only supports number whose value range
+     * Compares this number's value with the value range of the Long type. Only supports numbers whose value range
      * is larger than Long.
      *
      * @param number the number to process
-     * @param range the number's type
+     * @param range the range the number is in
      * @return compareTo int result indicating the relation of the number and the Long value range
      */
     private static ValueRangeComparison compareToLongRange(Number number, StandardValueRange range) {
@@ -397,6 +395,9 @@ public enum StandardNumberType implements NumberType {
 
     /*
      * Conversion method called when the type to convert *to* is FLOAT or DOUBLE.
+     * The only constellations with which this method is called are the following:
+     *   this=FLOAT,  range={DOUBLE, BIG_INTEGER, BIG_DECIMAL}
+     *   this=DOUBLE, range={BIG_INTEGER, BIG_DECIMAL}
      */
     private ValueRangeComparison compareToFloatOrDoubleRange(Number number, StandardValueRange range) {
         if (this == FLOAT && range == StandardValueRange.DOUBLE) {

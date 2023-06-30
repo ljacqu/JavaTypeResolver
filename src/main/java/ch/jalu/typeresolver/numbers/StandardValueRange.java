@@ -124,6 +124,19 @@ public enum StandardValueRange implements ValueRange {
         }
     }
 
+    /**
+     * Returns whether this range supports all values of the given range. See {@link ValueRange#supportsAllValuesOf} for
+     * details. This method exists as a convenience to avoid unchecked warnings when comparing two
+     * {@link StandardValueRange} objects.
+     *
+     * @param other the range to check with
+     * @return true if all values of the given number type can be represented by this type, false otherwise
+     */
+    @SuppressWarnings("unchecked")
+    public boolean supportsAllValuesOf(StandardValueRange other) {
+        return ValueRange.super.supportsAllValuesOf(other);
+    }
+
     @Override
     public String toString() {
         return "StandardValueRange[" + name() + "]";

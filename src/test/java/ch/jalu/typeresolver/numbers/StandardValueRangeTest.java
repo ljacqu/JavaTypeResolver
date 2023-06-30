@@ -93,4 +93,11 @@ class StandardValueRangeTest {
         assertThat(range3, equalTo(StandardValueRange.LONG));
         assertThat(range4, equalTo(StandardValueRange.BIG_DECIMAL));
     }
+
+    @Test
+    void shouldHaveToString() {
+        // given / when / then
+        assertThat(StandardValueRange.SHORT.toString(), equalTo(StandardValueRange.class.getSimpleName() + "[SHORT]"));
+        assertThat(StandardValueRange.LONG.toString(), equalTo(StandardValueRange.class.getSimpleName() + "[LONG]"));
+    }
 }

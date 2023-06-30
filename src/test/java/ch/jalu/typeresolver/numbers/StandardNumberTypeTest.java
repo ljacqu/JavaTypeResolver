@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -818,5 +820,82 @@ class StandardNumberTypeTest {
         // then
         Set<String> messages = Stream.of(ex1, ex2, ex3, ex4).map(Exception::getMessage).collect(Collectors.toSet());
         assertThat(messages, contains("Unsupported number type: class ch.jalu.typeresolver.numbers.NumberTestImpl"));
+    }
+
+    @Test
+    void shouldHaveToString() {
+        // given / when / then
+        assertThat(SHORT.toString(), equalTo(StandardNumberType.class.getSimpleName() + "[SHORT]"));
+        assertThat(LONG.toString(), equalTo(StandardNumberType.class.getSimpleName() + "[LONG]"));
+    }
+
+    @Nested
+    class PrivateMethodInvalidArgs {
+
+        @Test
+        void shouldThrowForUnexpectedRangeInCompareToLongRange() throws ReflectiveOperationException {
+            // given
+            Method method = StandardNumberType.class.getDeclaredMethod(
+                "compareToLongRange", Number.class, StandardValueRange.class);
+            method.setAccessible(true);
+
+            // when
+            InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+                () -> method.invoke(null, 3, StandardValueRange.INTEGER));
+
+            // then
+            assertThat(ex.getCause(), instanceOf(IllegalStateException.class));
+            assertThat(ex.getCause().getMessage(), equalTo("Unexpected value: StandardValueRange[INTEGER]"));
+        }
+
+        @Test
+        void shouldThrowForUnexpectedRangeInCompareToDoubleRange() throws ReflectiveOperationException {
+            // given
+            Method method = StandardNumberType.class.getDeclaredMethod(
+                "compareToFloatOrDoubleRange", Number.class, StandardValueRange.class);
+            method.setAccessible(true);
+
+            // when
+            InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+                () -> method.invoke(StandardNumberType.DOUBLE, 27L, StandardValueRange.LONG));
+
+            // then
+            assertThat(ex.getCause(), instanceOf(IllegalStateException.class));
+            assertThat(ex.getCause().getMessage(), equalTo("Unexpected value: StandardValueRange[LONG]"));
+        }
+
+        @Test
+        void shouldThrowForWrongCallToMinAsInt() throws ReflectiveOperationException {
+            // given
+            Method method = StandardNumberType.class.getDeclaredMethod("getMinAsIntOrThrow");
+            method.setAccessible(true);
+
+            // when
+            InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+                () -> method.invoke(StandardNumberType.LONG));
+
+            // then
+            assertThat(ex.getCause(), instanceOf(IllegalStateException.class));
+            assertThat(ex.getCause().getMessage(), equalTo("Unexpected value: StandardNumberType[LONG]"));
+        }
+
+        @Test
+        void shouldThrowForWrongCallToMaxAsInt() throws ReflectiveOperationException {
+            // given
+            Method method = StandardNumberType.class.getDeclaredMethod("getMaxAsIntOrThrow");
+            method.setAccessible(true);
+
+            // when
+            InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+                () -> method.invoke(StandardNumberType.FLOAT));
+
+            // then
+            assertThat(ex.getCause(), instanceOf(IllegalStateException.class));
+            assertThat(ex.getCause().getMessage(), equalTo("Unexpected value: StandardNumberType[FLOAT]"));
+        }
+        // compareToLongRange(Number number, StandardValueRange range) {
+        // compareToFloatOrDoubleRange(Number number, StandardValueRange range) {
+        // getMinAsIntOrThrow() {
+        // getMaxAsIntOrThrow() {
     }
 }
