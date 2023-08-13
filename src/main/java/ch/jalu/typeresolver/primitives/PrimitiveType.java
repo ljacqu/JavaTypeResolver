@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver.primitives;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

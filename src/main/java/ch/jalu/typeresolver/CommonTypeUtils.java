@@ -1,8 +1,8 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

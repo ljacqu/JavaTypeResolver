@@ -2,8 +2,8 @@ package ch.jalu.typeresolver.classutil;
 
 import ch.jalu.typeresolver.EnumUtils;
 import ch.jalu.typeresolver.array.ArrayClassProperties;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Proxy;
 import java.util.Optional;

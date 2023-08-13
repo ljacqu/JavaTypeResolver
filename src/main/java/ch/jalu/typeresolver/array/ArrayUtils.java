@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver.array;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;

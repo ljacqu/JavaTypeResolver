@@ -1,12 +1,12 @@
 package ch.jalu.typeresolver.classutil;
 
 import ch.jalu.typeresolver.TypeInfo;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import javax.annotation.Nullable;
 import java.awt.font.NumericShaper;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;

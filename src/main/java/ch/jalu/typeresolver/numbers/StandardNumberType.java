@@ -1,8 +1,8 @@
 package ch.jalu.typeresolver.numbers;
 
 import ch.jalu.typeresolver.primitives.PrimitiveType;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;

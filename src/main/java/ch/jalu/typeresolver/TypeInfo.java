@@ -2,8 +2,8 @@ package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Wraps a {@link Type} to offer easy retrieval of generic type information.
+ * Wraps a {@link Type} to offer easy retrieval of various type information.
  */
 public class TypeInfo {
 

@@ -2,8 +2,8 @@ package ch.jalu.typeresolver.typeimpl;
 
 import ch.jalu.typeresolver.CommonTypeUtils;
 import ch.jalu.typeresolver.TypeInfo;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
