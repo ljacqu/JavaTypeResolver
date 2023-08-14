@@ -155,7 +155,40 @@ public class TypeInfo {
     }
 
     /**
-     * Returns a type info of the enclosing type (i.e. the outer class if this type is an nested class).
+     * Returns whether this type info, as class ({@link #toClass()}), is equal to the given class.
+     * <p>Examples:<ul>
+     *  <li>{@code new TypeInfo(String.class).equalTo(String.class) // true}</li>
+     *  <li>{@code new TypeReference<List<String>>() { }.equalTo(List.class) // true}</li>
+     *  <li>{@code new TypeReference<List<String>>() { }.equalTo(ArrayList.class) // false}</li>
+     * </ul>
+     *
+     * @param clazz the class to check for equality
+     * @return true if this type info converts to the same class as the given one, false otherwise
+     */
+    public boolean equalTo(Class<?> clazz) {
+        return clazz.equals(toClass());
+    }
+
+    /**
+     * Returns whether the class represented by this type info is equal or assignable from the given class. In other
+     * words, this TypeInfo's {@link #toClass()} checks with {@link Class#isAssignableFrom} whether the given class
+     * is equal or an extension of this type info's class.
+     * <p>Examples:<ul>
+     *  <li>{@code new TypeInfo(String.class).isAssignableFrom(Double.class) // false}</li>
+     *  <li>{@code new TypeReference<List<String>>() { }.isAssignableFrom(List.class) // true}</li>
+     *  <li>{@code new TypeReference<List<String>>() { }.isAssignableFrom(ArrayList.class) // true}</li>
+     * </ul>
+     *
+     * @param clazz the class to check with
+     * @return true if this type info's class is equal or a supertype of the given class, false otherwise
+     */
+    public boolean isAssignableFrom(Class<?> clazz) {
+        Class<?> thisClass = toClass();
+        return thisClass != null && thisClass.isAssignableFrom(clazz);
+    }
+
+    /**
+     * Returns a type info of the enclosing type (i.e. the outer class if this type is a nested class).
      * Returns null if not applicable.
      *
      * @return the enclosing type, or null if this type is not a nested type
