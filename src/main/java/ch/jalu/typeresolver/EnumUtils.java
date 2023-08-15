@@ -37,6 +37,54 @@ public final class EnumUtils {
     }
 
     /**
+     * Returns an optional of the enum entry with the given name if the provided class is an enum and has an entry that
+     * matches the given name in a case-insensitive manner. Otherwise, an empty optional is returned.
+     * The first found match is returned if multiple enum entries match the name.
+     *
+     * @param clazz the class to check for enum entries, or null
+     * @param name the name to match (case-insensitive), or null
+     * @param <T> the class type
+     * @return optional of the enum entry if the class is an enum and the name matched; empty otherwise
+     */
+    public static <T> Optional<T> tryValueOfCaseInsensitive(@Nullable Class<T> clazz, @Nullable String name) {
+        if (clazz == null || !clazz.isEnum() || name == null) {
+            return Optional.empty();
+        }
+
+        for (T enumConstant : clazz.getEnumConstants()) {
+            if (name.equalsIgnoreCase(((Enum<?>) enumConstant).name())) {
+                return Optional.of(enumConstant);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns an optional with the class cast as enum extension, empty otherwise. Convenient to check if a class is
+     * an enum and to continue working with it as such. This class only returns an optional with the given class if it
+     * represents an enum type; use {@link #getAssociatedEnumType} if synthetic classes of enum entries should be
+     * converted to their enum type.
+     * <p>
+     * Examples:<pre>{@code
+     *   Class<?> class1 = TimeUnit.class;
+     *   Class<?> class2 = String.class;
+     *
+     *   EnumUtils.typeAsEnumClass(class1)    = Optional.of(TimeUnit.class)
+     *   EnumUtils.typeAsEnumClass(class2)    = Optional.empty()
+     * }</pre>
+     *
+     * @param clazz the class to inspect, or null
+     * @return optional with the enum type if applicable, otherwise empty optional
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static Optional<Class<? extends Enum<?>>> asEnumClassIfPossible(@Nullable Class<?> clazz) {
+        if (clazz != null && clazz.isEnum()) {
+            return Optional.of((Class) clazz);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Indicates whether the given class is an enum or a synthetic class of an enum entry. Synthetic classes are
      * created when an enum entry extends the enum type anonymously.
      * <p>
@@ -54,7 +102,7 @@ public final class EnumUtils {
      * @return true if the class is an enum or the class of an enum entry
      */
     public static boolean isEnumOrEnumEntryType(@Nullable Class<?> clazz) {
-        return asEnumType(clazz).isPresent();
+        return getAssociatedEnumType(clazz).isPresent();
     }
 
     /**
@@ -77,7 +125,7 @@ public final class EnumUtils {
      * @return optional with the enum type if applicable, otherwise empty optional
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static Optional<Class<? extends Enum<?>>> asEnumType(@Nullable Class<?> clazz) {
+    public static Optional<Class<? extends Enum<?>>> getAssociatedEnumType(@Nullable Class<?> clazz) {
         if (clazz == null || !Enum.class.isAssignableFrom(clazz)) {
             return Optional.empty();
         }

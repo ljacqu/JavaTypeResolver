@@ -63,6 +63,32 @@ public final class ClassUtils {
     }
 
     /**
+     * Returns an Optional with the same class cast as subtype of the given {@code parent} if possible,
+     * otherwise returns an empty optional.
+     * <p>
+     * Note that the behavior for primitive classes may be unintuitive:<pre>{@code
+     *   Optional<? extends Integer> result1 = asSubClassIfPossible(int.class, int.class); // Optional.of(int.class)
+     *   Optional<? extends Integer> result2 = asSubClassIfPossible(int.class, Integer.class); // Optional.empty()
+     * }</pre>
+     * See {@link ch.jalu.typeresolver.primitives.PrimitiveType#toReferenceType PrimitiveType#toReferenceType} to
+     * unwrap primitive types.
+     *
+     * @param classToInspect the class to process
+     * @param parent the parent type to check if the class is an extension of
+     * @param <T> the parent type
+     * @return optional with the class as extension of the parent, or empty optional if not possible
+     * @see Class#asSubclass
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<Class<? extends T>> asSubclassIfPossible(Class<?> classToInspect,
+                                                                        Class<T> parent) {
+        if (parent.isAssignableFrom(classToInspect)) {
+            return Optional.of((Class<? extends T>) classToInspect);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Returns the {@link Class#getName() class name} of the object null-safely, returning "null" if the object is null.
      * Use {@link #getSemanticName(Object)} to generate a null-safe, more user-appropriate name of the object's type.
      *
@@ -124,7 +150,7 @@ public final class ClassUtils {
     /**
      * Returns a human-friendly string representation of the given class, or of the most meaningful associated type.
      * Concretely, this means any synthetic classes for enum entries are replaced by the enum type itself, as returned
-     * by {@link EnumUtils#asEnumType}.
+     * by {@link EnumUtils#getAssociatedEnumType}.
      * <p>
      * Prefer using {@link #getSemanticName(Object)} whenever possible, as more semantic types can be inferred based
      * on an object.
@@ -133,7 +159,7 @@ public final class ClassUtils {
      * @return semantic type as class name, or "null" as string (never null itself)
      */
     public static String getSemanticName(@Nullable Class<?> clazz) {
-        return EnumUtils.asEnumType(clazz)
+        return EnumUtils.getAssociatedEnumType(clazz)
             .map(ClassUtils::createNameOfSemanticType)
             .orElseGet(() -> createNameOfSemanticType(clazz));
     }

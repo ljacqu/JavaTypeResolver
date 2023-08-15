@@ -43,17 +43,17 @@ class EnumUtilsTest {
     }
 
     /**
-     * Test the Javadoc on {@link EnumUtils#asEnumType}.
+     * Test the Javadoc on {@link EnumUtils#getAssociatedEnumType}.
      */
     @Test
-    void shouldHaveValidJavadocExampleOnAsEnumType() {
+    void shouldHaveValidJavadocExampleOnGetAssociatedEnumType() {
         Class<?> class1 = NumericShaper.Range.class;
         Class<?> class2 = NumericShaper.Range.ETHIOPIC.getClass(); // NumericShaper$Range$1.class
 
-        Optional<Class<? extends Enum<?>>> r1 = EnumUtils.asEnumType(class1);   // = Optional.of(NumericShaper.Range.class)
-        Optional<Class<? extends Enum<?>>> r2 = EnumUtils.asEnumType(class2);   // = Optional.of(NumericShaper.Range.class)
-        Optional<Class<? extends Enum<?>>> r3 = EnumUtils.asEnumType(null);// = Optional.empty()
-        Optional<Class<? extends Enum<?>>> r4 = EnumUtils.asEnumType(int.class);// = Optional.empty()
+        Optional<Class<? extends Enum<?>>> r1 = EnumUtils.getAssociatedEnumType(class1);   // = Optional.of(NumericShaper.Range.class)
+        Optional<Class<? extends Enum<?>>> r2 = EnumUtils.getAssociatedEnumType(class2);   // = Optional.of(NumericShaper.Range.class)
+        Optional<Class<? extends Enum<?>>> r3 = EnumUtils.getAssociatedEnumType(null);     // = Optional.empty()
+        Optional<Class<? extends Enum<?>>> r4 = EnumUtils.getAssociatedEnumType(int.class);// = Optional.empty()
 
         assertThat(r1, equalTo(Optional.of(NumericShaper.Range.class)));
         assertThat(r2, equalTo(Optional.of(NumericShaper.Range.class)));
@@ -81,6 +81,31 @@ class EnumUtilsTest {
     }
 
     @Test
+    void shouldTryToResolveNameToEntryCaseInsensitively() {
+        // given / when / then
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.class, "FIRST"), equalTo(Optional.of(TestEnum.FIRST)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.class, "Second"), equalTo(Optional.of(TestEnum.SECOND)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.class, "third"), equalTo(Optional.of(TestEnum.THIRD)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TimeUnit.class, "MINUTES"), equalTo(Optional.of(TimeUnit.MINUTES)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.NestedEnum.class, "SECOND"), equalTo(Optional.of(TestEnum.NestedEnum.SECOND)));
+
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(EnumWithNonStandardEntryNames.class, "FIRST"), equalTo(Optional.of(EnumWithNonStandardEntryNames.first)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(EnumWithNonStandardEntryNames.class, "second"), equalTo(Optional.of(EnumWithNonStandardEntryNames.Second)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(EnumWithNonStandardEntryNames.class, "third"), equalTo(Optional.of(EnumWithNonStandardEntryNames.Third)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(EnumWithNonStandardEntryNames.class, "tHird"), equalTo(Optional.of(EnumWithNonStandardEntryNames.Third)));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(EnumWithNonStandardEntryNames.class, "other"), equalTo(Optional.empty()));
+
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(null, null), equalTo(Optional.empty()));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.class, null), equalTo(Optional.empty()));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(null, "ENTRY"), equalTo(Optional.empty()));
+
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.class, "WRONG"), equalTo(Optional.empty()));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TestEnum.NestedEnum.class, "WRONG"), equalTo(Optional.empty()));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(HashMap.class, "wrong"), equalTo(Optional.empty()));
+        assertThat(EnumUtils.tryValueOfCaseInsensitive(TimeUnit.class, "WRONG"), equalTo(Optional.empty()));
+    }
+
+    @Test
     void shouldDefineWhetherIsEnumRelatedClass() {
         // given / when / then
         assertTrue(EnumUtils.isEnumOrEnumEntryType(TestEnum.class));
@@ -97,7 +122,7 @@ class EnumUtilsTest {
     }
 
     @Test
-    void shouldReturnEnumClassIfApplicable() {
+    void shouldCastClassAsEnumExtensionIfApplicable() {
         // given
         Class<?> clazz1 = TestEnum.class;
         Class<?> clazz2 = TestEnum.SECOND.getClass();
@@ -107,12 +132,44 @@ class EnumUtilsTest {
         Class<?> clazz6 = TestEnum.NestedEnum.SECOND.getClass();
 
         // when
-        Optional<Class<? extends Enum<?>>> result1 = EnumUtils.asEnumType(clazz1);
-        Optional<Class<? extends Enum<?>>> result2 = EnumUtils.asEnumType(clazz2);
-        Optional<Class<? extends Enum<?>>> result3 = EnumUtils.asEnumType(clazz3);
-        Optional<Class<? extends Enum<?>>> result4 = EnumUtils.asEnumType(clazz4);
-        Optional<Class<? extends Enum<?>>> result5 = EnumUtils.asEnumType(clazz5);
-        Optional<Class<? extends Enum<?>>> result6 = EnumUtils.asEnumType(clazz6);
+        Optional<Class<? extends Enum<?>>> result1 = EnumUtils.asEnumClassIfPossible(clazz1);
+        Optional<Class<? extends Enum<?>>> result2 = EnumUtils.asEnumClassIfPossible(clazz2);
+        Optional<Class<? extends Enum<?>>> result3 = EnumUtils.asEnumClassIfPossible(clazz3);
+        Optional<Class<? extends Enum<?>>> result4 = EnumUtils.asEnumClassIfPossible(clazz4);
+        Optional<Class<? extends Enum<?>>> result5 = EnumUtils.asEnumClassIfPossible(clazz5);
+        Optional<Class<? extends Enum<?>>> result6 = EnumUtils.asEnumClassIfPossible(clazz6);
+
+        // then
+        assertThat(result1, equalTo(Optional.of(TestEnum.class)));
+        assertThat(result2, equalTo(Optional.empty()));
+        assertThat(result3, equalTo(Optional.empty()));
+        assertThat(result4, equalTo(Optional.empty()));
+        assertThat(result5, equalTo(Optional.of(TestEnum.NestedEnum.class)));
+        assertThat(result6, equalTo(Optional.empty()));
+
+        assertThat(EnumUtils.getAssociatedEnumType(null), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(String.class), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(double[][].class), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(List.class), equalTo(Optional.empty()));
+    }
+
+    @Test
+    void shouldReturnAssociatedEnumClassIfApplicable() {
+        // given
+        Class<?> clazz1 = TestEnum.class;
+        Class<?> clazz2 = TestEnum.SECOND.getClass();
+        Class<?> clazz3 = TestEnum.Inner.class;
+        Class<?> clazz4 = TestEnum.SECOND.getClass().getDeclaredClasses()[0];
+        Class<?> clazz5 = TestEnum.NestedEnum.class;
+        Class<?> clazz6 = TestEnum.NestedEnum.SECOND.getClass();
+
+        // when
+        Optional<Class<? extends Enum<?>>> result1 = EnumUtils.getAssociatedEnumType(clazz1);
+        Optional<Class<? extends Enum<?>>> result2 = EnumUtils.getAssociatedEnumType(clazz2);
+        Optional<Class<? extends Enum<?>>> result3 = EnumUtils.getAssociatedEnumType(clazz3);
+        Optional<Class<? extends Enum<?>>> result4 = EnumUtils.getAssociatedEnumType(clazz4);
+        Optional<Class<? extends Enum<?>>> result5 = EnumUtils.getAssociatedEnumType(clazz5);
+        Optional<Class<? extends Enum<?>>> result6 = EnumUtils.getAssociatedEnumType(clazz6);
 
         // then
         assertThat(result1, equalTo(Optional.of(TestEnum.class)));
@@ -122,10 +179,10 @@ class EnumUtilsTest {
         assertThat(result5, equalTo(Optional.of(TestEnum.NestedEnum.class)));
         assertThat(result6, equalTo(Optional.of(TestEnum.NestedEnum.class)));
 
-        assertThat(EnumUtils.asEnumType(null), equalTo(Optional.empty()));
-        assertThat(EnumUtils.asEnumType(String.class), equalTo(Optional.empty()));
-        assertThat(EnumUtils.asEnumType(double[][].class), equalTo(Optional.empty()));
-        assertThat(EnumUtils.asEnumType(List.class), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(null), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(String.class), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(double[][].class), equalTo(Optional.empty()));
+        assertThat(EnumUtils.getAssociatedEnumType(List.class), equalTo(Optional.empty()));
     }
 
     @Test
@@ -162,7 +219,8 @@ class EnumUtilsTest {
 
             FIRST,
 
-            SECOND()
+            SECOND() {
+            }
 
         }
 
@@ -172,5 +230,13 @@ class EnumUtilsTest {
 
             }
         }
+    }
+
+    private enum EnumWithNonStandardEntryNames {
+
+        first,
+        Second,
+        Third, // 1
+        tHird // 2
     }
 }
