@@ -47,9 +47,6 @@ public final class ClassUtils {
     /**
      * Loads a class or throws an {@link IllegalArgumentException}. This method wraps {@link Class#forName(String)}
      * to throw a runtime exception for convenience.
-     * <p>
-     * Note that errors thrown by {@link Class#forName(String)} (e.g. {@link LinkageError}) are not caught as they
-     * typically indicate more severe issues.
      *
      * @param name the class name to load
      * @return the loaded class, never null
