@@ -37,11 +37,13 @@ class ArrayTypeUtilsTest {
         Class<?> stringArr = ArrayTypeUtils.createArrayClass(String.class, 3);
         Class<?> charArr = ArrayTypeUtils.createArrayClass(char.class, 0);
         Class<?> bigDecimalArr = ArrayTypeUtils.createArrayClass(BigDecimal.class, 2);
+        Class<?> bigDecimalArr4 = ArrayTypeUtils.createArrayClass(BigDecimal[][].class, 2);
 
         // then
         assertThat(stringArr, equalTo(String[][][].class));
         assertThat(charArr, equalTo(char.class));
         assertThat(bigDecimalArr, equalTo(BigDecimal[][].class));
+        assertThat(bigDecimalArr4, equalTo(BigDecimal[][][][].class));
     }
 
     @Test
