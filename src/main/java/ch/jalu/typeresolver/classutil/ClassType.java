@@ -20,12 +20,12 @@ public enum ClassType {
      * {@link java.lang.annotation.Annotation} do not fall into this category.
      * <p>
      * Note that objects of annotation types have a corresponding proxy class; their class is categorized as
-     * {@link #PROXY_CLASS}. Example:<pre>{@code
-     * @Test void demo() throws Exception {
+     * {@link #PROXY_CLASS}. Example:<pre><code>
+     * &#64;Test void demo() throws Exception {
      *   Test ann = getClass().getDeclaredMethod("demo").getAnnotation(Test.class);
      *   System.out.println(ann.getClass()); // Prints something like "$Proxy9"
      *   System.out.println(ClassUtils.getType(ann.getClass())); // Prints PROXY_CLASS
-     * }}</pre>
+     * }</code></pre>
      */
     ANNOTATION,
 

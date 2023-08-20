@@ -351,11 +351,11 @@ public final class ArrayUtils {
      * has been sorted. The result is the index in the array of a matching value (no guarantee which index it is if
      * there are multiple matching values). If the value could not be matched, a negative number is returned as
      * described in binary search methods of {@link Arrays} (e.g. {@link Arrays#binarySearch(char[], int, int, char)}).
-     *
-     * @implNote If the value is not matched, it is guaranteed that this method returns the same negative value as
-     *           {@link Arrays#binarySearch(Object[], int, int, Object)} if the given array were converted to
-     *           {@code Boolean[]}. If there is a match, a valid index with the given value is returned, but it is not
-     *           guaranteed to be the same value as returned by {@code Arrays#binarySearch}.
+     * <p>
+     * If the value is not matched, it is guaranteed that this method returns the same negative value as
+     * {@link Arrays#binarySearch(Object[], int, int, Object)} if the given array were converted to {@code Boolean[]}.
+     * If there is a match, a valid index with the given value is returned, but it is not guaranteed to be the same
+     * value as returned by {@code Arrays#binarySearch}.
      *
      * @param array the boolean array to search in
      * @param fromIndex the start index (inclusive) of the range to search in
