@@ -1,9 +1,22 @@
 # Java type resolver
 [![Build Status](https://github.com/ljacqu/JavaTypeResolver/actions/workflows/maven_build.yml/badge.svg)](https://github.com/ljacqu/JavaTypeResolver/actions?query=branch%3Amaster)
 [![Coverage Status](https://coveralls.io/repos/github/ljacqu/JavaTypeResolver/badge.svg?branch=master)](https://coveralls.io/github/ljacqu/JavaTypeResolver?branch=master)
+[![Javadocs](https://www.javadoc.io/badge/ch.jalu/typeresolver.svg)](https://www.javadoc.io/doc/ch.jalu/typeresolver)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a19c4b3ca6ea5ed5d083/maintainability)](https://codeclimate.com/github/ljacqu/JavaTypeResolver/maintainability)
 
 Resolves types from context for Java 8 and above, among other utilities.
+
+## Integration
+Start using ConfigMe by adding this to your pom.xml:
+```xml
+<dependencies>
+    <dependency>
+        <groupId>ch.jalu</groupId>
+        <artifactId>typeresolver</artifactId>
+        <version>0.1.0</version>
+    </dependency>
+</dependencies>
+```
 
 ## Accessing types and type information
 
