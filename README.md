@@ -54,7 +54,7 @@ You can use `TypeReference` and `NestedTypeReference` to create
 Type instances of any subclass in a compile-safe manner:
 
 1. Create types on the fly with `new TypeReference<Map<String, Double>>() { }`
-1. Implementation of all `Type` interfaces with equals and hashCode in line with the implementations from the JRE
+1. Implementation of all `Type` interfaces with equals and hashCode in line with the internal implementations of the JDK
 
 ```java
 public static void main(String... args) {
@@ -66,7 +66,8 @@ public static void main(String... args) {
   // Outputs: "Created wildcard: ? extends java.lang.String"
   System.out.println("Created wildcard: " + myWildcard);
 
-  // Implementations of Type interfaces are available which have the same #equals and #hashCode as the JRE impl.
+  // Implementations of Type interfaces which have the same #equals and #hashCode
+  // as the JDK impl. are available.
   ParameterizedType pt = new ParameterizedTypeImpl(Set.class, null, Double.class);
   // Outputs: "Set types equal -> true"
   System.out.println("Set types equal -> " + pt.equals(mySetType.getType()));

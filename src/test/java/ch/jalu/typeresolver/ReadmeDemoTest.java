@@ -53,7 +53,7 @@ class ReadmeDemoTest {
     // System.out.println("Created wildcard: " + myWildcard);
     assertThat(myWildcard.toString(), equalTo("? extends java.lang.String"));
 
-    // Implementations of Type interfaces are available which have the same #equals and #hashCode as the JRE impl.
+    // Implementations of Type interfaces are available which have the same #equals and #hashCode as the JDK impl.
     ParameterizedType pt = new ParameterizedTypeImpl(Set.class, null, Double.class);
     // Outputs: "Set types equal -> true"
     // System.out.println("Set types equal -> " + pt.equals(mySetType.getType()));

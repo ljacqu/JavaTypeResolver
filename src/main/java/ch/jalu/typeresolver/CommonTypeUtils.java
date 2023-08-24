@@ -19,7 +19,7 @@ public final class CommonTypeUtils {
     /**
      * Convenience method which returns the raw type of the given parameterized type cast as {@link Class}.
      * <p>
-     * Background: in current JRE versions, the raw type can only be a Class, so the raw type can be cast
+     * Background: in current JDK versions, the raw type can only be a Class, so the raw type can be cast
      * without checking it beforehand.
      *
      * @param parameterizedType the parameterized type whose raw type should be returned
@@ -32,7 +32,7 @@ public final class CommonTypeUtils {
     /**
      * Returns whether the given wildcard type has an explicitly defined upper bound.
      * <p>
-     * Background: the JRE sets the upper bounds to an array with one element of Object.class if the wildcard has
+     * Background: the JDK sets the upper bounds to an array with one element of Object.class if the wildcard has
      * lower bounds, or if the wildcard has no specified bounds (i.e. a simple "?").
      *
      * @param wildcardType the wildcard type to analyze

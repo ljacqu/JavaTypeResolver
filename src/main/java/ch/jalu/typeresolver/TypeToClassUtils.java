@@ -75,7 +75,7 @@ final class TypeToClassUtils {
             GenericArrayType gat = (GenericArrayType) type;
             Class<?> componentAsClass = getSafeToReadClassOrNull(gat.getGenericComponentType());
             // componentAsClass usually isn't null because the component type of GenericArrayType is normally either a
-            // ParameterizedType or a TypeVariable. If a type variable is unbounded, the JRE sets Object as the bound.
+            // ParameterizedType or a TypeVariable. If a type variable is unbounded, the JDK sets Object as the bound.
             // However, if the type was somehow resolved we might have an array of wildcard, for example.
             if (componentAsClass != null) {
                 return ArrayTypeUtils.createArrayClass(componentAsClass);

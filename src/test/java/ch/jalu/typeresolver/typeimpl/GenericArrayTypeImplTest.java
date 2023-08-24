@@ -32,9 +32,9 @@ class GenericArrayTypeImplTest extends AbstractTypeImplTest {
     @Override
     void shouldHaveSameHashCodeAsImplementation() {
         // given / when / then
-        assertThat(types[0].hashCode(), equalTo(jreTypes[0].hashCode()));
-        assertThat(types[1].hashCode(), equalTo(jreTypes[1].hashCode()));
-        assertThat(types[2].hashCode(), equalTo(jreTypes[2].hashCode()));
+        assertThat(types[0].hashCode(), equalTo(jdkTypes[0].hashCode()));
+        assertThat(types[1].hashCode(), equalTo(jdkTypes[1].hashCode()));
+        assertThat(types[2].hashCode(), equalTo(jdkTypes[2].hashCode()));
     }
 
     @Test

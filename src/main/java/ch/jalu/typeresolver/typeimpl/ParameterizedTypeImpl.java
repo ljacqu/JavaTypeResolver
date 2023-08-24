@@ -10,7 +10,7 @@ import java.util.Objects;
 
 /**
  * Implementation of {@link ParameterizedType}, with same {@link Object#equals} and {@link Object#hashCode()}
- * as the JRE implementation.
+ * as the JDK implementation uses internally.
  */
 public class ParameterizedTypeImpl implements ParameterizedType {
 

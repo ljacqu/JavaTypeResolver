@@ -36,7 +36,7 @@ class CommonTypeUtilsTest {
         WildcardTypeImpl wildcardWithObject = new WildcardTypeImpl(new Type[]{ Object.class }, new Type[0]);
         WildcardTypeImpl wildcardWithString = new WildcardTypeImpl(new Type[]{ String.class }, new Type[0]);
 
-        // The following are never returned by the JRE (upperBounds always has 1 entry)
+        // The following are never returned by the JDK (upperBounds always has 1 entry)
         WildcardTypeImpl emptyWildcard = new WildcardTypeImpl(new Type[0], new Type[0]);
         WildcardTypeImpl wildcardWithObjectAndString = new WildcardTypeImpl(new Type[]{ Object.class, String.class }, new Type[0]);
 
