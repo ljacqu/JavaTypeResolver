@@ -60,6 +60,23 @@ public final class ClassUtils {
     }
 
     /**
+     * Returns an optional with the given object cast to the target type, or an empty optional if the given object
+     * cannot be cast to the specified type.
+     *
+     * @param object the object to cast
+     * @param targetType the class to cast to
+     * @param <T> target type
+     * @return optional with the cast object, or empty optional if not possible
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> tryCast(@Nullable Object object, Class<T> targetType) {
+        if (targetType.isInstance(object)) {
+            return Optional.of((T) object);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Returns an Optional with the same class cast as subtype of the given {@code parent} if possible,
      * otherwise returns an empty optional.
      * <p>

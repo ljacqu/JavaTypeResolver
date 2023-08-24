@@ -98,34 +98,65 @@ class ClassUtilsTest {
         }
     }
 
-    @Test
-    void shouldCastClassAsSubclass() {
-        // given / when
-        Optional<Class<? extends CharSequence>> result1 = ClassUtils.asSubclassIfPossible(String.class, CharSequence.class);
-        Optional<Class<? extends Number>> result2 = ClassUtils.asSubclassIfPossible(Integer.class, Number.class);
-        Optional<Class<? extends Serializable>> result3 = ClassUtils.asSubclassIfPossible(Integer.class, Serializable.class);
-        Optional<Class<? extends Number[]>> result4 = ClassUtils.asSubclassIfPossible(Integer[].class, Number[].class);
-        Optional<Class<? extends Double>> result5 = ClassUtils.asSubclassIfPossible(Double.class, Double.class);
-        Optional<Class<? extends Integer>> result6 = ClassUtils.asSubclassIfPossible(int.class, int.class);
+    @Nested
+    class SubClassAndCastingUtils {
 
-        // then
-        assertThat(result1, equalTo(Optional.of(String.class)));
-        assertThat(result2, equalTo(Optional.of(Integer.class)));
-        assertThat(result3, equalTo(Optional.of(Integer.class)));
-        assertThat(result4, equalTo(Optional.of(Integer[].class)));
-        assertThat(result5, equalTo(Optional.of(Double.class)));
-        assertThat(result6, equalTo(Optional.of(int.class)));
-    }
+        @Test
+        void shouldCastToTargetType() {
+            // given / when
+            Optional<Number> result1 = ClassUtils.tryCast(3, Number.class);
+            Optional<String> result2 = ClassUtils.tryCast("str", String.class);
+            Optional<Serializable> result3 = ClassUtils.tryCast("str", Serializable.class);
+            Integer[] integerArray = {1, 2, 3};
+            Optional<Number[]> result4 = ClassUtils.tryCast(integerArray, Number[].class);
 
-    @Test
-    void shouldNotCastAsSubclassWhenNotPossible() {
-        // given / when / then
-        assertThat(ClassUtils.asSubclassIfPossible(String.class, Number.class), equalTo(Optional.empty()));
-        assertThat(ClassUtils.asSubclassIfPossible(Number.class, Integer.class), equalTo(Optional.empty()));
-        assertThat(ClassUtils.asSubclassIfPossible(Integer[].class, CharSequence[].class), equalTo(Optional.empty()));
+            // then
+            assertThat(result1, equalTo(Optional.of(3)));
+            assertThat(result2, equalTo(Optional.of("str")));
+            assertThat(result3, equalTo(Optional.of("str")));
+            assertThat(result4, equalTo(Optional.of(integerArray)));
+        }
 
-        assertThat(ClassUtils.asSubclassIfPossible(int.class, Integer.class), equalTo(Optional.empty()));
-        assertThat(ClassUtils.asSubclassIfPossible(Integer.class, int.class), equalTo(Optional.empty()));
+        @Test
+        void shouldNotCastObjectWhenNotPossible() {
+            // given / when / then
+            assertThat(ClassUtils.tryCast(3, String.class), equalTo(Optional.empty()));
+            assertThat(ClassUtils.tryCast("str", Character[].class), equalTo(Optional.empty()));
+            assertThat(ClassUtils.tryCast(null, Number.class), equalTo(Optional.empty()));
+
+            // Special case Integer <-> int: Integer is not considered an int.class
+            assertThat(ClassUtils.tryCast(3, int.class), equalTo(Optional.empty()));
+        }
+
+        @Test
+        void shouldCastClassAsSubclass() {
+            // given / when
+            Optional<Class<? extends CharSequence>> result1 = ClassUtils.asSubclassIfPossible(String.class, CharSequence.class);
+            Optional<Class<? extends Number>> result2 = ClassUtils.asSubclassIfPossible(Integer.class, Number.class);
+            Optional<Class<? extends Serializable>> result3 = ClassUtils.asSubclassIfPossible(Integer.class, Serializable.class);
+            Optional<Class<? extends Number[]>> result4 = ClassUtils.asSubclassIfPossible(Integer[].class, Number[].class);
+            Optional<Class<? extends Double>> result5 = ClassUtils.asSubclassIfPossible(Double.class, Double.class);
+            Optional<Class<? extends Integer>> result6 = ClassUtils.asSubclassIfPossible(int.class, int.class);
+
+            // then
+            assertThat(result1, equalTo(Optional.of(String.class)));
+            assertThat(result2, equalTo(Optional.of(Integer.class)));
+            assertThat(result3, equalTo(Optional.of(Integer.class)));
+            assertThat(result4, equalTo(Optional.of(Integer[].class)));
+            assertThat(result5, equalTo(Optional.of(Double.class)));
+            assertThat(result6, equalTo(Optional.of(int.class)));
+        }
+
+        @Test
+        void shouldNotCastAsSubclassWhenNotPossible() {
+            // given / when / then
+            assertThat(ClassUtils.asSubclassIfPossible(String.class, Number.class), equalTo(Optional.empty()));
+            assertThat(ClassUtils.asSubclassIfPossible(Number.class, Integer.class), equalTo(Optional.empty()));
+            assertThat(ClassUtils.asSubclassIfPossible(Integer[].class, CharSequence[].class), equalTo(Optional.empty()));
+
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, Integer.class), equalTo(Optional.empty()));
+            assertThat(ClassUtils.asSubclassIfPossible(Integer.class, int.class), equalTo(Optional.empty()));
+        }
     }
 
     @Test
