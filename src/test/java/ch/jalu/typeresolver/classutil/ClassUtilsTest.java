@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.awt.font.NumericShaper;
@@ -21,6 +22,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static ch.jalu.typeresolver.classutil.ClassUtils.getSemanticType;
+import static ch.jalu.typeresolver.classutil.ClassUtilsTest.ExpectedEvalResult.AUTOBOX_ONLY;
+import static ch.jalu.typeresolver.classutil.ClassUtilsTest.ExpectedEvalResult.FALSE;
+import static ch.jalu.typeresolver.classutil.ClassUtilsTest.ExpectedEvalResult.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -101,61 +105,171 @@ class ClassUtilsTest {
     @Nested
     class SubClassAndCastingUtils {
 
+        // This test just has a few samples. The method below tests this method more intensively; the goal here
+        // is to just ensure that the return value is typed correctly, and that the 2-params method has autobox=true
         @Test
         void shouldCastToTargetType() {
             // given / when
             Optional<Number> result1 = ClassUtils.tryCast(3, Number.class);
-            Optional<String> result2 = ClassUtils.tryCast("str", String.class);
-            Optional<Serializable> result3 = ClassUtils.tryCast("str", Serializable.class);
-            Integer[] integerArray = {1, 2, 3};
-            Optional<Number[]> result4 = ClassUtils.tryCast(integerArray, Number[].class);
+            Optional<Double> result2 = ClassUtils.tryCast(4.5, double.class);
+            Optional<String> result3 = ClassUtils.tryCast(4.5, String.class, false);
 
             // then
             assertThat(result1, equalTo(Optional.of(3)));
-            assertThat(result2, equalTo(Optional.of("str")));
-            assertThat(result3, equalTo(Optional.of("str")));
-            assertThat(result4, equalTo(Optional.of(integerArray)));
+            assertThat(result2, equalTo(Optional.of(4.5)));
+            assertThat(result3, equalTo(Optional.empty()));
         }
 
         @Test
-        void shouldNotCastObjectWhenNotPossible() {
-            // given / when / then
-            assertThat(ClassUtils.tryCast(3, String.class), equalTo(Optional.empty()));
-            assertThat(ClassUtils.tryCast("str", Character[].class), equalTo(Optional.empty()));
-            assertThat(ClassUtils.tryCast(null, Number.class), equalTo(Optional.empty()));
+        void shouldCastWhenPossible() {
+            argsForTryCastTest().forEach(testCase -> {
+                Object object = testCase.get()[0];
+                Class<?> target = (Class<?>) testCase.get()[1];
+                ExpectedEvalResult expectedResult = (ExpectedEvalResult) testCase.get()[2];
 
-            // Special case Integer <-> int: Integer is not considered an int.class
-            assertThat(ClassUtils.tryCast(3, int.class), equalTo(Optional.empty()));
+                if (!evalCastWhenPossibleCase(object, target, expectedResult)) {
+                    throw new IllegalStateException("Test case (" + object + ", " + target + ", " + expectedResult + ") failed");
+                }
+            });
         }
 
+        private boolean evalCastWhenPossibleCase(Object obj, Class<?> type, ExpectedEvalResult expectedResult) {
+            // given / when
+            Optional<?> resultAutobox = ClassUtils.tryCast(obj, type, true);
+            Optional<?> resultNoBoxing = ClassUtils.tryCast(obj, type, false);
+
+            // then
+            switch (expectedResult) {
+                case TRUE:
+                    return resultAutobox.equals(Optional.of(obj))
+                        && resultNoBoxing.equals(Optional.of(obj));
+
+                case AUTOBOX_ONLY:
+                    return resultAutobox.equals(Optional.of(obj))
+                        && !resultNoBoxing.isPresent();
+
+                case FALSE:
+                    return !resultAutobox.isPresent()
+                        && !resultNoBoxing.isPresent();
+
+                default:
+                    throw new IllegalStateException("Unexpected value: " + expectedResult);
+            }
+        }
+
+        // #347: Static method in non-static nested class not possible -> can't use @ParameterizedTest
+        private Stream<Arguments> argsForTryCastTest() {
+            return Stream.of(
+                Arguments.of(3, Number.class, TRUE),
+                Arguments.of("str", String.class, TRUE),
+                Arguments.of("str", Serializable.class, TRUE),
+                Arguments.of(new Integer[]{1,2}, Number[].class, TRUE),
+                Arguments.of(new int[]{1,2}, int[].class, TRUE),
+
+                Arguments.of(3, int.class, AUTOBOX_ONLY),
+                Arguments.of(true, boolean.class, AUTOBOX_ONLY),
+
+                Arguments.of(null, int.class, FALSE),
+                Arguments.of(null, Number.class, FALSE),
+                Arguments.of("test", Number.class, FALSE),
+                Arguments.of(4, long.class, FALSE),
+                Arguments.of(4, Long.class, FALSE),
+                Arguments.of(new int[]{1}, Integer[].class, FALSE),
+                Arguments.of(new Integer[]{1}, int[].class, FALSE));
+        }
+
+        @Test
+        void shouldHaveValidJavadoc_tryCast() {
+            assertThat(ClassUtils.tryCast("a", String.class, false), equalTo(Optional.of("a")));
+            assertThat(ClassUtils.tryCast("a", String.class, true), equalTo(Optional.of("a")));
+            assertThat(ClassUtils.tryCast(3, int.class, false), equalTo(Optional.empty()));
+            assertThat(ClassUtils.tryCast(3, int.class, true), equalTo(Optional.of(3)));
+            assertThat(ClassUtils.tryCast(3, Integer.class, false), equalTo(Optional.of(3)));
+        }
+
+        // This test just has a few samples. The method below tests this method more intensively; the goal here
+        // is to just ensure that the return value is typed correctly, and that the 2-params method has autobox=true
         @Test
         void shouldCastClassAsSubclass() {
             // given / when
             Optional<Class<? extends CharSequence>> result1 = ClassUtils.asSubclassIfPossible(String.class, CharSequence.class);
-            Optional<Class<? extends Number>> result2 = ClassUtils.asSubclassIfPossible(Integer.class, Number.class);
+            Optional<Class<? extends Integer>> result2 = ClassUtils.asSubclassIfPossible(int.class, Integer.class);
             Optional<Class<? extends Serializable>> result3 = ClassUtils.asSubclassIfPossible(Integer.class, Serializable.class);
-            Optional<Class<? extends Number[]>> result4 = ClassUtils.asSubclassIfPossible(Integer[].class, Number[].class);
-            Optional<Class<? extends Double>> result5 = ClassUtils.asSubclassIfPossible(Double.class, Double.class);
-            Optional<Class<? extends Integer>> result6 = ClassUtils.asSubclassIfPossible(int.class, int.class);
 
             // then
             assertThat(result1, equalTo(Optional.of(String.class)));
-            assertThat(result2, equalTo(Optional.of(Integer.class)));
+            assertThat(result2, equalTo(Optional.of(int.class)));
             assertThat(result3, equalTo(Optional.of(Integer.class)));
-            assertThat(result4, equalTo(Optional.of(Integer[].class)));
-            assertThat(result5, equalTo(Optional.of(Double.class)));
-            assertThat(result6, equalTo(Optional.of(int.class)));
         }
 
         @Test
-        void shouldNotCastAsSubclassWhenNotPossible() {
-            // given / when / then
-            assertThat(ClassUtils.asSubclassIfPossible(String.class, Number.class), equalTo(Optional.empty()));
-            assertThat(ClassUtils.asSubclassIfPossible(Number.class, Integer.class), equalTo(Optional.empty()));
-            assertThat(ClassUtils.asSubclassIfPossible(Integer[].class, CharSequence[].class), equalTo(Optional.empty()));
+        void shouldCastAsSubclassWhenPossible() {
+            argsForSubclassCastsTest().forEach(testCase -> {
+                Class<?> clazz = (Class<?>) testCase.get()[0];
+                Class<?> parent = (Class<?>) testCase.get()[1];
+                ExpectedEvalResult expectedResult = (ExpectedEvalResult) testCase.get()[2];
 
-            assertThat(ClassUtils.asSubclassIfPossible(int.class, Integer.class), equalTo(Optional.empty()));
-            assertThat(ClassUtils.asSubclassIfPossible(Integer.class, int.class), equalTo(Optional.empty()));
+                if (!evalCastAsSubclassWhenPossibleCase(clazz, parent, expectedResult)) {
+                    throw new IllegalStateException("Test case (" + clazz + ", " + parent + ", " + expectedResult + ") failed");
+                }
+            });
+        }
+
+        private boolean evalCastAsSubclassWhenPossibleCase(Class<?> clazz, Class<?> parent, ExpectedEvalResult expectedResult) {
+            // given / when
+            Optional<?> resultAutobox = ClassUtils.asSubclassIfPossible(clazz, parent, true);
+            Optional<?> resultNoBoxing = ClassUtils.asSubclassIfPossible(clazz, parent, false);
+
+            // then
+            switch (expectedResult) {
+                case TRUE:
+                    return resultAutobox.equals(Optional.of(clazz))
+                        && resultNoBoxing.equals(Optional.of(clazz));
+
+                case AUTOBOX_ONLY:
+                    return resultAutobox.equals(Optional.of(clazz))
+                        && !resultNoBoxing.isPresent();
+
+                case FALSE:
+                    return !resultAutobox.isPresent()
+                        && !resultNoBoxing.isPresent();
+
+                default:
+                    throw new IllegalStateException("Unexpected value: " + expectedResult);
+            }
+        }
+
+        // #347: Static method in non-static nested class not possible -> can't use @ParameterizedTest
+        private Stream<Arguments> argsForSubclassCastsTest() {
+            return Stream.of(
+                Arguments.of(String.class, String.class, TRUE),
+                Arguments.of(String.class, CharSequence.class, TRUE),
+                Arguments.of(String.class, Serializable.class, TRUE),
+                Arguments.of(Double.class, Number.class, TRUE),
+                Arguments.of(byte[][].class, Object[].class, TRUE),
+
+                Arguments.of(Integer.class, int.class, AUTOBOX_ONLY),
+                Arguments.of(int.class, Integer.class, AUTOBOX_ONLY),
+                Arguments.of(int.class, Number.class, AUTOBOX_ONLY),
+
+                Arguments.of(int.class, short.class, FALSE),
+                Arguments.of(Integer.class, short.class, FALSE),
+                Arguments.of(Integer.class, Short.class, FALSE),
+
+                Arguments.of(Byte[].class, byte[].class, FALSE),
+                Arguments.of(byte[].class, Object[].class, FALSE),
+                Arguments.of(void.class, Void.class, FALSE),
+                Arguments.of(Void.class, void.class, FALSE));
+        }
+
+        @Test
+        void shouldHaveValidJavadoc_asSubclassIfPossible() {
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, Integer.class, false), equalTo(Optional.empty()));
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, Integer.class, true), equalTo(Optional.of(int.class)));
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, Number.class, false), equalTo(Optional.empty()));
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, Number.class, true), equalTo(Optional.of(int.class)));
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, long.class, false), equalTo(Optional.empty()));
+            assertThat(ClassUtils.asSubclassIfPossible(int.class, long.class, true), equalTo(Optional.empty()));
         }
     }
 
@@ -544,6 +658,11 @@ class ClassUtilsTest {
         }
     }
 
+    enum ExpectedEvalResult {
+        TRUE,
+        AUTOBOX_ONLY,
+        FALSE
+    }
 
     // -------
     // Sample types

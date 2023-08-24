@@ -99,11 +99,13 @@ public enum PrimitiveType {
      * Note that {@link Void} is not converted to {@link Void#TYPE void.class}.
      *
      * @param clazz the class to process
+     * @param <T> the class's type
      * @return the class's primitive type equivalent, or the provided argument if not applicable
      */
-    public static Class<?> toPrimitiveType(Class<?> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T> Class<T> toPrimitiveType(Class<T> clazz) {
         Class<?> primitiveType = REFERENCE_TO_PRIMITIVE_TYPES.get(clazz);
-        return primitiveType == null ? clazz : primitiveType;
+        return primitiveType == null ? clazz : (Class<T>) primitiveType;
     }
 
     /**
@@ -113,11 +115,13 @@ public enum PrimitiveType {
      * Note that {@link Void#TYPE void.class} is not converted to {@link Void}.
      *
      * @param clazz the class to process
+     * @param <T> the class's type
      * @return the class's reference type equivalent, or the provided argument if not applicable
      */
-    public static Class<?> toReferenceType(Class<?> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T> Class<T> toReferenceType(Class<T> clazz) {
         Class<?> referenceType = PRIMITIVE_TO_REFERENCE_TYPES.get(clazz);
-        return referenceType == null ? clazz : referenceType;
+        return referenceType == null ? clazz : (Class<T>) referenceType;
     }
 
     /**

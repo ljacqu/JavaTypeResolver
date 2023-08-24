@@ -2,6 +2,7 @@ package ch.jalu.typeresolver.classutil;
 
 import ch.jalu.typeresolver.EnumUtils;
 import ch.jalu.typeresolver.array.ArrayClassProperties;
+import ch.jalu.typeresolver.primitives.PrimitiveType;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -61,16 +62,43 @@ public final class ClassUtils {
 
     /**
      * Returns an optional with the given object cast to the target type, or an empty optional if the given object
-     * cannot be cast to the specified type.
+     * cannot be cast to the specified type. See {@link #tryCast(Object, Class, boolean)} for details.
      *
      * @param object the object to cast
      * @param targetType the class to cast to
      * @param <T> target type
      * @return optional with the cast object, or empty optional if not possible
      */
-    @SuppressWarnings("unchecked")
     public static <T> Optional<T> tryCast(@Nullable Object object, Class<T> targetType) {
-        if (targetType.isInstance(object)) {
+        return tryCast(object, targetType, true);
+    }
+
+    /**
+     * Returns an optional with the given object cast to the target type, or an empty optional if the given object
+     * cannot be cast to the specified type. If {@code autobox} is true, primitive types are cast to their wrapper
+     * types.
+     * <p>
+     * Examples:<pre>{@code
+     *   tryCast("a", String.class, false) = Optional.of("a")
+     *   tryCast("a", String.class, true) = Optional.of("a")
+     *   tryCast(3, int.class, false) = Optional.empty()
+     *   tryCast(3, int.class, true) = Optional.of(3)
+     *   tryCast(3, Integer.class, false) = Optional.of(3)
+     * }</pre>
+     * <p>
+     * This method returns an empty Optional even if a widening primitive conversion (see JLS 5.1.2) exists:
+     * {@code tryCast(3, long.class, autobox)} returns an empty optional (regardless of the value of {@code autobox}).
+     *
+     * @param object the object to cast
+     * @param targetType the class to cast to
+     * @param autobox whether the target type should be autoboxed, e.g. to turn int.class to Integer.class
+     * @param <T> target type
+     * @return optional with the cast object, or empty optional if not possible
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> tryCast(@Nullable Object object, Class<T> targetType, boolean autobox) {
+        Class<T> target = autobox ? PrimitiveType.toReferenceType(targetType) : targetType;
+        if (target.isInstance(object)) {
             return Optional.of((T) object);
         }
         return Optional.empty();
@@ -78,14 +106,8 @@ public final class ClassUtils {
 
     /**
      * Returns an Optional with the same class cast as subtype of the given {@code parent} if possible,
-     * otherwise returns an empty optional.
-     * <p>
-     * Note that the behavior for primitive classes may be unintuitive:<pre>{@code
-     *   Optional<? extends Integer> result1 = asSubClassIfPossible(int.class, int.class); // Optional.of(int.class)
-     *   Optional<? extends Integer> result2 = asSubClassIfPossible(int.class, Integer.class); // Optional.empty()
-     * }</pre>
-     * See {@link ch.jalu.typeresolver.primitives.PrimitiveType#toReferenceType PrimitiveType#toReferenceType} to
-     * unwrap primitive types.
+     * otherwise returns an empty optional. Auto-boxes classes. See {@link #asSubclassIfPossible(Class, Class, boolean)}
+     * for more details.
      *
      * @param classToInspect the class to process
      * @param parent the parent type to check if the class is an extension of
@@ -93,13 +115,45 @@ public final class ClassUtils {
      * @return optional with the class as extension of the parent, or empty optional if not possible
      * @see Class#asSubclass
      */
-    @SuppressWarnings("unchecked")
     public static <T> Optional<Class<? extends T>> asSubclassIfPossible(Class<?> classToInspect,
                                                                         Class<T> parent) {
-        if (parent.isAssignableFrom(classToInspect)) {
-            return Optional.of((Class<? extends T>) classToInspect);
+        return asSubclassIfPossible(classToInspect, parent, true);
+    }
+
+    /**
+     * Returns an Optional with the same class cast as subtype of the given {@code parent} if possible,
+     * otherwise returns an empty optional. If {@code autobox} is true, primitive classes are cast to their wrapper
+     * types.
+     * <p>
+     * Examples:<pre>{@code
+     *  asSubclassIfPossible(int.class, Integer.class, false) = Optional.empty()
+     *  asSubclassIfPossible(int.class, Integer.class, true) = Optional.of(int.class)
+     *  asSubclassIfPossible(int.class, Number.class, false) = Optional.empty()
+     *  asSubclassIfPossible(int.class, Number.class, true) = Optional.of(int.class)
+     *  asSubclassIfPossible(int.class, long.class, false) = Optional.empty()
+     *  asSubclassIfPossible(int.class, long.class, true) = Optional.empty()
+     * }</pre>
+     *
+     * @param classToInspect the class to process
+     * @param parent the parent type to check if the class is an extension of
+     * @param autobox whether the target type should be autoboxed, e.g. to turn int.class to Integer.class
+     * @param <T> the parent type
+     * @return optional with the class as extension of the parent, or empty optional if not possible
+     * @see Class#asSubclass
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<Class<? extends T>> asSubclassIfPossible(Class<?> classToInspect,
+                                                                        Class<T> parent,
+                                                                        boolean autobox) {
+        boolean isSubclass;
+        if (autobox) {
+            isSubclass = PrimitiveType.toReferenceType(parent).isAssignableFrom(
+                PrimitiveType.toReferenceType(classToInspect));
+        } else {
+            isSubclass = parent.isAssignableFrom(classToInspect);
         }
-        return Optional.empty();
+
+        return isSubclass ? Optional.of((Class<? extends T>) classToInspect) : Optional.empty();
     }
 
     /**
