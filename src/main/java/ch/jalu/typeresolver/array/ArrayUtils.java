@@ -1,15 +1,14 @@
 package ch.jalu.typeresolver.array;
 
-import org.jetbrains.annotations.Nullable;
+import ch.jalu.typeresolver.classutil.ClassUtils;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static ch.jalu.typeresolver.array.ArrayComponentType.getArrayComponentType;
 
 /**
  * This class contains methods that can handle arrays of any type ({@code boolean[]}, {@code byte[]}, {@code Object[]},
@@ -398,74 +397,14 @@ public final class ArrayUtils {
         Arrays.fill(array, fromIndex + numberOfFalse, toIndex, true);
     }
 
-    private static ArrayComponentType getArrayComponentType(Object array) {
-        if (array == null) {
-            throw new NullPointerException("array");
-        }
-        ArrayComponentType componentType = ArrayComponentType.resolveComponentForPrimitiveArrays(array.getClass());
-        if (componentType != null) {
-            return componentType;
-        }
-        if (Object[].class.isAssignableFrom(array.getClass())) {
-            return ArrayComponentType.OBJECT;
-        }
-        throw new IllegalArgumentException("Expected an array as argument, but got: " + array.getClass());
-    }
-
     private static void verifyArgumentMatchesComponentType(Object argument, ArrayComponentType componentType,
                                                            String argumentName) {
         if (argument == null) {
             throw new NullPointerException(argumentName);
-        } else if (!componentType.matches(argument)) {
+        }
+        if (!ClassUtils.isInstance(argument, componentType.getComponentClass())) {
             throw new ClassCastException("Expected " + argumentName + " to be a "
                 + componentType.name().toLowerCase(Locale.ROOT) + ", instead found: " + argument.getClass());
-        }
-    }
-
-    /**
-     * Represents the component type an array can have.
-     */
-    enum ArrayComponentType {
-
-        BOOLEAN(Boolean.class),
-        BYTE(Byte.class),
-        CHARACTER(Character.class),
-        SHORT(Short.class),
-        INTEGER(Integer.class),
-        LONG(Long.class),
-        FLOAT(Float.class),
-        DOUBLE(Double.class),
-        /** Means any extension of Object, such as the component of {@code String[]}, or even {@code int[][]}. */
-        OBJECT(Object.class);
-
-        private static final Map<Class<?>, ArrayComponentType> PRIMITIVE_ARRAY_TO_COMPONENT =
-            createPrimitiveArrayTypesToComponentMap();
-        private final Class<?> referenceType;
-
-        ArrayComponentType(Class<?> referenceType) {
-            this.referenceType = referenceType;
-        }
-
-        boolean matches(Object obj) {
-            return referenceType.isInstance(obj);
-        }
-
-        @Nullable
-        static ArrayComponentType resolveComponentForPrimitiveArrays(Class<?> clazz) {
-            return PRIMITIVE_ARRAY_TO_COMPONENT.get(clazz);
-        }
-
-        private static Map<Class<?>, ArrayComponentType> createPrimitiveArrayTypesToComponentMap() {
-            Map<Class<?>, ArrayComponentType> map = new HashMap<>();
-            map.put(boolean[].class, BOOLEAN);
-            map.put(byte[].class, BYTE);
-            map.put(char[].class, CHARACTER);
-            map.put(short[].class, SHORT);
-            map.put(int[].class, INTEGER);
-            map.put(long[].class, LONG);
-            map.put(float[].class, FLOAT);
-            map.put(double[].class, DOUBLE);
-            return Collections.unmodifiableMap(map);
         }
     }
 }

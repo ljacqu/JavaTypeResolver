@@ -61,6 +61,19 @@ public final class ClassUtils {
     }
 
     /**
+     * Returns whether the given object is an instance of the given target type. This method, unlike
+     * {@link Class#isInstance}, boxes primitive classes, such that {@code isInstance(5, int.class)}
+     * returns true. See also {@link ClassUtils#tryCast} if you want to cast the object safely.
+     *
+     * @param object the object to process
+     * @param targetType the target type to check for
+     * @return true if the object is not null and an instance of the given target type, false otherwise
+     */
+    public static boolean isInstance(@Nullable Object object, Class<?> targetType) {
+        return PrimitiveType.toReferenceType(targetType).isInstance(object);
+    }
+
+    /**
      * Returns an optional with the given object cast to the target type, or an empty optional if the given object
      * cannot be cast to the specified type. See {@link #tryCast(Object, Class, boolean)} for details.
      *

@@ -1,7 +1,6 @@
 package ch.jalu.typeresolver.array;
 
 import ch.jalu.typeresolver.EnumUtils;
-import ch.jalu.typeresolver.array.ArrayUtils.ArrayComponentType;
 import ch.jalu.typeresolver.primitives.PrimitiveType;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -350,7 +349,7 @@ class ArrayUtilsTest {
             // given / when
             IllegalArgumentException iae1 = assertThrows(IllegalArgumentException.class,
                 () -> ArrayUtils.copyOf(BigDecimal.TEN, 2));
-            NullPointerException npe2 = assertThrows(NullPointerException.class,
+            IllegalArgumentException iae2 = assertThrows(IllegalArgumentException.class,
                 () -> ArrayUtils.hashCode(null));
             IllegalArgumentException iae3 = assertThrows(IllegalArgumentException.class,
                 () -> ArrayUtils.fill(new Object(), "t"));
@@ -360,8 +359,8 @@ class ArrayUtilsTest {
                 () -> ArrayUtils.fill(new double[]{2.0, 1.85}, null));
 
             // then
-            assertThat(iae1.getMessage(), equalTo("Expected an array as argument, but got: class java.math.BigDecimal"));
-            assertThat(npe2.getMessage(), equalTo("array"));
+            assertThat(iae1.getMessage(), equalTo("Expected an array but got an object of type: java.math.BigDecimal"));
+            assertThat(iae2.getMessage(), equalTo("Expected an array but got an object of type: null"));
             assertThat(iae3.getMessage(), equalTo("Argument is not an array"));
             assertThat(cce4.getMessage(), equalTo("Expected val to be a integer, instead found: class java.lang.String"));
             assertThat(npe5.getMessage(), equalTo("val"));

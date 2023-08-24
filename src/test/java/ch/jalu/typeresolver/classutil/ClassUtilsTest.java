@@ -105,6 +105,26 @@ class ClassUtilsTest {
     @Nested
     class SubClassAndCastingUtils {
 
+        @Test
+        void shouldDetermineWhetherObjectIsInstanceOfClassInclAutoboxing() {
+            // given / when / then
+            assertTrue(ClassUtils.isInstance("FGH", String.class));
+            assertTrue(ClassUtils.isInstance("FGH", CharSequence.class));
+            assertTrue(ClassUtils.isInstance("FGH", Serializable.class));
+            assertTrue(ClassUtils.isInstance(3, Integer.class));
+            assertTrue(ClassUtils.isInstance(3, Number.class));
+            assertTrue(ClassUtils.isInstance(3, int.class));
+            assertTrue(ClassUtils.isInstance(new byte[0], byte[].class));
+
+            assertFalse(ClassUtils.isInstance(null, String.class));
+            assertFalse(ClassUtils.isInstance(null, char.class));
+            assertFalse(ClassUtils.isInstance(4, String.class));
+            assertFalse(ClassUtils.isInstance(4, double.class));
+            assertFalse(ClassUtils.isInstance(4, Double.class));
+            assertFalse(ClassUtils.isInstance(new int[0], Integer[].class));
+            assertFalse(ClassUtils.isInstance(new Integer[0], int[].class));
+        }
+
         // This test just has a few samples. The method below tests this method more intensively; the goal here
         // is to just ensure that the return value is typed correctly, and that the 2-params method has autobox=true
         @Test
