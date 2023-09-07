@@ -47,13 +47,27 @@ class FieldUtilsTest {
         List<Field> allFields = FieldUtils.getFieldsIncludingParents(Class3.class);
 
         // then
-        assertThat(allFields, hasSize(6));
-        assertThat(allFields.get(0), equalTo(Class1.class.getDeclaredField("C1A")));
-        assertThat(allFields.get(1), equalTo(Class1.class.getDeclaredField("c1b")));
-        assertThat(allFields.get(2), equalTo(Class2.class.getDeclaredField("c2a")));
-        assertThat(allFields.get(3), equalTo(Class2.class.getDeclaredField("c2b")));
-        assertThat(allFields.get(4), equalTo(Class3.class.getDeclaredField("c3a")));
-        assertThat(allFields.get(5), equalTo(Class3.class.getDeclaredField("c3b")));
+        assertThat(allFields.size(), greaterThanOrEqualTo(6));
+        List<Field> expectedFields = new ArrayList<>();
+        expectedFields.add(Class1.class.getDeclaredField("C1A"));
+        expectedFields.add(Class1.class.getDeclaredField("c1b"));
+        expectedFields.add(Class2.class.getDeclaredField("c2a"));
+        expectedFields.add(Class2.class.getDeclaredField("c2b"));
+        expectedFields.add(Class3.class.getDeclaredField("c3a"));
+        expectedFields.add(Class3.class.getDeclaredField("c3b"));
+
+        Iterator<Field> expectedFieldsIterator = expectedFields.iterator();
+        Field expectedField = expectedFieldsIterator.next();
+        for (Field field : allFields) {
+            if (field.equals(expectedField)) {
+                expectedField = expectedFieldsIterator.hasNext() ? expectedFieldsIterator.next() : null;
+            }
+        }
+
+        if (expectedFieldsIterator.hasNext()) {
+            throw new IllegalStateException("Could not match all fields!\nExpected: " + expectedFields
+                + "\nActual: " + allFields);
+        }
     }
 
     @Test
@@ -74,7 +88,7 @@ class FieldUtilsTest {
     void shouldGetAllFieldsWithFilterAndParentsLast() throws NoSuchFieldException {
         // given / when
         List<Field> allFields = FieldUtils.getFieldsIncludingParents(Class3.class,
-            field -> !field.getName().endsWith("a"), false);
+            field -> !field.getName().endsWith("a") && !field.isSynthetic(), false);
 
         // then
         assertThat(allFields, hasSize(4));
