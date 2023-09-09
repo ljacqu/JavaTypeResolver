@@ -101,8 +101,8 @@ class FieldUtilsTest {
     @Test
     void shouldGetAllRegularInstanceFieldsIncludingParents() throws NoSuchFieldException {
         // given / when
-        List<Field> allFields1 = FieldUtils.getInstanceFieldsIncludingParents(Class3.class);
-        List<Field> allFields2 = FieldUtils.getInstanceFieldsIncludingParents(InnerClass.class);
+        List<Field> allFields1 = FieldUtils.getRegularInstanceFieldsFromClassAndParents(Class3.class);
+        List<Field> allFields2 = FieldUtils.getRegularInstanceFieldsFromClassAndParents(InnerClass.class);
 
         // then
         assertThat(allFields1, hasSize(4));
@@ -129,6 +129,12 @@ class FieldUtilsTest {
         assertThat(FieldUtils.tryFindFieldInClassOrParents(Class3.class, "c2a"), equalTo(Optional.of(Class2.class.getDeclaredField("c2a"))));
         assertThat(FieldUtils.tryFindFieldInClassOrParents(Class3.class, "C1A"), equalTo(Optional.of(Class1.class.getDeclaredField("C1A"))));
 
+        // Ensure the field lowest in the hierarchy is matched, if multiple field names have the same name
+        assertThat(FieldUtils.tryFindFieldInClassOrParents(ClassWithSameFieldNames.class, "c1b"), equalTo(Optional.of(ClassWithSameFieldNames.class.getDeclaredField("c1b"))));
+        assertThat(FieldUtils.tryFindFieldInClassOrParents(ClassWithSameFieldNames.class, "c2b"), equalTo(Optional.of(ClassWithSameFieldNames.class.getDeclaredField("c2b"))));
+        assertThat(FieldUtils.tryFindFieldInClassOrParents(ClassWithSameFieldNames.class, "c3b"), equalTo(Optional.of(Class3.class.getDeclaredField("c3b"))));
+        assertThat(FieldUtils.tryFindFieldInClassOrParents(ClassWithSameFieldNames.class, "c2a"), equalTo(Optional.of(Class2.class.getDeclaredField("c2a"))));
+
         assertThat(FieldUtils.tryFindFieldInClassOrParents(Class3.class, "bogus"), equalTo(Optional.empty()));
         assertThat(FieldUtils.tryFindFieldInClassOrParents(Class3.class, ""), equalTo(Optional.empty()));
     }
@@ -154,6 +160,13 @@ class FieldUtilsTest {
 
         private static TimeUnit c3a;
         private int c3b;
+
+    }
+
+    private static class ClassWithSameFieldNames extends Class3 {
+
+        private double c1b;
+        private String c2b;
 
     }
 }

@@ -85,10 +85,24 @@ public final class FieldUtils {
             .collect(Collectors.toList());
     }
 
-    public static List<Field> getInstanceFieldsIncludingParents(Class<?> clazz) {
+    /**
+     * Returns all non-synthetic, non-static fields of the given class, including all fields from superclasses.
+     *
+     * @param clazz the class whose instance fields should be retrieved
+     * @return all non-synthetic instance fields
+     */
+    public static List<Field> getRegularInstanceFieldsFromClassAndParents(Class<?> clazz) {
         return getFieldsIncludingParents(clazz, FieldUtils::isRegularInstanceField, true);
     }
 
+    /**
+     * Returns an optional with a field on the given class having the given name, or an empty optional if the name
+     * did not match any field. This method does not check the fields of the class's superclasses.
+     *
+     * @param clazz the class to check
+     * @param name the name of the field to resolve
+     * @return optional with the field in the class, or empty optional if there is no match
+     */
     public static Optional<Field> tryFindField(Class<?> clazz, String name) {
         try {
             return Optional.of(clazz.getDeclaredField(name));
@@ -97,6 +111,15 @@ public final class FieldUtils {
         }
     }
 
+    /**
+     * Returns an optional with a field of the given name on the class or one of its superclasses. If multiple fields
+     * match the given name (on different superclasses), the field on the class that is lowest in the hierarchy is
+     * returned. An empty optional is returned if no field was matched.
+     *
+     * @param clazz the class (and its superclasses) to inspect
+     * @param name the name of the field to look for
+     * @return optional with a field of the given name
+     */
     public static Optional<Field> tryFindFieldInClassOrParents(Class<?> clazz, String name) {
         Class<?> currentClass = clazz;
         while (currentClass != null) {
