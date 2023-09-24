@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Classes with utils for handling fields.
+ * Class with utilities for processing fields.
  */
 public final class FieldUtils {
 
@@ -31,14 +31,25 @@ public final class FieldUtils {
     }
 
     /**
-     * Specifies whether a field is a "regular" (= non-synthetic) instance fields. This method exists for brevity and
-     * because it can be easily forgotten to check if a field is synthetic.
+     * Specifies whether a field is a "regular" (= non-synthetic) instance field. This method exists for brevity and
+     * because it can be easily forgotten to exclude synthetic fields.
      *
      * @param field the field to process
      * @return true if the field is not synthetic and not static, false otherwise
      */
     public static boolean isRegularInstanceField(Field field) {
         return !field.isSynthetic() && !Modifier.isStatic(field.getModifiers());
+    }
+
+    /**
+     * Specifies whether a field is a "regular" (= non-synthetic) static field. This method exists for brevity and
+     * because it can be easily forgotten to exclude synthetic fields.
+     *
+     * @param field the field to process
+     * @return true if the field is not synthetic and static, false otherwise
+     */
+    public static boolean isRegularStaticField(Field field) {
+        return !field.isSynthetic() && Modifier.isStatic(field.getModifiers());
     }
 
     /**
@@ -91,7 +102,7 @@ public final class FieldUtils {
      * @param clazz the class whose instance fields should be retrieved
      * @return all non-synthetic instance fields
      */
-    public static List<Field> getRegularInstanceFieldsFromClassAndParents(Class<?> clazz) {
+    public static List<Field> getRegularInstanceFieldsIncludingParents(Class<?> clazz) {
         return getFieldsIncludingParents(clazz, FieldUtils::isRegularInstanceField, true);
     }
 
@@ -120,7 +131,7 @@ public final class FieldUtils {
      * @param name the name of the field to look for
      * @return optional with a field of the given name
      */
-    public static Optional<Field> tryFindFieldInClassOrParents(Class<?> clazz, String name) {
+    public static Optional<Field> tryFindFieldInClassOrParent(Class<?> clazz, String name) {
         Class<?> currentClass = clazz;
         while (currentClass != null) {
             Optional<Field> field = tryFindField(currentClass, name);
