@@ -18,7 +18,8 @@ import static ch.jalu.typeresolver.array.ArrayComponentType.getArrayComponentTyp
  * Methods throw a runtime exception if the given object is not an array. To check if an object is an array, use
  * {@code object.getClass().isArray()}. See individual methods for specific caveats.
  */
-@SuppressWarnings("checkstyle:OneStatementPerLine") // Justification: line-by-line aligned casts in switch statements
+// Justification: line-by-line aligned casts in switch statements
+@SuppressWarnings({"checkstyle:OneStatementPerLine", "checkstyle:SingleSpaceSeparator"})
 public final class ArrayUtils {
 
     private ArrayUtils() {
