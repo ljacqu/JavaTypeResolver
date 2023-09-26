@@ -5,12 +5,15 @@ import ch.jalu.typeresolver.classutil.ClassUtils;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class with utilities for processing fields.
@@ -57,43 +60,26 @@ public final class FieldUtils {
      * in this class's hierarchy are returned first.
      *
      * @param clazz the class whose fields (incl. its parents' fields) should be returned
-     * @return all fields, with top-most parent's fields first, and this class's fields last
+     * @return a stream of all fields, with top-most parent's fields first, and this class's fields last
      */
-    public static List<Field> getFieldsIncludingParents(Class<?> clazz) {
-        return getFieldsIncludingParents(clazz, f -> true, true);
+    public static Stream<Field> getAllFields(Class<?> clazz) {
+        return getAllFields(clazz, true);
     }
 
     /**
-     * Returns all fields from the given class and its parents, recursively, that match the provided filter.
-     * The fields of the top-most parent in this class's hierarchy are returned first.
+     * Returns all fields from the given class and its parents, recursively. Depending on the parameter, fields are
+     * either returned from top-to-bottom or bottom-to-top relative to the class's hierarchy.
      *
-     * @param clazz the class whose fields (incl. its parents' fields) should be returned that match the filter
-     * @param fieldFilter the condition a field must fulfill in order to be part of the result
-     * @return all fields matching the filter, with the top-most parent's fields first, and this class's fields last
-     */
-    public static List<Field> getFieldsIncludingParents(Class<?> clazz, Predicate<Field> fieldFilter) {
-        return getFieldsIncludingParents(clazz, fieldFilter, true);
-    }
-
-    /**
-     * Returns all fields from the given class and its parents, recursively, that match the provided filter. Depending
-     * on the parameter, fields are either returned from top-to-bottom or bottom-to-top relative to the class's
-     * hierarchy.
-     *
-     * @param clazz the class whose fields (incl. its parents' fields) should be returned that match the filter
-     * @param fieldFilter the condition a field must fulfill in order to be part of the result
+     * @param clazz the class whose fields (incl. its parents' fields) should be returned
      * @param topParentFirst true if the top-most parent's fields should come first, false for last
-     * @return all fields matching the filter, in the specified order
+     * @return a stream of all fields, in the specified order
      */
-    public static List<Field> getFieldsIncludingParents(Class<?> clazz, Predicate<Field> fieldFilter,
-                                                        boolean topParentFirst) {
+    public static Stream<Field> getAllFields(Class<?> clazz, boolean topParentFirst) {
         LinkedList<Class<?>> classes = new LinkedList<>();
         collectParents(clazz, (topParentFirst ? classes::addFirst : classes::addLast));
 
         return classes.stream()
-            .flatMap(clz -> Arrays.stream(clz.getDeclaredFields()))
-            .filter(fieldFilter)
-            .collect(Collectors.toList());
+            .flatMap(clz -> Arrays.stream(clz.getDeclaredFields()));
     }
 
     /**
@@ -102,8 +88,10 @@ public final class FieldUtils {
      * @param clazz the class whose instance fields should be retrieved
      * @return all non-synthetic instance fields
      */
-    public static List<Field> getRegularInstanceFieldsIncludingParents(Class<?> clazz) {
-        return getFieldsIncludingParents(clazz, FieldUtils::isRegularInstanceField, true);
+    public static List<Field> collectAllRegularInstanceFields(Class<?> clazz) {
+        return getAllFields(clazz, true)
+            .filter(FieldUtils::isRegularInstanceField)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -141,6 +129,30 @@ public final class FieldUtils {
             currentClass = currentClass.getSuperclass();
         }
         return Optional.empty();
+    }
+
+    /**
+     * Collector for a stream of fields to group them by name, with the parameter indicating whether the first
+     * encountered field with a given name should be retained, or the last one. This collector does not support
+     * parallel streams.
+     * <p>
+     * Note that this collector is especially useful if you are only dealing with instance fields: for a mechanism
+     * that processes the instance fields of classes (e.g. for serialization), you may want to only consider the
+     * lowest-most declared field per any given name so that behavior can be overridden.
+     * <p>
+     * To get <b>all fields</b> grouped by name, use {@code stream.collect(Collectors.groupingBy(Field::getName))}.
+     *
+     * @param firstFieldWins true if the first encountered field with a given name should be kept;
+     *                       false to keep the last one
+     * @return collector to collect names by field
+     */
+    public static Collector<Field, ?, LinkedHashMap<String, Field>> collectByName(boolean firstFieldWins) {
+        BiConsumer<LinkedHashMap<String, Field>, Field> accumulator = firstFieldWins
+            ? (map, field) -> map.putIfAbsent(field.getName(), field)
+            : (map, field) -> map.put(field.getName(), field);
+
+        return Collector.of(LinkedHashMap::new, accumulator,
+            (a, b) -> { throw new UnsupportedOperationException(); });
     }
 
     private static void collectParents(Class<?> clazz, Consumer<Class<?>> classAdder) {
