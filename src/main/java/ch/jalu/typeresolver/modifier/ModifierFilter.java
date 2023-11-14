@@ -4,19 +4,21 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
-public abstract class ModifierFilter {
+public abstract class ModifierFilter implements IntPredicate {
 
-    public boolean matches(Member member) {
-        return matches(member.getModifiers());
+    public boolean test(Member member) {
+        return test(member.getModifiers());
     }
 
-    public boolean matches(Class<?> clazz) {
-        return matches(clazz.getModifiers());
+    public boolean test(Class<?> clazz) {
+        return test(clazz.getModifiers());
     }
 
-    public abstract boolean matches(int modifiers);
+    @Override
+    public abstract boolean test(int modifiers);
 
     public static ModifierFilter is(int flag) {
         return new ExactValueFilter(flag, false);
@@ -95,7 +97,8 @@ public abstract class ModifierFilter {
             this.negate = negate;
         }
 
-        public boolean matches(int modifiers) {
+        @Override
+        public boolean test(int modifiers) {
             boolean hasFlag = (modifiers & flag) == flag;
             return hasFlag ^ negate;
         }
@@ -119,7 +122,8 @@ public abstract class ModifierFilter {
             this.negate = negate;
         }
 
-        public boolean matches(int modifiers) {
+        @Override
+        public boolean test(int modifiers) {
             boolean hasAnyValue = (modifiers & flag) != 0;
             return hasAnyValue ^ negate;
         }
@@ -142,7 +146,7 @@ public abstract class ModifierFilter {
         }
 
         @Override
-        public boolean matches(int modifiers) {
+        public boolean test(int modifiers) {
             return constantResult;
         }
 
@@ -217,10 +221,11 @@ public abstract class ModifierFilter {
             this.combineOp = combination;
         }
 
-        public boolean matches(int modifiers) {
+        @Override
+        public boolean test(int modifiers) {
             return combineOp.combine(
-                () -> filter1.matches(modifiers),
-                () -> filter2.matches(modifiers));
+                () -> filter1.test(modifiers),
+                () -> filter2.test(modifiers));
         }
 
         public CombiningModifierFilter negate() {
