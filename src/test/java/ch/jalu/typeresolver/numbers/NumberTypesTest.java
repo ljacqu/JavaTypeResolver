@@ -1,10 +1,9 @@
 package ch.jalu.typeresolver.numbers;
 
-import ch.jalu.typeresolver.classutil.ClassUtils;
-import com.google.common.reflect.ClassPath;
 import org.junit.jupiter.api.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
@@ -86,16 +85,13 @@ class NumberTypesTest {
      * in {@link NumberType} guarantees that certain methods can deal with any JDK Number type.
      */
     @Test
-    void shouldSupportAllJdkNumberTypes() throws IOException {
+    void shouldSupportAllJdkNumberTypes() {
         // given
-        ClassPath classPath = ClassPath.from(ClassLoader.getSystemClassLoader());
+        Reflections reflections = new Reflections("java", Scanners.SubTypes);
 
         // when
-        Set<String> numberClasses = classPath.getAllClasses().stream()
-            .filter(classInfo -> classInfo.getPackageName().startsWith("java.")
-                    && !classInfo.getPackageName().startsWith("java.awt."))
-            .map(classInfo -> ClassUtils.loadClassOrThrow(classInfo.getName()))
-            .filter(cls -> Number.class.isAssignableFrom(cls) && !Modifier.isAbstract(cls.getModifiers()))
+        Set<String> numberClasses = reflections.getSubTypesOf(Number.class).stream()
+            .filter(clz -> !Modifier.isAbstract(clz.getModifiers()))
             .map(Class::getName)
             .collect(Collectors.toSet());
 
