@@ -1,8 +1,9 @@
 package ch.jalu.typeresolver.numbers;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.Scanners;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -84,21 +85,17 @@ class NumberTypesTest {
      * If this test fails, it means there are new Number classes in the JDK that should be addressed; the Javadoc
      * in {@link NumberType} guarantees that certain methods can deal with any JDK Number type.
      */
+    @Disabled // Seems impossible to get JDK classes via Maven, so this can only be run locally
     @Test
     void shouldSupportAllJdkNumberTypes() {
         // given
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-
-        /*Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .forPackage("java")
-                .setUrls(ClasspathHelper.forClassLoader(classLoader))
-                .addScanners(Scanners.SubTypes));*/
-        Reflections reflections = new Reflections("java", Integer.class.getClassLoader(), new SubTypesScanner());
+        Reflections reflections = new Reflections("java", Scanners.SubTypes);
+        // If no classes are found, you can try passing in a custom class loader into Reflections,
+        // though note that this has also not made it possible to fix this test to run correctly in Maven
 
         // when
         Set<String> numberClasses = reflections.getSubTypesOf(Number.class).stream()
             .filter(clz -> !Modifier.isAbstract(clz.getModifiers()))
-            .filter(clz -> clz.getPackage().getName().startsWith("java."))
             .map(Class::getName)
             .collect(Collectors.toSet());
 
