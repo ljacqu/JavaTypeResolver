@@ -2,7 +2,7 @@ package ch.jalu.typeresolver.numbers;
 
 import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
+import org.reflections.scanners.SubTypesScanner;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -87,11 +87,18 @@ class NumberTypesTest {
     @Test
     void shouldSupportAllJdkNumberTypes() {
         // given
-        Reflections reflections = new Reflections("java", Scanners.SubTypes);
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+
+        /*Reflections reflections = new Reflections(new ConfigurationBuilder()
+                .forPackage("java")
+                .setUrls(ClasspathHelper.forClassLoader(classLoader))
+                .addScanners(Scanners.SubTypes));*/
+        Reflections reflections = new Reflections("java", Integer.class.getClassLoader(), new SubTypesScanner());
 
         // when
         Set<String> numberClasses = reflections.getSubTypesOf(Number.class).stream()
             .filter(clz -> !Modifier.isAbstract(clz.getModifiers()))
+            .filter(clz -> clz.getPackage().getName().startsWith("java."))
             .map(Class::getName)
             .collect(Collectors.toSet());
 
