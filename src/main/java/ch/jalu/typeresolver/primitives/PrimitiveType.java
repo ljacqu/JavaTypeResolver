@@ -35,8 +35,6 @@ public enum PrimitiveType {
     /** Double type pair. */
     DOUBLE(double.class, Double.class, 0d);
 
-    private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_REFERENCE_TYPES = initPrimitiveToReferenceTypesMap();
-    private static final Map<Class<?>, Class<?>> REFERENCE_TO_PRIMITIVE_TYPES = initReferenceToPrimitiveTypesMap();
     private static final Map<Class<?>, PrimitiveType> PRIMITIVES_BY_CLASS = initClassToPrimitiveTypes();
 
     private final Class<?> primitiveType;
@@ -104,8 +102,8 @@ public enum PrimitiveType {
      */
     @SuppressWarnings("unchecked")
     public static <T> Class<T> toPrimitiveType(Class<T> clazz) {
-        Class<?> primitiveType = REFERENCE_TO_PRIMITIVE_TYPES.get(clazz);
-        return primitiveType == null ? clazz : (Class<T>) primitiveType;
+        PrimitiveType primitiveTypePair = PRIMITIVES_BY_CLASS.get(clazz);
+        return primitiveTypePair == null ? clazz : (Class<T>) primitiveTypePair.getPrimitiveType();
     }
 
     /**
@@ -120,8 +118,8 @@ public enum PrimitiveType {
      */
     @SuppressWarnings("unchecked")
     public static <T> Class<T> toReferenceType(Class<T> clazz) {
-        Class<?> referenceType = PRIMITIVE_TO_REFERENCE_TYPES.get(clazz);
-        return referenceType == null ? clazz : (Class<T>) referenceType;
+        PrimitiveType primitiveTypePair = PRIMITIVES_BY_CLASS.get(clazz);
+        return primitiveTypePair == null ? clazz : (Class<T>) primitiveTypePair.getReferenceType();
     }
 
     /**
@@ -138,32 +136,6 @@ public enum PrimitiveType {
     // -----------
     // Initialization methods
     // -----------
-
-    private static Map<Class<?>, Class<?>> initPrimitiveToReferenceTypesMap() {
-        Map<Class<?>, Class<?>> primToRefTypes = new HashMap<>();
-        primToRefTypes.put(boolean.class, Boolean.class);
-        primToRefTypes.put(byte.class, Byte.class);
-        primToRefTypes.put(char.class, Character.class);
-        primToRefTypes.put(short.class, Short.class);
-        primToRefTypes.put(int.class, Integer.class);
-        primToRefTypes.put(long.class, Long.class);
-        primToRefTypes.put(float.class, Float.class);
-        primToRefTypes.put(double.class, Double.class);
-        return Collections.unmodifiableMap(primToRefTypes);
-    }
-
-    private static Map<Class<?>, Class<?>> initReferenceToPrimitiveTypesMap() {
-        Map<Class<?>, Class<?>> refToPrimTypes = new HashMap<>();
-        refToPrimTypes.put(Boolean.class, boolean.class);
-        refToPrimTypes.put(Byte.class, byte.class);
-        refToPrimTypes.put(Character.class, char.class);
-        refToPrimTypes.put(Short.class, short.class);
-        refToPrimTypes.put(Integer.class, int.class);
-        refToPrimTypes.put(Long.class, long.class);
-        refToPrimTypes.put(Float.class, float.class);
-        refToPrimTypes.put(Double.class, double.class);
-        return Collections.unmodifiableMap(refToPrimTypes);
-    }
 
     private static Map<Class<?>, PrimitiveType> initClassToPrimitiveTypes() {
         Map<Class<?>, PrimitiveType> classToPrimRefType = new HashMap<>();
