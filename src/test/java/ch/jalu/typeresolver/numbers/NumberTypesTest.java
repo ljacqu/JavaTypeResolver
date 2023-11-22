@@ -1,10 +1,14 @@
 package ch.jalu.typeresolver.numbers;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -77,6 +81,43 @@ class NumberTypesTest {
         assertThat(NumberTypes.unwrapToStandardNumberType(Collections.emptyList()), nullValue());
     }
 
+    /**
+     * If this test fails, it means there are new Number classes in the JDK that should be addressed; the Javadoc
+     * in {@link NumberType} guarantees that certain methods can deal with any JDK Number type.
+     */
+    @Disabled // Seems impossible to get JDK classes via Maven, so this can only be run locally
+    @Test
+    void shouldSupportAllJdkNumberTypes() {
+        // given
+        Reflections reflections = new Reflections("java", Scanners.SubTypes);
+        // If no classes are found, you can try passing in a custom class loader into Reflections,
+        // though note that this has also not made it possible to fix this test to run correctly in Maven
+
+        // when
+        Set<String> numberClasses = reflections.getSubTypesOf(Number.class).stream()
+            .filter(clz -> !Modifier.isAbstract(clz.getModifiers()))
+            .map(Class::getName)
+            .collect(Collectors.toSet());
+
+        // then
+        Set<String> expectedNumberClasses = new HashSet<>(Arrays.asList(
+                "java.lang.Byte",
+                "java.lang.Short",
+                "java.lang.Integer",
+                "java.lang.Long",
+                "java.lang.Float",
+                "java.lang.Double",
+                "java.math.BigInteger",
+                "java.math.BigDecimal",
+                "java.util.concurrent.atomic.AtomicInteger",
+                "java.util.concurrent.atomic.AtomicLong",
+                "java.util.concurrent.atomic.DoubleAccumulator",
+                "java.util.concurrent.atomic.DoubleAdder",
+                "java.util.concurrent.atomic.LongAccumulator",
+                "java.util.concurrent.atomic.LongAdder"));
+        assertThat(numberClasses, equalTo(expectedNumberClasses));
+    }
+
     @Test
     void shouldStreamThroughAllNumberTypeInstances() {
         // given
@@ -108,6 +149,7 @@ class NumberTypesTest {
         assertThat(NumberTypes.from(Byte.class), equalTo(StandardNumberType.BYTE));
         assertThat(NumberTypes.from(long.class), equalTo(StandardNumberType.LONG));
         assertThat(NumberTypes.from(Long.class), equalTo(StandardNumberType.LONG));
+        assertThat(NumberTypes.from(char.class), equalTo(MoreNumberTypes.CHARACTER));
         assertThat(NumberTypes.from(Character.class), equalTo(MoreNumberTypes.CHARACTER));
         assertThat(NumberTypes.from(AtomicInteger.class), equalTo(MoreNumberTypes.ATOMIC_INTEGER));
         assertThat(NumberTypes.from(AtomicLong.class), equalTo(MoreNumberTypes.ATOMIC_LONG));
