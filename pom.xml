@@ -168,6 +168,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.guava</groupId><!-- For ClassPath -->
+            <artifactId>guava</artifactId>
+            <version>32.1.3-jre</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.1</version>
