@@ -76,7 +76,7 @@ public final class FieldUtils {
      */
     public static Stream<Field> getAllFields(Class<?> clazz, boolean topParentFirst) {
         LinkedList<Class<?>> classes = new LinkedList<>();
-        collectParents(clazz, (topParentFirst ? classes::addFirst : classes::addLast));
+        collectParents(clazz, topParentFirst ? classes::addFirst : classes::addLast);
 
         return classes.stream()
             .flatMap(clz -> Arrays.stream(clz.getDeclaredFields()));
@@ -146,13 +146,16 @@ public final class FieldUtils {
      *                       false to keep the last one
      * @return collector to collect names by field
      */
+    @SuppressWarnings("checkstyle:IllegalType") // LinkedHashMap is relevant to signal that the order is retained
     public static Collector<Field, ?, LinkedHashMap<String, Field>> collectByName(boolean firstFieldWins) {
         BiConsumer<LinkedHashMap<String, Field>, Field> accumulator = firstFieldWins
             ? (map, field) -> map.putIfAbsent(field.getName(), field)
             : (map, field) -> map.put(field.getName(), field);
 
         return Collector.of(LinkedHashMap::new, accumulator,
-            (a, b) -> { throw new UnsupportedOperationException(); });
+            (a, b) -> {
+                throw new UnsupportedOperationException();
+            });
     }
 
     private static void collectParents(Class<?> clazz, Consumer<Class<?>> classAdder) {

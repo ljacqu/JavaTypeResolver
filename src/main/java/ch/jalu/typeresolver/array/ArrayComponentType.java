@@ -12,13 +12,21 @@ import java.util.Map;
  */
 public enum ArrayComponentType {
 
+    /** Primitive boolean. */
     BOOLEAN(boolean.class),
+    /** Primitive byte. */
     BYTE(byte.class),
+    /** Primitive char. */
     CHARACTER(char.class),
+    /** Primitive short. */
     SHORT(short.class),
+    /** Primitive int. */
     INTEGER(int.class),
+    /** Primitive long. */
     LONG(long.class),
+    /** Primitive float. */
     FLOAT(float.class),
+    /** Primitive double. */
     DOUBLE(double.class),
     /** Means any extension of Object, such as the component of {@code String[]}, or even {@code int[][]}. */
     OBJECT(Object.class);

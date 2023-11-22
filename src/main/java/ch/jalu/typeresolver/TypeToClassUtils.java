@@ -12,6 +12,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Internal utility class to transform Type instances to an equivalent Class.
+ */
 final class TypeToClassUtils {
 
     private TypeToClassUtils() {

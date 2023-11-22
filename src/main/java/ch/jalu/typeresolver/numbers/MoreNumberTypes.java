@@ -37,9 +37,6 @@ public final class MoreNumberTypes {
     /**
      * Atomic number type implementation: uses a base number type and wraps it in its atomic equivalent.
      *
-     * @implNote Value ranges that go beyond Long's range are not supported because of the implementation of
-     *           {@link #getValueRange()}.
-     *
      * @param <B> the base number type (e.g. Integer)
      * @param <A> the atomic type (e.g. AtomicInteger)
      */
