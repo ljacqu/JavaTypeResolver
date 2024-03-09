@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * Builder to create parameterized types programmatically.
  * <p>
  * Example:<pre>{@code
- *   ParameterizedType pt = newTypeFromClass(Optional.class)
+ *   ParameterizedType pt = parameterizedTypeBuilder(Optional.class)
  *     .withTypeArg(0, String.class)
  *     .build();
  *  // pt = Optional<String>
