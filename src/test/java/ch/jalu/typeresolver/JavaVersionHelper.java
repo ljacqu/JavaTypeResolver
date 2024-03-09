@@ -19,6 +19,15 @@ public final class JavaVersionHelper {
         return Optional.empty();
     }
 
+    public static Optional<SequenceCollectionTypes> getSequencedCollectionTypesIfApplicable() {
+        if (isJavaVersionGreaterOrEqualTo(21)) {
+            SequenceCollectionTypes types = new SequenceCollectionTypes(
+                getClass("java.util.SequencedCollection"), getClass("java.util.SequencedMap"));
+            return Optional.of(types);
+        }
+        return Optional.empty();
+    }
+
     private static boolean isJavaVersionGreaterOrEqualTo(int version) {
         String javaVersion = System.getProperty("java.version");
         int majorVersion;
@@ -54,6 +63,25 @@ public final class JavaVersionHelper {
 
         public Class<?> getConstantDescClass() {
             return constantDescClass;
+        }
+    }
+
+    public static final class SequenceCollectionTypes {
+
+        private final Class<?> sequencedCollectionClass;
+        private final Class<?> sequencedMapClass;
+
+        public SequenceCollectionTypes(Class<?> sequencedCollectionClass, Class<?> sequencedMapClass) {
+            this.sequencedCollectionClass = sequencedCollectionClass;
+            this.sequencedMapClass = sequencedMapClass;
+        }
+
+        public Class<?> getSequencedCollectionClass() {
+            return sequencedCollectionClass;
+        }
+
+        public Class<?> getSequencedMapClass() {
+            return sequencedMapClass;
         }
     }
 }
