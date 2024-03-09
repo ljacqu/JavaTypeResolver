@@ -35,11 +35,11 @@ class ParameterizedTypeImplTest extends AbstractTypeImplTest {
         // given
         ParameterizedTypeImpl parameterizedType = new ParameterizedTypeImpl(
             InnerParameterizedClassesContainer.TypedNestedClass.class, InnerParameterizedClassesContainer.class, BigDecimal.class);
-        Type jreType = new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<BigDecimal>>() { }.getType();
+        Type jdkType = new TypeReference<InnerParameterizedClassesContainer.TypedNestedClass<BigDecimal>>() { }.getType();
 
         // when / then
         assertThat(parameterizedType.toString(), equalTo("ch.jalu.typeresolver.samples.nestedclasses.InnerParameterizedClassesContainer$TypedNestedClass<java.math.BigDecimal>"));
-        assertThat(parameterizedType.toString(), equalTo(jreType.toString()));
+        assertThat(parameterizedType.toString(), equalTo(jdkType.toString()));
     }
 
     @Test

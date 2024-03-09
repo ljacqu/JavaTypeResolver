@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver.numbers;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 

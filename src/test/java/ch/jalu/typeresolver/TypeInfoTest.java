@@ -12,6 +12,7 @@ import ch.jalu.typeresolver.samples.typeinheritance.AbstractTwoArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.IntegerDoubleArgProcessorExtension;
 import ch.jalu.typeresolver.samples.typeinheritance.OneArgProcessor;
 import ch.jalu.typeresolver.samples.typeinheritance.StringArgProcessorExtension;
+import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
@@ -368,6 +369,36 @@ class TypeInfoTest {
     void shouldThrowForConstructorWithNotOverriddenMethod() {
         // given / when / then
         assertThrows(UnsupportedOperationException.class, TypeInfo::new);
+    }
+
+    @Test
+    void shouldReturnWhetherIsEqualToClass() {
+        // given / when / then
+        assertThat(new TypeInfo(String.class).equalTo(String.class), equalTo(true));
+        assertThat(getType("stringList").equalTo(List.class), equalTo(true));
+        assertThat(new NestedTypeReference<List<? super Number>>() { }.equalTo(Number.class), equalTo(true));
+
+        assertThat(new TypeInfo(String.class).equalTo(double.class), equalTo(false));
+        assertThat(getType("stringList").equalTo(ArrayList.class), equalTo(false));
+        assertThat(getType("stringList").equalTo(Collection.class), equalTo(false));
+        assertThat(new TypeInfo(WildcardTypeImpl.newUnboundedWildcard()).equalTo(Object.class), equalTo(false));
+    }
+
+    @Test
+    void shouldReturnWhetherIsAssignableFromClass() {
+        // given / when / then
+        assertThat(new TypeInfo(String.class).isAssignableFrom(String.class), equalTo(true));
+        assertThat(new TypeInfo(CharSequence.class).isAssignableFrom(String.class), equalTo(true));
+
+        assertThat(getType("stringList").isAssignableFrom(List.class), equalTo(true));
+        assertThat(getType("stringList").isAssignableFrom(ArrayList.class), equalTo(true));
+        assertThat(new NestedTypeReference<List<? super Number>>() { }.isAssignableFrom(Number.class), equalTo(true));
+        assertThat(new NestedTypeReference<List<? super Number>>() { }.isAssignableFrom(Integer.class), equalTo(true));
+
+        assertThat(new TypeInfo(String.class).isAssignableFrom(double.class), equalTo(false));
+        assertThat(getType("stringList").isAssignableFrom(Collection.class), equalTo(false));
+        assertThat(new NestedTypeReference<List<? super Number>>() { }.isAssignableFrom(int.class), equalTo(false));
+        assertThat(new TypeInfo(WildcardTypeImpl.newUnboundedWildcard()).isAssignableFrom(Object.class), equalTo(false));
     }
 
     private static TypeInfo getType(String fieldName) {

@@ -1,8 +1,8 @@
 package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -12,6 +12,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Internal utility class to transform Type instances to an equivalent Class.
+ */
 final class TypeToClassUtils {
 
     private TypeToClassUtils() {
@@ -75,7 +78,7 @@ final class TypeToClassUtils {
             GenericArrayType gat = (GenericArrayType) type;
             Class<?> componentAsClass = getSafeToReadClassOrNull(gat.getGenericComponentType());
             // componentAsClass usually isn't null because the component type of GenericArrayType is normally either a
-            // ParameterizedType or a TypeVariable. If a type variable is unbounded, the JRE sets Object as the bound.
+            // ParameterizedType or a TypeVariable. If a type variable is unbounded, the JDK sets Object as the bound.
             // However, if the type was somehow resolved we might have an array of wildcard, for example.
             if (componentAsClass != null) {
                 return ArrayTypeUtils.createArrayClass(componentAsClass);

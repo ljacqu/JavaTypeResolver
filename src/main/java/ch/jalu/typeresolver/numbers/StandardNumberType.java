@@ -1,8 +1,8 @@
 package ch.jalu.typeresolver.numbers;
 
 import ch.jalu.typeresolver.primitives.PrimitiveType;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -94,16 +94,24 @@ public enum StandardNumberType implements NumberType {
         }
     };
 
+    /** Byte number type. */
     public static final NumberType<Byte> TYPE_BYTE = (NumberType<Byte>) BYTE;
+    /** Short number type. */
     public static final NumberType<Short> TYPE_SHORT = (NumberType<Short>) SHORT;
+    /** Integer number type. */
     public static final NumberType<Integer> TYPE_INTEGER = (NumberType<Integer>) INTEGER;
+    /** Long number type. */
     public static final NumberType<Long> TYPE_LONG = (NumberType<Long>) LONG;
+    /** Float number type. */
     public static final NumberType<Float> TYPE_FLOAT = (NumberType<Float>) FLOAT;
+    /** Double number type. */
     public static final NumberType<Double> TYPE_DOUBLE = (NumberType<Double>) DOUBLE;
+    /** BigInteger number type. */
     public static final NumberType<BigInteger> TYPE_BIG_INTEGER = (NumberType<BigInteger>) BIG_INTEGER;
+    /** BigDecimal number type. */
     public static final NumberType<BigDecimal> TYPE_BIG_DECIMAL = (NumberType<BigDecimal>) BIG_DECIMAL;
 
-    private static final Map<Class<?>, StandardNumberType> typeToEnumEntry =
+    private static final Map<Class<?>, StandardNumberType> TYPE_TO_ENUM_ENTRIES =
         initReferenceTypeToStandardNumberTypeMap();
 
     private final Class<? extends Number> type;
@@ -207,7 +215,7 @@ public enum StandardNumberType implements NumberType {
      */
     @Nullable
     public static StandardNumberType fromClass(Class<?> clazz) {
-        return typeToEnumEntry.get(PrimitiveType.toReferenceType(clazz));
+        return TYPE_TO_ENUM_ENTRIES.get(PrimitiveType.toReferenceType(clazz));
     }
 
     /**

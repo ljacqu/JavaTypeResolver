@@ -1,8 +1,8 @@
 package ch.jalu.typeresolver.typeimpl;
 
 import ch.jalu.typeresolver.CommonTypeUtils;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -10,7 +10,7 @@ import java.util.Objects;
 
 /**
  * Implementation of {@link ParameterizedType}, with same {@link Object#equals} and {@link Object#hashCode()}
- * as the JRE implementation.
+ * as the JDK implementation uses internally.
  */
 public class ParameterizedTypeImpl implements ParameterizedType {
 

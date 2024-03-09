@@ -11,27 +11,27 @@ import static org.hamcrest.Matchers.not;
 
 /**
  * Common parent class for tests of Type implementations to ensure that they
- * are in sync with the JRE implementation.
+ * are in sync with the internal JDK implementation.
  */
 abstract class AbstractTypeImplTest {
 
     final Type[] types;
-    final Type[] jreTypes;
+    final Type[] jdkTypes;
 
-    AbstractTypeImplTest(Type type1, Type type2, Type type3, Type jreType1, Type jreType2, Type jreType3) {
+    AbstractTypeImplTest(Type type1, Type type2, Type type3, Type jdkType1, Type jdkType2, Type jdkType3) {
         this.types = new Type[]{ type1, type2, type3 };
-        this.jreTypes = new Type[]{ jreType1, jreType2, jreType3 };
+        this.jdkTypes = new Type[]{ jdkType1, jdkType2, jdkType3 };
     }
 
     @Test
-    void shouldBeEqualToJreTypes() {
+    void shouldBeEqualToJdkTypes() {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
                 String description = i + ", " + j;
                 boolean expectedEquals = (i == j);
 
-                assertThat(description, types[i].equals(jreTypes[j]), equalTo(expectedEquals));
-                assertThat(description, jreTypes[j].equals(types[i]), equalTo(expectedEquals));
+                assertThat(description, types[i].equals(jdkTypes[j]), equalTo(expectedEquals));
+                assertThat(description, jdkTypes[j].equals(types[i]), equalTo(expectedEquals));
             }
             assertThat(Integer.toString(i), types[i].equals(types[i]), equalTo(true));
             assertThat(Integer.toString(i), types[i].equals(Object.class), equalTo(false));
@@ -40,22 +40,22 @@ abstract class AbstractTypeImplTest {
 
     @Test
     void shouldDefineSameToString() {
-        testValueFromImplAndJre(Object::toString);
+        testValueFromImplAndJdk(Object::toString);
     }
 
     @Test
     void shouldHaveSameHashCodeAsImplementation() {
-        testValueFromImplAndJre(Object::hashCode);
+        testValueFromImplAndJdk(Object::hashCode);
     }
 
-    private void testValueFromImplAndJre(Function<Type, Object> function) {
+    private void testValueFromImplAndJdk(Function<Type, Object> function) {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
                 String description = i + ", " + j;
                 if (i == j) {
-                    assertThat(description, function.apply(types[i]), equalTo(function.apply(jreTypes[j])));
+                    assertThat(description, function.apply(types[i]), equalTo(function.apply(jdkTypes[j])));
                 } else {
-                    assertThat(description, function.apply(types[i]), not(function.apply(jreTypes[j])));
+                    assertThat(description, function.apply(types[i]), not(function.apply(jdkTypes[j])));
                 }
             }
         }

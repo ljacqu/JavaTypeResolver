@@ -1,9 +1,22 @@
 # Java type resolver
 [![Build Status](https://github.com/ljacqu/JavaTypeResolver/actions/workflows/maven_build.yml/badge.svg)](https://github.com/ljacqu/JavaTypeResolver/actions?query=branch%3Amaster)
 [![Coverage Status](https://coveralls.io/repos/github/ljacqu/JavaTypeResolver/badge.svg?branch=master)](https://coveralls.io/github/ljacqu/JavaTypeResolver?branch=master)
+[![Javadocs](https://www.javadoc.io/badge/ch.jalu/typeresolver.svg)](https://www.javadoc.io/doc/ch.jalu/typeresolver)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a19c4b3ca6ea5ed5d083/maintainability)](https://codeclimate.com/github/ljacqu/JavaTypeResolver/maintainability)
 
 Resolves types from context for Java 8 and above, among other utilities.
+
+## Integration
+Start using ConfigMe by adding this to your pom.xml:
+```xml
+<dependencies>
+    <dependency>
+        <groupId>ch.jalu</groupId>
+        <artifactId>typeresolver</artifactId>
+        <version>0.1.0</version>
+    </dependency>
+</dependencies>
+```
 
 ## Accessing types and type information
 
@@ -41,7 +54,7 @@ You can use `TypeReference` and `NestedTypeReference` to create
 Type instances of any subclass in a compile-safe manner:
 
 1. Create types on the fly with `new TypeReference<Map<String, Double>>() { }`
-1. Implementation of all `Type` interfaces with equals and hashCode in line with the implementations from the JRE
+1. Implementation of all `Type` interfaces with equals and hashCode in line with the internal implementations of the JDK
 
 ```java
 public static void main(String... args) {
@@ -53,7 +66,8 @@ public static void main(String... args) {
   // Outputs: "Created wildcard: ? extends java.lang.String"
   System.out.println("Created wildcard: " + myWildcard);
 
-  // Implementations of Type interfaces are available which have the same #equals and #hashCode as the JRE impl.
+  // Implementations of Type interfaces which have the same #equals and #hashCode
+  // as the JDK impl. are available.
   ParameterizedType pt = new ParameterizedTypeImpl(Set.class, null, Double.class);
   // Outputs: "Set types equal -> true"
   System.out.println("Set types equal -> " + pt.equals(mySetType.getType()));

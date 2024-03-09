@@ -44,10 +44,10 @@ class PrimitiveTypeTest {
         assertThat(PrimitiveType.toReferenceType(double.class), equalTo(Double.class));
         assertThat(PrimitiveType.toReferenceType(float.class), equalTo(Float.class));
 
-        assertThat(PrimitiveType.toPrimitiveType(null), nullValue());
-        assertThat(PrimitiveType.toPrimitiveType(Void.class), equalTo(Void.class));
-        assertThat(PrimitiveType.toPrimitiveType(String.class), equalTo(String.class));
-        assertThat(PrimitiveType.toPrimitiveType(List.class), equalTo(List.class));
+        assertThat(PrimitiveType.toReferenceType(null), nullValue());
+        assertThat(PrimitiveType.toReferenceType(void.class), equalTo(void.class));
+        assertThat(PrimitiveType.toReferenceType(String.class), equalTo(String.class));
+        assertThat(PrimitiveType.toReferenceType(List.class), equalTo(List.class));
     }
 
     @Test

@@ -1,14 +1,14 @@
 package ch.jalu.typeresolver.array;
 
-import javax.annotation.Nullable;
+import ch.jalu.typeresolver.classutil.ClassUtils;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static ch.jalu.typeresolver.array.ArrayComponentType.getArrayComponentType;
 
 /**
  * This class contains methods that can handle arrays of any type ({@code boolean[]}, {@code byte[]}, {@code Object[]},
@@ -18,7 +18,8 @@ import java.util.stream.Stream;
  * Methods throw a runtime exception if the given object is not an array. To check if an object is an array, use
  * {@code object.getClass().isArray()}. See individual methods for specific caveats.
  */
-@SuppressWarnings("checkstyle:OneStatementPerLine") // Justification: line-by-line aligned casts in switch statements
+// Justification: line-by-line aligned casts in switch statements
+@SuppressWarnings({"checkstyle:OneStatementPerLine", "checkstyle:SingleSpaceSeparator"})
 public final class ArrayUtils {
 
     private ArrayUtils() {
@@ -350,11 +351,11 @@ public final class ArrayUtils {
      * has been sorted. The result is the index in the array of a matching value (no guarantee which index it is if
      * there are multiple matching values). If the value could not be matched, a negative number is returned as
      * described in binary search methods of {@link Arrays} (e.g. {@link Arrays#binarySearch(char[], int, int, char)}).
-     *
-     * @implNote If the value is not matched, it is guaranteed that this method returns the same negative value as
-     *           {@link Arrays#binarySearch(Object[], int, int, Object)} if the given array were converted to
-     *           {@code Boolean[]}. If there is a match, a valid index with the given value is returned, but it is not
-     *           guaranteed to be the same value as returned by {@code Arrays#binarySearch}.
+     * <p>
+     * If the value is not matched, it is guaranteed that this method returns the same negative value as
+     * {@link Arrays#binarySearch(Object[], int, int, Object)} if the given array were converted to {@code Boolean[]}.
+     * If there is a match, a valid index with the given value is returned, but it is not guaranteed to be the same
+     * value as returned by {@code Arrays#binarySearch}.
      *
      * @param array the boolean array to search in
      * @param fromIndex the start index (inclusive) of the range to search in
@@ -397,74 +398,14 @@ public final class ArrayUtils {
         Arrays.fill(array, fromIndex + numberOfFalse, toIndex, true);
     }
 
-    private static ArrayComponentType getArrayComponentType(Object array) {
-        if (array == null) {
-            throw new NullPointerException("array");
-        }
-        ArrayComponentType componentType = ArrayComponentType.resolveComponentForPrimitiveArrays(array.getClass());
-        if (componentType != null) {
-            return componentType;
-        }
-        if (Object[].class.isAssignableFrom(array.getClass())) {
-            return ArrayComponentType.OBJECT;
-        }
-        throw new IllegalArgumentException("Expected an array as argument, but got: " + array.getClass());
-    }
-
     private static void verifyArgumentMatchesComponentType(Object argument, ArrayComponentType componentType,
                                                            String argumentName) {
         if (argument == null) {
             throw new NullPointerException(argumentName);
-        } else if (!componentType.matches(argument)) {
+        }
+        if (!ClassUtils.isInstance(argument, componentType.getComponentClass())) {
             throw new ClassCastException("Expected " + argumentName + " to be a "
                 + componentType.name().toLowerCase(Locale.ROOT) + ", instead found: " + argument.getClass());
-        }
-    }
-
-    /**
-     * Represents the component type an array can have.
-     */
-    enum ArrayComponentType {
-
-        BOOLEAN(Boolean.class),
-        BYTE(Byte.class),
-        CHARACTER(Character.class),
-        SHORT(Short.class),
-        INTEGER(Integer.class),
-        LONG(Long.class),
-        FLOAT(Float.class),
-        DOUBLE(Double.class),
-        /** Means any extension of Object, such as the component of {@code String[]}, or even {@code int[][]}. */
-        OBJECT(Object.class);
-
-        private static final Map<Class<?>, ArrayComponentType> PRIMITIVE_ARRAY_TO_COMPONENT =
-            createPrimitiveArrayTypesToComponentMap();
-        private final Class<?> referenceType;
-
-        ArrayComponentType(Class<?> referenceType) {
-            this.referenceType = referenceType;
-        }
-
-        boolean matches(Object obj) {
-            return referenceType.isInstance(obj);
-        }
-
-        @Nullable
-        static ArrayComponentType resolveComponentForPrimitiveArrays(Class<?> clazz) {
-            return PRIMITIVE_ARRAY_TO_COMPONENT.get(clazz);
-        }
-
-        private static Map<Class<?>, ArrayComponentType> createPrimitiveArrayTypesToComponentMap() {
-            Map<Class<?>, ArrayComponentType> map = new HashMap<>();
-            map.put(boolean[].class, BOOLEAN);
-            map.put(byte[].class, BYTE);
-            map.put(char[].class, CHARACTER);
-            map.put(short[].class, SHORT);
-            map.put(int[].class, INTEGER);
-            map.put(long[].class, LONG);
-            map.put(float[].class, FLOAT);
-            map.put(double[].class, DOUBLE);
-            return Collections.unmodifiableMap(map);
         }
     }
 }

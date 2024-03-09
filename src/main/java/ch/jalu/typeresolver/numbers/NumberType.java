@@ -67,7 +67,7 @@ public interface NumberType<N> {
      * <p>
      * Implementations by this library support all instantiable {@link Number} classes of the JDK as input. An
      * {@link IllegalArgumentException} is thrown for other types.
-     * 
+     *
      * @param number the number to potentially convert (not null)
      * @return optional with the value converted to this type, or empty if it cannot be represented in this type
      */
@@ -111,7 +111,7 @@ public interface NumberType<N> {
 
     /**
      * Returns information about the value range this type can represent.
-     * 
+     *
      * @return this type's range of possible values
      */
     ValueRange<N> getValueRange();
@@ -144,7 +144,7 @@ public interface NumberType<N> {
      * If this method returns {@code true}, then calling {@link NumberType#compareToValueRange} on {@code this} type
      * with any number of the given {@code other} type will always return {@link ValueRangeComparison#WITHIN_RANGE}.
      * This also means that {@link #convertIfNoLossOfMagnitude} will always return a non-empty Optional.
-     * 
+     *
      * @param other the number type to check
      * @return true if all values of the given number type can be represented by this type, false otherwise
      * @see ValueRange#supportsAllValuesOf 

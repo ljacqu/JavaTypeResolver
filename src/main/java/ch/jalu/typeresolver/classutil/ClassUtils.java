@@ -2,8 +2,9 @@ package ch.jalu.typeresolver.classutil;
 
 import ch.jalu.typeresolver.EnumUtils;
 import ch.jalu.typeresolver.array.ArrayClassProperties;
+import ch.jalu.typeresolver.primitives.PrimitiveType;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Proxy;
 import java.util.Optional;
@@ -47,9 +48,6 @@ public final class ClassUtils {
     /**
      * Loads a class or throws an {@link IllegalArgumentException}. This method wraps {@link Class#forName(String)}
      * to throw a runtime exception for convenience.
-     * <p>
-     * Note that errors thrown by {@link Class#forName(String)} (e.g. {@link LinkageError}) are not caught as they
-     * typically indicate more severe issues.
      *
      * @param name the class name to load
      * @return the loaded class, never null
@@ -60,6 +58,115 @@ public final class ClassUtils {
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Class '" + name + "' could not be loaded", e);
         }
+    }
+
+    /**
+     * Returns whether the given object is an instance of the given target type. This method, unlike
+     * {@link Class#isInstance}, boxes primitive classes, such that {@code isInstance(5, int.class)}
+     * returns true. See also {@link ClassUtils#tryCast} if you want to cast the object safely.
+     *
+     * @param object the object to process
+     * @param targetType the target type to check for
+     * @return true if the object is not null and an instance of the given target type, false otherwise
+     */
+    public static boolean isInstance(@Nullable Object object, Class<?> targetType) {
+        return PrimitiveType.toReferenceType(targetType).isInstance(object);
+    }
+
+    /**
+     * Returns an optional with the given object cast to the target type, or an empty optional if the given object
+     * cannot be cast to the specified type. See {@link #tryCast(Object, Class, boolean)} for details.
+     *
+     * @param object the object to cast
+     * @param targetType the class to cast to
+     * @param <T> target type
+     * @return optional with the cast object, or empty optional if not possible
+     */
+    public static <T> Optional<T> tryCast(@Nullable Object object, Class<T> targetType) {
+        return tryCast(object, targetType, true);
+    }
+
+    /**
+     * Returns an optional with the given object cast to the target type, or an empty optional if the given object
+     * cannot be cast to the specified type. If {@code autobox} is true, primitive types are cast to their wrapper
+     * types.
+     * <p>
+     * Examples:<pre>{@code
+     *   tryCast("a", String.class, false) = Optional.of("a")
+     *   tryCast("a", String.class, true) = Optional.of("a")
+     *   tryCast(3, int.class, false) = Optional.empty()
+     *   tryCast(3, int.class, true) = Optional.of(3)
+     *   tryCast(3, Integer.class, false) = Optional.of(3)
+     * }</pre>
+     * <p>
+     * This method returns an empty Optional even if a widening primitive conversion (see JLS 5.1.2) exists:
+     * {@code tryCast(3, long.class, autobox)} returns an empty optional (regardless of the value of {@code autobox}).
+     *
+     * @param object the object to cast
+     * @param targetType the class to cast to
+     * @param autobox whether the target type should be autoboxed, e.g. to turn int.class to Integer.class
+     * @param <T> target type
+     * @return optional with the cast object, or empty optional if not possible
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> tryCast(@Nullable Object object, Class<T> targetType, boolean autobox) {
+        Class<T> target = autobox ? PrimitiveType.toReferenceType(targetType) : targetType;
+        if (target.isInstance(object)) {
+            return Optional.of((T) object);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns an Optional with the same class cast as subtype of the given {@code parent} if possible,
+     * otherwise returns an empty optional. Auto-boxes classes. See {@link #asSubclassIfPossible(Class, Class, boolean)}
+     * for more details.
+     *
+     * @param classToInspect the class to process
+     * @param parent the parent type to check if the class is an extension of
+     * @param <T> the parent type
+     * @return optional with the class as extension of the parent, or empty optional if not possible
+     * @see Class#asSubclass
+     */
+    public static <T> Optional<Class<? extends T>> asSubclassIfPossible(Class<?> classToInspect,
+                                                                        Class<T> parent) {
+        return asSubclassIfPossible(classToInspect, parent, true);
+    }
+
+    /**
+     * Returns an Optional with the same class cast as subtype of the given {@code parent} if possible,
+     * otherwise returns an empty optional. If {@code autobox} is true, primitive classes are cast to their wrapper
+     * types.
+     * <p>
+     * Examples:<pre>{@code
+     *  asSubclassIfPossible(int.class, Integer.class, false) = Optional.empty()
+     *  asSubclassIfPossible(int.class, Integer.class, true) = Optional.of(int.class)
+     *  asSubclassIfPossible(int.class, Number.class, false) = Optional.empty()
+     *  asSubclassIfPossible(int.class, Number.class, true) = Optional.of(int.class)
+     *  asSubclassIfPossible(int.class, long.class, false) = Optional.empty()
+     *  asSubclassIfPossible(int.class, long.class, true) = Optional.empty()
+     * }</pre>
+     *
+     * @param classToInspect the class to process
+     * @param parent the parent type to check if the class is an extension of
+     * @param autobox whether the target type should be autoboxed, e.g. to turn int.class to Integer.class
+     * @param <T> the parent type
+     * @return optional with the class as extension of the parent, or empty optional if not possible
+     * @see Class#asSubclass
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<Class<? extends T>> asSubclassIfPossible(Class<?> classToInspect,
+                                                                        Class<T> parent,
+                                                                        boolean autobox) {
+        boolean isSubclass;
+        if (autobox) {
+            isSubclass = PrimitiveType.toReferenceType(parent).isAssignableFrom(
+                PrimitiveType.toReferenceType(classToInspect));
+        } else {
+            isSubclass = parent.isAssignableFrom(classToInspect);
+        }
+
+        return isSubclass ? Optional.of((Class<? extends T>) classToInspect) : Optional.empty();
     }
 
     /**
@@ -124,7 +231,7 @@ public final class ClassUtils {
     /**
      * Returns a human-friendly string representation of the given class, or of the most meaningful associated type.
      * Concretely, this means any synthetic classes for enum entries are replaced by the enum type itself, as returned
-     * by {@link EnumUtils#asEnumType}.
+     * by {@link EnumUtils#getAssociatedEnumType}.
      * <p>
      * Prefer using {@link #getSemanticName(Object)} whenever possible, as more semantic types can be inferred based
      * on an object.
@@ -133,7 +240,7 @@ public final class ClassUtils {
      * @return semantic type as class name, or "null" as string (never null itself)
      */
     public static String getSemanticName(@Nullable Class<?> clazz) {
-        return EnumUtils.asEnumType(clazz)
+        return EnumUtils.getAssociatedEnumType(clazz)
             .map(ClassUtils::createNameOfSemanticType)
             .orElseGet(() -> createNameOfSemanticType(clazz));
     }

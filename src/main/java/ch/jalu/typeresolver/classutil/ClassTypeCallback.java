@@ -1,6 +1,7 @@
 package ch.jalu.typeresolver.classutil;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.annotation.Annotation;
 
 /**

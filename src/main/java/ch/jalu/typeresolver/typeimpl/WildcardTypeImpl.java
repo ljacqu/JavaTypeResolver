@@ -7,7 +7,8 @@ import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 
 /**
- * Implementation of {@link WildcardType}.
+ * Implementation of {@link WildcardType} with equals and hashCode mirroring the implementation
+ *  * used by the JDK internally.
  */
 public class WildcardTypeImpl implements WildcardType {
 
@@ -42,12 +43,12 @@ public class WildcardTypeImpl implements WildcardType {
      * @return new wildcard type whose lower bound is the given type
      */
     public static WildcardType newWildcardSuper(Type lowerBound) {
-        // Set Object.class as upper bound to be in line with the JRE behavior
+        // Set Object.class as upper bound to be in line with the JDK behavior
         return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ lowerBound });
     }
 
     /**
-     * Creates a new unbounded wildcard "?", as returned by the JRE (upper bound is set to Object.class).
+     * Creates a new unbounded wildcard "?", as returned by the JDK (upper bound is set to Object.class).
      *
      * @return new wildcard with no bounds
      */

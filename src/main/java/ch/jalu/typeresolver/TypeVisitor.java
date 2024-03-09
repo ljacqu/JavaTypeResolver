@@ -2,8 +2,8 @@ package ch.jalu.typeresolver;
 
 import ch.jalu.typeresolver.array.ArrayTypeProperties;
 import ch.jalu.typeresolver.array.ArrayTypeUtils;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;

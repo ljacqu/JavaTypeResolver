@@ -5,7 +5,8 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 
 /**
- * Implementation of {@link GenericArrayType}.
+ * Implementation of {@link GenericArrayType} with equals and hashCode mirroring the implementation
+ * used by the JDK internally.
  */
 public class GenericArrayTypeImpl implements GenericArrayType {
 
