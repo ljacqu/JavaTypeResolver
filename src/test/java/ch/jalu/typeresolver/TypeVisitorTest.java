@@ -60,6 +60,7 @@ class TypeVisitorTest {
         Set<TypeInfo> arrayListAll = arrayList.getAllTypeInfos();
 
         // then
+        // Verify stringAll
         TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
         List<Type> expectedStringTypes = new ArrayList<>(Arrays.asList(
             String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
@@ -70,6 +71,7 @@ class TypeVisitorTest {
         });
         assertThat(stringAll, containsTypesInAnyOrder(expectedStringTypes));
 
+        // Verify arrayListAll
         List<TypeInfo> expectedArrayListTypes = new ArrayList<>(Arrays.asList(
             new TypeReference<ArrayList<String>>() { },
             new TypeReference<AbstractList<String>>() { },
@@ -100,6 +102,7 @@ class TypeVisitorTest {
         Set<Type> primitiveIntArrAll = primitiveIntArr.getAllTypes();
 
         // then
+        // Verify stringArrayAll
         List<Type> expectedStringArrayTypes = new ArrayList<>(Arrays.asList(
             String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
             Object.class, Cloneable.class, Serializable.class));
@@ -109,6 +112,7 @@ class TypeVisitorTest {
         });
         assertThat(stringArrayAll, containsTypesInAnyOrder(expectedStringArrayTypes));
 
+        // Verify primitiveIntArrAll
         assertThat(primitiveIntArrAll, containsInAnyOrder(int[].class, Object.class, Cloneable.class, Serializable.class));
     }
 
@@ -123,6 +127,7 @@ class TypeVisitorTest {
         Set<Type> float3dArrayAll = float3dArray.getAllTypes();
 
         // then
+        // Verify list2dArrayAll
         List<TypeInfo> expectedListTypeInfos = new ArrayList<>(Arrays.asList(
             new TypeReference<List<String>[][]>() { },
             new TypeReference<Collection<String>[][]>() { },
@@ -140,9 +145,9 @@ class TypeVisitorTest {
             Type sequencedColl2dType = ArrayTypeUtils.createArrayType(sequencedStringCollection, 2);
             expectedListTypeInfos.add(new TypeInfo(sequencedColl2dType));
         });
-
         assertThat(list2dArrayAll, containsTypeInfosInAnyOrder(expectedListTypeInfos));
 
+        // Verify float3dArray
         assertThat(float3dArrayAll, containsInAnyOrder(
             float[][][].class,
             Serializable[][].class, Cloneable[][].class, Object[][].class,
@@ -161,6 +166,7 @@ class TypeVisitorTest {
         Set<TypeInfo> linkedHashMapAll = linkedHashMap.getAllTypeInfos();
 
         // then
+        // Verify timeUnitAll
         List<Type> expectedTimeUnitTypes = new ArrayList<>(Arrays.asList(
             TimeUnit.class, Serializable.class, Object.class,
             new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
@@ -170,6 +176,7 @@ class TypeVisitorTest {
         });
         assertThat(timeUnitAll, containsTypesInAnyOrder(expectedTimeUnitTypes));
 
+        // Verify linkedHashMapAll
         List<TypeInfo> expectedLinkedHashMapTypes = new ArrayList<>(Arrays.asList(
             new TypeReference<LinkedHashMap<String, ? extends Integer>>() { },
             new TypeReference<HashMap<String, ? extends Integer>>() { },
