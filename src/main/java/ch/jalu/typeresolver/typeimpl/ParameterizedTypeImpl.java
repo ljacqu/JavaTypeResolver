@@ -54,9 +54,8 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         return rawType;
     }
 
-    @Nullable
     @Override
-    public Type getOwnerType() {
+    public @Nullable Type getOwnerType() {
         return ownerType;
     }
 

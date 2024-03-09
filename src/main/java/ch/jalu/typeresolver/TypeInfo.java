@@ -82,8 +82,7 @@ public class TypeInfo {
      * @param index the index of the type parameter to get (0-based)
      * @return the type argument for the given index, null if not applicable
      */
-    @Nullable
-    public TypeInfo getTypeArgumentInfo(int index) {
+    public @Nullable TypeInfo getTypeArgumentInfo(int index) {
         if (type instanceof ParameterizedType) {
             Type[] typeArguments = ((ParameterizedType) type).getActualTypeArguments();
             if (index < typeArguments.length) {
@@ -109,8 +108,7 @@ public class TypeInfo {
      * @param index the index of the type parameter to get (0-based)
      * @return the type argument as safe-to-write class, null if not applicable
      */
-    @Nullable
-    public Class<?> getTypeArgumentAsClass(int index) {
+    public @Nullable Class<?> getTypeArgumentAsClass(int index) {
         TypeInfo genericTypeInfo = getTypeArgumentInfo(index);
         return genericTypeInfo == null ? null : genericTypeInfo.toClass();
     }
@@ -131,8 +129,7 @@ public class TypeInfo {
      *         (e.g. setting a value to a field or adding to a collection);
      *         null if not applicable
      */
-    @Nullable
-    public Class<?> toClass() {
+    public @Nullable Class<?> toClass() {
         return TypeToClassUtils.getSafeToWriteClass(type);
     }
 
@@ -193,8 +190,7 @@ public class TypeInfo {
      *
      * @return the enclosing type, or null if this type is not a nested type
      */
-    @Nullable
-    public TypeInfo getEnclosingType() {
+    public @Nullable TypeInfo getEnclosingType() {
         Type enclosingType = null;
         if (type instanceof Class<?>) {
             enclosingType = ((Class<?>) type).getEnclosingClass();
@@ -210,8 +206,7 @@ public class TypeInfo {
      *
      * @return the component type of this array type, or null if this type is not an array
      */
-    @Nullable
-    public TypeInfo getComponentType() {
+    public @Nullable TypeInfo getComponentType() {
         Type componentType = null;
         if (type instanceof Class<?>) {
             componentType = ((Class<?>) type).getComponentType();
@@ -249,8 +244,7 @@ public class TypeInfo {
      * @param clazz the desired superclass to get the info for
      * @return the type info of the superclass of the given class, or null if this wrapped type is not a supertype
      */
-    @Nullable
-    public TypeInfo resolveSuperclass(Class<?> clazz) {
+    public @Nullable TypeInfo resolveSuperclass(Class<?> clazz) {
         final Class<?> thisClass = toClass();
         if (thisClass == null || !clazz.isAssignableFrom(thisClass)) {
             return null;
@@ -297,8 +291,7 @@ public class TypeInfo {
         TypeVisitor.visitAllTypes(type, getOrInitResolver(), typeVisitor);
     }
 
-    @Nullable
-    private Type getOwnerTypeForResolvedParameterizedType(Class<?> superclass) {
+    private @Nullable Type getOwnerTypeForResolvedParameterizedType(Class<?> superclass) {
         Class<?> enclosingClass = superclass.getEnclosingClass();
         // Return enclosing class without type arguments if the nested class is static (in line with Java behavior)
         if (enclosingClass == null || Modifier.isStatic(superclass.getModifiers())) {

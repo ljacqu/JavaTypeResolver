@@ -38,9 +38,8 @@ public final class NumberTypes {
      * @param <T> the class's type
      * @return the number type for the given class, null if not available
      */
-    @Nullable
     @SuppressWarnings("unchecked")
-    public static <T> NumberType<T> from(@Nullable Class<T> clazz) {
+    public static <T> @Nullable NumberType<T> from(@Nullable Class<T> clazz) {
         return (NumberType<T>) NUMBER_TYPES_BY_CLASS.get(clazz);
     }
 
@@ -66,8 +65,7 @@ public final class NumberTypes {
      * @param object the object to unwrap
      * @return the number value the object could be unwrapped to
      */
-    @Nullable
-    public static Number unwrapToStandardNumberType(@Nullable Object object) {
+    public static @Nullable Number unwrapToStandardNumberType(@Nullable Object object) {
         if (object instanceof Character) {
             return (int) (Character) object;
         } else if (object instanceof Number) {

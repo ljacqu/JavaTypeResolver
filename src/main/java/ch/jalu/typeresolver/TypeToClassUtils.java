@@ -27,8 +27,7 @@ final class TypeToClassUtils {
      * @param type the type to process
      * @return safe-to-write class of the type, or null if not known
      */
-    @Nullable
-    public static Class<?> getSafeToWriteClass(@Nullable Type type) {
+    public static @Nullable Class<?> getSafeToWriteClass(@Nullable Type type) {
         if (type instanceof Class<?>) {
             return (Class<?>) type;
         } else if (type instanceof ParameterizedType) {
@@ -59,8 +58,7 @@ final class TypeToClassUtils {
         return clazz == null ? Object.class : clazz;
     }
 
-    @Nullable
-    private static Class<?> getSafeToReadClassOrNull(@Nullable Type type) {
+    private static @Nullable Class<?> getSafeToReadClassOrNull(@Nullable Type type) {
         if (type instanceof Class<?>) {
             return (Class<?>) type;
         } else if (type instanceof ParameterizedType) {
@@ -88,8 +86,7 @@ final class TypeToClassUtils {
         return null;
     }
 
-    @Nullable
-    private static Class<?> getFirstNonNull(Function<Type, Class<?>> converter, Type[] inputs) {
+    private static @Nullable Class<?> getFirstNonNull(Function<Type, Class<?>> converter, Type[] inputs) {
         return Arrays.stream(inputs)
             .map(converter)
             .filter(Objects::nonNull)

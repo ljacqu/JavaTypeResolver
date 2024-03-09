@@ -143,27 +143,23 @@ public enum StandardValueRange implements ValueRange {
         return "StandardValueRange[" + name() + "]";
     }
 
-    @Nullable
     @Override
-    public BigDecimal getMinValue() {
+    public @Nullable BigDecimal getMinValue() {
         return min;
     }
 
-    @Nullable
     @Override
-    public BigDecimal getMaxValue() {
+    public @Nullable BigDecimal getMaxValue() {
         return max;
     }
 
-    @Nullable
     @Override
-    public Number getMinInOwnType() {
+    public @Nullable Number getMinInOwnType() {
         return minInOwnType;
     }
 
-    @Nullable
     @Override
-    public Number getMaxInOwnType() {
+    public @Nullable Number getMaxInOwnType() {
         return maxInOwnType;
     }
 }

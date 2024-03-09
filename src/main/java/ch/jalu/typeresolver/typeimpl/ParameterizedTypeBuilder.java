@@ -253,8 +253,7 @@ public class ParameterizedTypeBuilder {
      * @param rawType the raw type whose owner type should be created with generic information
      * @return owner type to use for the raw type
      */
-    @Nullable
-    public static Type createOwnerType(Class<?> rawType) {
+    public static @Nullable Type createOwnerType(Class<?> rawType) {
         Class<?> directDeclaringClass = rawType.getDeclaringClass();
         if (directDeclaringClass == null || Modifier.isStatic(rawType.getModifiers())) {
             return directDeclaringClass;

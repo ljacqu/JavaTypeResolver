@@ -20,8 +20,7 @@ public abstract class ClassTypeCallback<R> {
      * @param enumClass the enum class
      * @return result or null
      */
-    @Nullable
-    public R forEnum(Class<? extends Enum<?>> enumClass) {
+    public @Nullable R forEnum(Class<? extends Enum<?>> enumClass) {
         return null;
     }
 
@@ -35,8 +34,7 @@ public abstract class ClassTypeCallback<R> {
      * @param enumEntryClass the synthetic class of the enum entry
      * @return result or null
      */
-    @Nullable
-    public R forEnumEntry(Class<? extends Enum<?>> enumClass, Class<? extends Enum<?>> enumEntryClass) {
+    public @Nullable R forEnumEntry(Class<? extends Enum<?>> enumClass, Class<? extends Enum<?>> enumEntryClass) {
         return null;
     }
 
@@ -46,8 +44,7 @@ public abstract class ClassTypeCallback<R> {
      * @param annotationClass the annotation class
      * @return result or null
      */
-    @Nullable
-    public R forAnnotation(Class<? extends Annotation> annotationClass) {
+    public @Nullable R forAnnotation(Class<? extends Annotation> annotationClass) {
         return null;
     }
 
@@ -57,8 +54,7 @@ public abstract class ClassTypeCallback<R> {
      * @param primitiveClass the primitive class (or void)
      * @return result or null
      */
-    @Nullable
-    public R forPrimitiveType(Class<?> primitiveClass) {
+    public @Nullable R forPrimitiveType(Class<?> primitiveClass) {
         return null;
     }
 
@@ -71,8 +67,7 @@ public abstract class ClassTypeCallback<R> {
      * @param arrayClass the array class
      * @return result or null
      */
-    @Nullable
-    public R forArrayType(Class<?> arrayClass) {
+    public @Nullable R forArrayType(Class<?> arrayClass) {
         return null;
     }
 
@@ -82,8 +77,7 @@ public abstract class ClassTypeCallback<R> {
      * @param interfaceType the interface
      * @return result or null
      */
-    @Nullable
-    public R forInterface(Class<?> interfaceType) {
+    public @Nullable R forInterface(Class<?> interfaceType) {
         return null;
     }
 
@@ -93,8 +87,7 @@ public abstract class ClassTypeCallback<R> {
      * @param proxyClass the proxy class
      * @return result or null
      */
-    @Nullable
-    public R forProxyClass(Class<?> proxyClass) {
+    public @Nullable R forProxyClass(Class<?> proxyClass) {
         return null;
     }
 
@@ -104,8 +97,7 @@ public abstract class ClassTypeCallback<R> {
      * @param regularClass the Java class
      * @return result or null
      */
-    @Nullable
-    public R forRegularClass(Class<?> regularClass) {
+    public @Nullable R forRegularClass(Class<?> regularClass) {
         return null;
     }
 }
