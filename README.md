@@ -7,7 +7,7 @@
 Resolves types from context for Java 8 and above, among other utilities.
 
 ## Integration
-Start using ConfigMe by adding this to your pom.xml:
+If you're using Maven, add this to your pom.xml:
 ```xml
 <dependencies>
     <dependency>
