@@ -4,12 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -20,12 +20,24 @@ class ConstructorUtilsTest {
     @Test
     void shouldReturnConstructorIfApplicable() throws NoSuchMethodException {
         // given / when
-        Optional<Constructor<Sample>> constr1 = ConstructorUtils.tryFindConstructor(Sample.class, int.class, String.class);
-        Optional<Constructor<Sample>> constr2 = ConstructorUtils.tryFindConstructor(Sample.class, int.class, long.class);
+        Constructor<Sample> constr1 = ConstructorUtils.getConstructorOrNull(Sample.class, int.class, String.class);
+        Constructor<Sample> constr2 = ConstructorUtils.getConstructorOrNull(Sample.class, int.class, long.class);
 
         // then
-        assertThat(constr1, equalTo(Optional.of(Sample.class.getDeclaredConstructor(int.class, String.class))));
-        assertThat(constr2, equalTo(Optional.empty()));
+        assertThat(constr1, equalTo(Sample.class.getDeclaredConstructor(int.class, String.class)));
+        assertThat(constr2, nullValue());
+    }
+
+    @Test
+    void shouldCompileWithWildcard() {
+        // given
+        Class<?> clazz = Sample.class;
+
+        // when
+        Constructor<?> result = ConstructorUtils.getConstructorOrNull(clazz, String[].class);
+
+        // then
+        assertThat(result, nullValue());
     }
 
     @Test

@@ -1,8 +1,9 @@
 package ch.jalu.typeresolver.reflect;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -14,18 +15,20 @@ public final class ConstructorUtils {
     }
 
     /**
-     * Returns the specified constructor if it exists, otherwise returns an empty Optional.
+     * Returns the specified constructor if it exists, otherwise null.
      *
      * @param clazz the class to search in
      * @param parameterTypes the parameter types the constructor must match
      * @param <T> class type
-     * @return optional with the matching constructor, or empty optional
+     * @return the matching constructor, or null
      */
-    public static <T> Optional<Constructor<T>> tryFindConstructor(Class<T> clazz, Class<?>... parameterTypes) {
+    // Optional<Constructor<T>> would be a nicer return type, but generics don't play well when the incoming `clazz`
+    // parameter is typed as Class<?>
+    public static <T> @Nullable Constructor<T> getConstructorOrNull(Class<T> clazz, Class<?>... parameterTypes) {
         try {
-            return Optional.of(clazz.getDeclaredConstructor(parameterTypes));
+            return clazz.getDeclaredConstructor(parameterTypes);
         } catch (NoSuchMethodException ignore) {
-            return Optional.empty();
+            return null;
         }
     }
 
