@@ -199,8 +199,7 @@ public final class ClassUtils {
      * @param object the object to inspect, or null
      * @return the semantic type (only null if the object was null)
      */
-    @Nullable
-    public static Class<?> getSemanticType(@Nullable Object object) {
+    public static @Nullable Class<?> getSemanticType(@Nullable Object object) {
         if (object == null) {
             return null;
         } else if (object instanceof Enum<?>) {
@@ -296,8 +295,8 @@ public final class ClassUtils {
      * @param <R> the callback's result type
      * @return the result from the callback (may be null)
      */
-    @Nullable
-    public static <R> R processClassByType(@Nullable Class<?> clazz, ClassTypeCallback<? extends R> typeCallback) {
+    public static <R> @Nullable R processClassByType(@Nullable Class<?> clazz,
+                                                     ClassTypeCallback<? extends R> typeCallback) {
         ClassType type = getType(clazz);
         if (type == null) {
             return null;

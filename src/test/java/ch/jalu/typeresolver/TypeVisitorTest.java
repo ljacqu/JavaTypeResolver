@@ -1,8 +1,10 @@
 package ch.jalu.typeresolver;
 
-import ch.jalu.typeresolver.JavaVersionHelper.ConstableAndConstantDescTypes;
 import ch.jalu.typeresolver.array.ArrayTypeUtils;
 import ch.jalu.typeresolver.reference.TypeReference;
+import ch.jalu.typeresolver.typeimpl.ParameterizedTypeImpl;
+import ch.jalu.typeresolver.typeimpl.WildcardTypeImpl;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
@@ -15,19 +17,20 @@ import java.util.AbstractCollection;
 import java.util.AbstractList;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.RandomAccess;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static ch.jalu.typeresolver.TypeInfo.of;
+import static ch.jalu.typeresolver.typeimpl.ParameterizedTypeBuilder.parameterizedTypeBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -57,17 +60,19 @@ class TypeVisitorTest {
         Set<TypeInfo> arrayListAll = arrayList.getAllTypeInfos();
 
         // then
+        // Verify stringAll
         TypeReference<Comparable<String>> comparableString = new TypeReference<Comparable<String>>() { };
-        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
-        if (constableTypes.isPresent()) {
-            Class<?> constable = constableTypes.get().getConstableClass();
-            Class<?> constantDesc = constableTypes.get().getConstantDescClass();
-            assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, constable, constantDesc, Object.class));
-        } else {
-            assertThat(stringAll, containsInAnyOrder(String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
-        }
+        List<Type> expectedStringTypes = new ArrayList<>(Arrays.asList(
+            String.class, CharSequence.class, comparableString.getType(), Serializable.class, Object.class));
 
-        assertThat(arrayListAll, containsInAnyOrder(
+        JavaVersionHelper.getConstableClassIfApplicable().ifPresent(constableTypes -> {
+            expectedStringTypes.add(constableTypes.getConstableClass());
+            expectedStringTypes.add(constableTypes.getConstantDescClass());
+        });
+        assertThat(stringAll, containsTypesInAnyOrder(expectedStringTypes));
+
+        // Verify arrayListAll
+        List<TypeInfo> expectedArrayListTypes = new ArrayList<>(Arrays.asList(
             new TypeReference<ArrayList<String>>() { },
             new TypeReference<AbstractList<String>>() { },
             new TypeReference<AbstractCollection<String>>() { },
@@ -75,6 +80,15 @@ class TypeVisitorTest {
             new TypeReference<Collection<String>>() { },
             new TypeReference<Iterable<String>>() { },
             of(Cloneable.class), of(Serializable.class), of(RandomAccess.class), of(Object.class)));
+
+        JavaVersionHelper.getSequencedCollectionTypesIfApplicable().ifPresent(sequencedCollTypes -> {
+            ParameterizedTypeImpl sequencedStringCollection =
+                parameterizedTypeBuilder(sequencedCollTypes.getSequencedCollectionClass())
+                    .withTypeArg(0, String.class)
+                    .build();
+            expectedArrayListTypes.add(TypeInfo.of(sequencedStringCollection));
+        });
+        assertThat(arrayListAll, containsTypeInfosInAnyOrder(expectedArrayListTypes));
     }
 
     @Test
@@ -88,20 +102,17 @@ class TypeVisitorTest {
         Set<Type> primitiveIntArrAll = primitiveIntArr.getAllTypes();
 
         // then
-        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
-        if (constableTypes.isPresent()) {
-            Class<?> constableArray = ArrayTypeUtils.createArrayClass(constableTypes.get().getConstableClass());
-            Class<?> constantDescArray = ArrayTypeUtils.createArrayClass(constableTypes.get().getConstantDescClass());
+        // Verify stringArrayAll
+        List<Type> expectedStringArrayTypes = new ArrayList<>(Arrays.asList(
+            String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
+            Object.class, Cloneable.class, Serializable.class));
+        JavaVersionHelper.getConstableClassIfApplicable().ifPresent(constableTypes -> {
+            expectedStringArrayTypes.add(ArrayTypeUtils.createArrayType(constableTypes.getConstableClass()));
+            expectedStringArrayTypes.add(ArrayTypeUtils.createArrayType(constableTypes.getConstantDescClass()));
+        });
+        assertThat(stringArrayAll, containsTypesInAnyOrder(expectedStringArrayTypes));
 
-            assertThat(stringArrayAll, containsInAnyOrder(
-                String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), constableArray, constantDescArray, Object[].class,
-                Object.class, Cloneable.class, Serializable.class));
-        } else {
-            assertThat(stringArrayAll, containsInAnyOrder(
-                String[].class, CharSequence[].class, Serializable[].class, new TypeReference<Comparable<String>[]>() { }.getType(), Object[].class,
-                Object.class, Cloneable.class, Serializable.class));
-        }
-
+        // Verify primitiveIntArrAll
         assertThat(primitiveIntArrAll, containsInAnyOrder(int[].class, Object.class, Cloneable.class, Serializable.class));
     }
 
@@ -116,7 +127,8 @@ class TypeVisitorTest {
         Set<Type> float3dArrayAll = float3dArray.getAllTypes();
 
         // then
-        assertThat(list2dArrayAll, containsInAnyOrder(
+        // Verify list2dArrayAll
+        List<TypeInfo> expectedListTypeInfos = new ArrayList<>(Arrays.asList(
             new TypeReference<List<String>[][]>() { },
             new TypeReference<Collection<String>[][]>() { },
             new TypeReference<Iterable<String>[][]>() { },
@@ -124,6 +136,18 @@ class TypeVisitorTest {
             of(Serializable[].class), of(Cloneable[].class), of(Object[].class),
             of(Serializable.class), of(Cloneable.class), of(Object.class)));
 
+        JavaVersionHelper.getSequencedCollectionTypesIfApplicable().ifPresent(sequencedCollTypes -> {
+            // java.util.SequencedCollection<java.lang.String>[][]
+            ParameterizedTypeImpl sequencedStringCollection =
+                parameterizedTypeBuilder(sequencedCollTypes.getSequencedCollectionClass())
+                    .withTypeArg(0, String.class)
+                    .build();
+            Type sequencedColl2dType = ArrayTypeUtils.createArrayType(sequencedStringCollection, 2);
+            expectedListTypeInfos.add(new TypeInfo(sequencedColl2dType));
+        });
+        assertThat(list2dArrayAll, containsTypeInfosInAnyOrder(expectedListTypeInfos));
+
+        // Verify float3dArray
         assertThat(float3dArrayAll, containsInAnyOrder(
             float[][][].class,
             Serializable[][].class, Cloneable[][].class, Object[][].class,
@@ -142,22 +166,33 @@ class TypeVisitorTest {
         Set<TypeInfo> linkedHashMapAll = linkedHashMap.getAllTypeInfos();
 
         // then
-        Optional<ConstableAndConstantDescTypes> constableTypes = JavaVersionHelper.getConstableClassIfApplicable();
-        if (constableTypes.isPresent()) {
-            Class<?> constable = constableTypes.get().getConstableClass();
-            assertThat(timeUnitAll, containsInAnyOrder(TimeUnit.class, Serializable.class, constable, Object.class,
-                new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
-        } else {
-            assertThat(timeUnitAll, containsInAnyOrder(TimeUnit.class, Serializable.class, Object.class,
-                new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
-        }
+        // Verify timeUnitAll
+        List<Type> expectedTimeUnitTypes = new ArrayList<>(Arrays.asList(
+            TimeUnit.class, Serializable.class, Object.class,
+            new TypeReference<Enum<TimeUnit>>() { }.getType(), new TypeReference<Comparable<TimeUnit>>() { }.getType()));
 
-        assertThat(linkedHashMapAll, containsInAnyOrder(
+        JavaVersionHelper.getConstableClassIfApplicable().ifPresent(constableTypes -> {
+            expectedTimeUnitTypes.add(constableTypes.getConstableClass());
+        });
+        assertThat(timeUnitAll, containsTypesInAnyOrder(expectedTimeUnitTypes));
+
+        // Verify linkedHashMapAll
+        List<TypeInfo> expectedLinkedHashMapTypes = new ArrayList<>(Arrays.asList(
             new TypeReference<LinkedHashMap<String, ? extends Integer>>() { },
             new TypeReference<HashMap<String, ? extends Integer>>() { },
             new TypeReference<AbstractMap<String, ? extends Integer>>() { },
             new TypeReference<Map<String, ? extends Integer>>() { },
             of(Cloneable.class), of(Serializable.class), of(Object.class)));
+
+        JavaVersionHelper.getSequencedCollectionTypesIfApplicable().ifPresent(seqCollectionTypes -> {
+            ParameterizedTypeImpl sequencedMapTypeEquivalent =
+                parameterizedTypeBuilder(seqCollectionTypes.getSequencedMapClass())
+                    .withTypeArg(0, String.class)
+                    .withTypeArg(1, WildcardTypeImpl.newWildcardExtends(Integer.class))
+                    .build();
+            expectedLinkedHashMapTypes.add(TypeInfo.of(sequencedMapTypeEquivalent));
+        });
+        assertThat(linkedHashMapAll, containsTypeInfosInAnyOrder(expectedLinkedHashMapTypes));
     }
 
     @Test
@@ -188,5 +223,13 @@ class TypeVisitorTest {
 
         // then
         assertThat(typesOfBigDecimal, contains("BigDecimal", "Number", "Object", "Serializable", "Comparable"));
+    }
+
+    private Matcher<Iterable<? extends Type>> containsTypesInAnyOrder(List<Type> items) {
+        return containsInAnyOrder(items.toArray(new Type[0]));
+    }
+
+    private Matcher<Iterable<? extends TypeInfo>> containsTypeInfosInAnyOrder(List<TypeInfo> items) {
+        return containsInAnyOrder(items.toArray(new TypeInfo[0]));
     }
 }

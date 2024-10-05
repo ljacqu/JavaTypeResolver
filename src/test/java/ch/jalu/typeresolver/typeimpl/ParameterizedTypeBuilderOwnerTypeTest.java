@@ -200,8 +200,8 @@ class ParameterizedTypeBuilderOwnerTypeTest {
         }
     }
 
-    @Nullable
-    private String verifyOwnerTypesAndReturnErrorIfApplicable(Type ownerType, OwnerTypeToken... expectations) {
+    private @Nullable String verifyOwnerTypesAndReturnErrorIfApplicable(Type ownerType,
+                                                                        OwnerTypeToken... expectations) {
         Type currentOwnerLevel = ownerType;
         for (int i = 0; i < expectations.length; i++) {
             OwnerTypeToken expectedType = expectations[i];
@@ -253,8 +253,7 @@ class ParameterizedTypeBuilderOwnerTypeTest {
     @FunctionalInterface
     private interface OwnerTypeToken {
 
-        @Nullable
-        String getExpectationOnMismatch(@Nullable Type typeToVerify);
+        @Nullable String getExpectationOnMismatch(@Nullable Type typeToVerify);
     }
 
     /*

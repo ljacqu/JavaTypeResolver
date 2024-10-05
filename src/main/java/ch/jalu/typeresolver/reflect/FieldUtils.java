@@ -1,4 +1,4 @@
-package ch.jalu.typeresolver;
+package ch.jalu.typeresolver.reflect;
 
 import ch.jalu.typeresolver.classutil.ClassUtils;
 

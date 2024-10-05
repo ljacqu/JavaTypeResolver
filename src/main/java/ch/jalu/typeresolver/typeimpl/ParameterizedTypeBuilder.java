@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * Builder to create parameterized types programmatically.
  * <p>
  * Example:<pre>{@code
- *   ParameterizedType pt = newTypeFromClass(Optional.class)
+ *   ParameterizedType pt = parameterizedTypeBuilder(Optional.class)
  *     .withTypeArg(0, String.class)
  *     .build();
  *  // pt = Optional<String>
@@ -253,8 +253,7 @@ public class ParameterizedTypeBuilder {
      * @param rawType the raw type whose owner type should be created with generic information
      * @return owner type to use for the raw type
      */
-    @Nullable
-    public static Type createOwnerType(Class<?> rawType) {
+    public static @Nullable Type createOwnerType(Class<?> rawType) {
         Class<?> directDeclaringClass = rawType.getDeclaringClass();
         if (directDeclaringClass == null || Modifier.isStatic(rawType.getModifiers())) {
             return directDeclaringClass;

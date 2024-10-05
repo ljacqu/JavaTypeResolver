@@ -50,26 +50,22 @@ public class ValueRangeImpl<T> implements ValueRange<T> {
     }
 
     @Override
-    @Nullable
-    public BigDecimal getMinValue() {
+    public @Nullable BigDecimal getMinValue() {
         return min;
     }
 
     @Override
-    @Nullable
-    public BigDecimal getMaxValue() {
+    public @Nullable BigDecimal getMaxValue() {
         return max;
     }
 
     @Override
-    @Nullable
-    public T getMinInOwnType() {
+    public @Nullable T getMinInOwnType() {
         return minOwnType;
     }
 
     @Override
-    @Nullable
-    public T getMaxInOwnType() {
+    public @Nullable T getMaxInOwnType() {
         return maxOwnType;
     }
 

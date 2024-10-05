@@ -85,8 +85,7 @@ public enum PrimitiveType {
      * @param clazz the class to search for (primitive or reference type of a primitive-reference class pair)
      * @return the corresponding entry, or null if not applicable
      */
-    @Nullable
-    public static PrimitiveType from(Class<?> clazz) {
+    public static @Nullable PrimitiveType from(Class<?> clazz) {
         return PRIMITIVES_BY_CLASS.get(clazz);
     }
 

@@ -58,12 +58,12 @@ public class WildcardTypeImpl implements WildcardType {
 
     @Override
     public Type[] getUpperBounds() {
-        return upperBounds;
+        return upperBounds.clone();
     }
 
     @Override
     public Type[] getLowerBounds() {
-        return lowerBounds;
+        return lowerBounds.clone();
     }
 
     @Override

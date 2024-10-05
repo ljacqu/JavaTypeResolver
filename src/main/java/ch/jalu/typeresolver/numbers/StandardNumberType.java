@@ -213,8 +213,7 @@ public enum StandardNumberType implements NumberType {
      * @param clazz the class to find the number type for
      * @return the instance matching the given type, or null if not applicable
      */
-    @Nullable
-    public static StandardNumberType fromClass(Class<?> clazz) {
+    public static @Nullable StandardNumberType fromClass(Class<?> clazz) {
         return TYPE_TO_ENUM_ENTRIES.get(PrimitiveType.toReferenceType(clazz));
     }
 
@@ -228,9 +227,8 @@ public enum StandardNumberType implements NumberType {
      * @return the instance matching the given type, or null if not applicable
      * @see NumberTypes#from
      */
-    @Nullable
     @SuppressWarnings("unchecked")
-    public static <T extends Number> NumberType<T> fromNumberClass(@Nullable Class<T> clazz) {
+    public static <T extends Number> @Nullable NumberType<T> fromNumberClass(@Nullable Class<T> clazz) {
         return fromClass(clazz);
     }
 

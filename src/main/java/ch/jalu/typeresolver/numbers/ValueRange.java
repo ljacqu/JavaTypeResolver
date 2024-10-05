@@ -14,26 +14,22 @@ public interface ValueRange<T> {
     /**
      * @return the minimum value this type can represent; null if there is no explicit bound
      */
-    @Nullable
-    BigDecimal getMinValue();
+    @Nullable BigDecimal getMinValue();
 
     /**
      * @return the maximum value this type can represent; null if there is no explicit bound
      */
-    @Nullable
-    BigDecimal getMaxValue();
+    @Nullable BigDecimal getMaxValue();
 
     /**
      * @return the smallest finite value the type can represent, in the type itself (null if the type has no limit)
      */
-    @Nullable
-    T getMinInOwnType();
+    @Nullable T getMinInOwnType();
 
     /**
      * @return the largest finite value the type can represent, in the type itself (null if the type has no limit)
      */
-    @Nullable
-    T getMaxInOwnType();
+    @Nullable T getMaxInOwnType();
 
     /**
      * @return true if this value can represent decimals, false otherwise

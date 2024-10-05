@@ -53,8 +53,7 @@ public final class CommonTypeUtils {
      * @param type the type to return as class if possible
      * @return the type as class, or null if not applicable
      */
-    @Nullable
-    public static Class<?> getDefinitiveClass(Type type) {
+    public static @Nullable Class<?> getDefinitiveClass(Type type) {
         if (type instanceof Class<?>) {
             return (Class<?>) type;
         } else if (type instanceof ParameterizedType) {
